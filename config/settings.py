@@ -47,6 +47,7 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'config.urls'
 
+ADMIN_SITE_CLS = 'config.admin.PolyclinicAdminSite'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -66,6 +67,8 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
+
+ADMIN_SITE = 'config.admin.admin_site'
 
 DATABASES = {
     'default': {

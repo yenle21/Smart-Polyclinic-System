@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🏥 Polyclinic Stats</title>
+    <style>
+        body { font-family: Arial; margin: 40px; background: #f5f5f5; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        .stat-card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .stat-number { font-size: 2.5em; font-weight: bold; color: #2563eb; }
+        .stat-label { color: #666; margin-top: 5px; }
+        .pie-chart { height: 200px; background: #e0e0e0; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+    </style>
+</head>
+<body>
+    <h1>🏥 Polyclinic Dashboard</h1>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-number">{{ stats.total_patients }}</div>
+            <div class="stat-label">👤 Bệnh nhân</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ stats.total_doctors }}</div>
+            <div class="stat-label">👨‍⚕️ Bác sĩ</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ stats.today_appointments }}</div>
+            <div class="stat-label">📅 Lịch hôm nay</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ stats.pending_appointments }}</div>
+            <div class="stat-label">⏳ Chờ xác nhận</div>
+        </div>
+    </div>
+
+    <h2>📊 Thống kê chi tiết</h2>
+    <div style="display: flex; gap: 20px;">
+        <div class="stat-card">
+            <h3>Người dùng theo vai trò</h3>
+            <ul>
+            {% for role, count in stats.patients_by_role.items %}
+                <li>{{ role }}: {{ count }}</li>
+            {% endfor %}
+            </ul>
+        </div>
+        <div class="stat-card">
+            <h3>Lịch hẹn theo trạng thái</h3>
+            <ul>
+            {% for status, count in stats.appointments_by_status.items %}
+                <li>{{ status }}: {{ count }}</li>
+            {% endfor %}
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
