@@ -36,7 +36,7 @@ class Appointment(models.Model):
     ]
     patient = models.ForeignKey('accounts.Patient', on_delete=models.CASCADE, related_name='appointments')
     doctor = models.ForeignKey('accounts.Doctor', on_delete=models.CASCADE, related_name='appointments')
-    scheduled_at = models.TimeField()
+    scheduled_at = models.DateTimeField()
     status = models.CharField(max_length=10, choices=STATUS, default='pending')
     symptoms = models.TextField(blank=True)
     notes = models.TextField(blank=True)

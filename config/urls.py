@@ -18,16 +18,35 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
+from config.admin import admin_site
+
+# IMPORT ĐÚNG JWT VIEWS
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-path('api/accounts/', include('accounts.urls')),
+    path('admin/', admin_site.urls),
+
+    # UTH - JWT + REGISTER
+    path('api/auth/register/', include('accounts.urls')),
+    path('api/auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
+    # CORE APIS
+    path('api/accounts/', include('accounts.urls')),
     path('api/appointments/', include('appointments.urls')),
     path('api/medical-records/', include('medical_records.urls')),
     path('api/pharmacy/', include('pharmacy.urls')),
     path('api/billing/', include('billing.urls')),
     path('api/reports/', include('reports.urls')),
-    path('o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
-    path('auth/', include('social_django.urls', namespace='social')),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
+    # OAuth2 (sẽ dùng sau)
+    path('o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
+]
+
+# Media files
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
