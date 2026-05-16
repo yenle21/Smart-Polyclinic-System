@@ -101,8 +101,8 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'ecourseapisv2.wsgi.application'
-
+WSGI_APPLICATION = 'polyclinic.wsgi.application'
+ROOT_URLCONF = 'polyclinic.urls'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
