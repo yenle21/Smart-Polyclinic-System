@@ -61,3 +61,17 @@ class Doctor(BaseModel):
     # PROTECT là không cho xóa chuyên khoa, nếu còn bác sĩ thuộc chuyên khoa đó
     def __str__(self):
         return self.user.get_full_name()
+
+class Staff(BaseModel):
+    DEPARTMENT_CHOICES = [
+        ('reception', 'Lễ tân'),
+        ('pharmacy',  'Dược phẩm'),
+        ('lab',       'Xét nghiệm'),
+    ]
+
+    user       = models.OneToOneField(User, on_delete=models.CASCADE, related_name='staff_profile')
+    full_name  = models.CharField(max_length=100)
+    department = models.CharField(max_length=20, choices=DEPARTMENT_CHOICES)
+
+    def __str__(self):
+        return self.full_name
