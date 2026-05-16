@@ -9,8 +9,6 @@ router.register('users', views.UserViewSet, basename='users')
 router.register('doctors', views.DoctorViewSet, basename='doctors')
 router.register('patients', views.PatientViewSet, basename='patients')
 from appointments.urls import router as appointments_router
-router.registry.extend(appointments_router.registry)  # ← gộp vào đây
-
 
 urlpatterns = [
     path('', include(router.urls)),
