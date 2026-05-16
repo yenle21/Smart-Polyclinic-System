@@ -1,6 +1,4 @@
 from django.contrib import admin
-from .models import Schedule, Appointment, Notification, MedicalRecord, TestResult
-
 
 class ScheduleAdmin(admin.ModelAdmin):
     list_display  = ['doctor', 'work_date', 'start_time', 'end_time', 'max_slots', 'available_slots']
@@ -36,8 +34,3 @@ class TestResultAdmin(admin.ModelAdmin):
     ordering      = ['-tested_at']
 
 
-admin.site.register(Schedule,      ScheduleAdmin)
-admin.site.register(Appointment,   AppointmentAdmin)
-admin.site.register(Notification,  NotificationAdmin)
-admin.site.register(MedicalRecord, MedicalRecordAdmin)
-admin.site.register(TestResult,    TestResultAdmin)

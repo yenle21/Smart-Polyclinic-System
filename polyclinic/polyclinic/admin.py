@@ -5,18 +5,20 @@ from django.urls import path
 from django.db.models import Count, Sum
 from django.utils import timezone
 from datetime import timedelta
-
-# Chỉ import app của bạn
 from pharmacy.models import Category, Medicine, Inventory, StockTransaction, Prescription
 from billing.models import Invoice, InvoiceItem
 from dashboard.models import Report
-
+from appointments.models import Schedule, Appointment, Notification, MedicalRecord, TestResult  # ← thêm dòng này
+from accounts.models import User,Doctor,Patient
 from pharmacy.admin import (
     CategoryModelAdmin, MedicineModelAdmin, InventoryModelAdmin,
     StockTransactionModelAdmin, PrescriptionModelAdmin
 )
 from billing.admin import InvoiceModelAdmin
 from dashboard.admin import ReportModelAdmin
+
+from appointments.admin import ScheduleAdmin, AppointmentAdmin, NotificationAdmin, MedicalRecordAdmin, TestResultAdmin
+from accounts.admin import DoctorAdmin,PatientAdmin
 
 
 class PolyclinicAdminSite(admin.AdminSite):
@@ -95,3 +97,13 @@ admin_site.register(Invoice, InvoiceModelAdmin)
 
 # Dashboard/Reports — app của bạn
 admin_site.register(Report, ReportModelAdmin)
+
+admin_site.register(Schedule,      ScheduleAdmin)
+admin_site.register(Appointment,   AppointmentAdmin)
+admin_site.register(Notification,  NotificationAdmin)
+admin_site.register(MedicalRecord, MedicalRecordAdmin)
+admin_site.register(TestResult,    TestResultAdmin)
+
+admin_site.register(Doctor, DoctorAdmin)
+admin_site.register(Patient, PatientAdmin)
+admin_site.register(User)

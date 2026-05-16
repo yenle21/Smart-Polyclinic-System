@@ -11,6 +11,3 @@ class PatientAdmin(admin.ModelAdmin):
     list_display = ['pk','full_name','gender','dob','address', 'active']
 
 # Register your models here.
-admin.site.register(Doctor, DoctorAdmin)
-admin.site.register(Patient, PatientAdmin)
-admin.site.register(User)
