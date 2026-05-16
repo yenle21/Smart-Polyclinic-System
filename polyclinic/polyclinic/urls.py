@@ -37,6 +37,8 @@ schema_view = get_schema_view(
 urlpatterns = [
 
     path('',include('pharmacy.urls')),
+    path('',include('dashboard.urls')),
+    path('',include('billing.urls')),
     path('',include('accounts.urls')),
     path('admin/', admin_site.urls),
     re_path(r'^ckeditor/', include('ckeditor_uploader.urls')),
