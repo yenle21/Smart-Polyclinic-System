@@ -54,8 +54,13 @@ INSTALLED_APPS = [
 
 AUTH_USER_MODEL = 'accounts.User'
 
-OAUTH2_PROVIDER = { 'OAUTH2_BACKEND_CLASS': 'oauth2_provider.oauth2_backends.JSONOAuthLibCore' }
-
+OAUTH2_PROVIDER = {
+    'ALLOWED_GRANT_TYPES': [
+        'password',
+        'refresh_token',
+    ],
+    'ACCESS_TOKEN_EXPIRE_SECONDS': 3600,
+}
 CKEDITOR_UPLOAD_PATH = "images/ckeditors/"
 
 import cloudinary.api
@@ -159,3 +164,5 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+CLIENT_ID = 'Qo0xwsPc00Wama0YySwi81z1jfnjPbUxi6xYc5H1'
+CLIENT_SECRET = 'SIN6g29BplhvAY0IfUin8OVGnOzAuvbfy9WXbO8FWIitHgzlRYYDYtixGFOQXbpil0DwAOhx5PdVfGjbOOlZaZo2GzVW6WzqsR4kXa927OTC3qxqUtmFRjqauSvebbfS'
