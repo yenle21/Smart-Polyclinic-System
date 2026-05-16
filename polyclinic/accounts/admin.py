@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Doctor, Patient
+from .models import Doctor, Patient, User
 
 
 class DoctorAdmin(admin.ModelAdmin):
@@ -13,3 +13,4 @@ class PatientAdmin(admin.ModelAdmin):
 # Register your models here.
 admin.site.register(Doctor, DoctorAdmin)
 admin.site.register(Patient, PatientAdmin)
+admin.site.register(User)
