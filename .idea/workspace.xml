@@ -5,12 +5,29 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="6b1c70b9-6bd4-4a3e-ba1f-53ca55c0f88f" name="Changes" comment="">
+<<<<<<< Updated upstream
       <change afterPath="$PROJECT_DIR$/polyclinic/accounts/serializers.py" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/polyclinic/accounts/urls.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/polyclinic/accounts/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/accounts/admin.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/polyclinic/accounts/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/accounts/models.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/polyclinic/accounts/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/accounts/views.py" afterDir="false" />
+=======
+      <change afterPath="$PROJECT_DIR$/polyclinic/billing/serializers.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/polyclinic/dashboard/serializers.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/polyclinic/pharmacy/serializers.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/polyclinic/polyclinic/admin.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/Smart-Polyclinic-System.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/Smart-Polyclinic-System.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic/billing/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/billing/admin.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic/billing/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/billing/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic/dashboard/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/dashboard/admin.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic/dashboard/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/dashboard/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic/pharmacy/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/pharmacy/admin.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic/pharmacy/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/pharmacy/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic/pharmacy/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/pharmacy/views.py" afterDir="false" />
+>>>>>>> Stashed changes
       <change beforePath="$PROJECT_DIR$/polyclinic/polyclinic/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/polyclinic/urls.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -54,7 +71,8 @@
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;Yenle&quot;
+    &quot;git-widget-placeholder&quot;: &quot;NguyenQNhu&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
   }
 }</component>
   <component name="SharedIndexes">
