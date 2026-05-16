@@ -18,7 +18,7 @@ class MedicineForm(forms.ModelForm):
 
 class InventoryInline(admin.StackedInline):
     model  = Inventory
-    extra  = 0
+    extra  = 1
     fields = ['quantity', 'min_quantity', 'expiry_date']
 
 

@@ -1,13 +1,20 @@
+from django.utils import timezone
 from django.db.models import F
+from datetime import timedelta
 from rest_framework import viewsets, generics, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import Category, Medicine, StockTransaction, Prescription
+
+from .models import Category, Medicine, Inventory, StockTransaction, Prescription
 from . import serializers
 
 
 class CategoryViewSet(viewsets.ViewSet, generics.ListCreateAPIView):
-    queryset = Category.objects.all()
+    """
+    GET  /api/pharmacy/categories/    → danh sách
+    POST /api/pharmacy/categories/    → tạo mới
+    """
+    queryset         = Category.objects.all()
     serializer_class = serializers.CategorySerializer
 
     def get_queryset(self):
@@ -18,78 +25,170 @@ class CategoryViewSet(viewsets.ViewSet, generics.ListCreateAPIView):
         return query
 
 
-class MedicineViewSet(viewsets.ViewSet, generics.ListCreateAPIView):
-    queryset = Medicine.objects.filter(is_active=True).select_related('category')
-    serializer_class = serializers.MedicineListSerializer
+class MedicineViewSet(viewsets.ViewSet,
+                      generics.ListCreateAPIView,
+                      generics.RetrieveUpdateDestroyAPIView):
+    """
+    GET    /api/pharmacy/medicines/           → danh sách + tìm kiếm
+    POST   /api/pharmacy/medicines/           → thêm thuốc
+    GET    /api/pharmacy/medicines/{id}/      → chi tiết
+    PUT    /api/pharmacy/medicines/{id}/      → cập nhật
+    DELETE /api/pharmacy/medicines/{id}/      → ngừng kinh doanh
+    GET    /api/pharmacy/medicines/alerts/    → tất cả cảnh báo kho
+    """
+    queryset        = Medicine.objects.filter(is_active=True).select_related('category', 'inventory')
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['name', 'ingredient']
+    search_fields   = ['name', 'ingredient']
     ordering_fields = ['name', 'price']
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return serializers.MedicineListSerializer
+        return serializers.MedicineSerializer
 
     def get_queryset(self):
         query = self.queryset
-
         q = self.request.query_params.get('q')
         if q:
             query = query.filter(name__icontains=q)
-
         category_id = self.request.query_params.get('category_id')
         if category_id:
             query = query.filter(category_id=category_id)
-
-        low_stock = self.request.query_params.get('low_stock')
-        if low_stock:
-            query = query.filter(
-                inventory__quantity__lte=F('inventory__min_quantity')
-            )
-
         return query
 
-    @action(methods=['get'], url_path='inventory', detail=True)
-    def get_inventory(self, request, pk):
-        """Xem tồn kho và cảnh báo hết hạn / số lượng thấp"""
-        medicine = self.get_object()
-        inv = getattr(medicine, 'inventory', None)
-        if not inv:
-            return Response(
-                {'detail': 'Không có thông tin tồn kho.'},
-                status=status.HTTP_404_NOT_FOUND
-            )
-        return Response(serializers.InventorySerializer(inv).data)
+    def destroy(self, request, *args, **kwargs):
+        medicine            = self.get_object()
+        medicine.is_active  = False
+        medicine.save()
+        return Response(
+            {'message': f'Đã ngừng kinh doanh thuốc {medicine.name}'},
+            status=status.HTTP_200_OK
+        )
+
+    @action(detail=False, methods=['get'], url_path='alerts')
+    def alerts(self, request):
+        """
+        Gộp tất cả cảnh báo vào 1 endpoint
+        GET /api/pharmacy/medicines/alerts/
+        React Native chỉ cần gọi 1 lần là có đủ thông tin
+        """
+        today     = timezone.now().date()
+        threshold = today + timedelta(days=30)
+
+        low_stock = Inventory.objects.filter(
+            quantity__lte=F('min_quantity')
+        ).select_related('medicine')
+
+        expiring = Inventory.objects.filter(
+            expiry_date__lte=threshold,
+            expiry_date__gte=today       # chưa hết hạn nhưng sắp
+        ).select_related('medicine').order_by('expiry_date')
+
+        expired = Inventory.objects.filter(
+            expiry_date__lt=today
+        ).select_related('medicine')
+
+        return Response({
+            'low_stock': {
+                'count': low_stock.count(),
+                'items': [{
+                    'id':           inv.medicine.id,
+                    'name':         inv.medicine.name,
+                    'quantity':     inv.quantity,
+                    'min_quantity': inv.min_quantity,
+                    'shortage':     inv.min_quantity - inv.quantity,
+                } for inv in low_stock]
+            },
+            'expiring_soon': {
+                'count': expiring.count(),
+                'items': [{
+                    'id':             inv.medicine.id,
+                    'name':           inv.medicine.name,
+                    'expiry_date':    inv.expiry_date,
+                    'days_remaining': inv.days_until_expiry,
+                    'quantity':       inv.quantity,
+                } for inv in expiring]
+            },
+            'expired': {
+                'count': expired.count(),
+                'items': [{
+                    'id':          inv.medicine.id,
+                    'name':        inv.medicine.name,
+                    'expiry_date': inv.expiry_date,
+                    'quantity':    inv.quantity,
+                } for inv in expired]
+            }
+        })
 
 
-class StockTransactionViewSet(viewsets.ViewSet, generics.ListCreateAPIView):
-    queryset = StockTransaction.objects.select_related('medicine').order_by('-created_date')
-    serializer_class = serializers.StockTransactionSerializer
+class InventoryViewSet(viewsets.ViewSet,
+                       generics.ListAPIView,
+                       generics.RetrieveUpdateAPIView):
+    """
+    GET /api/pharmacy/inventory/       → danh sách tồn kho
+    GET /api/pharmacy/inventory/{id}/  → chi tiết
+    PUT /api/pharmacy/inventory/{id}/  → cập nhật số lượng, hạn dùng
+    """
+    queryset         = Inventory.objects.select_related('medicine').all()
+    serializer_class = serializers.InventorySerializer
 
     def get_queryset(self):
         query = self.queryset
+        q = self.request.query_params.get('q')
+        if q:
+            query = query.filter(medicine__name__icontains=q)
+        return query
 
-        medicine_id = self.request.query_params.get('medicine_id')
+
+class StockTransactionViewSet(viewsets.ViewSet, generics.ListCreateAPIView):
+    """
+    GET  /api/pharmacy/transactions/   → lịch sử nhập xuất kho
+    POST /api/pharmacy/transactions/   → tạo giao dịch mới
+    """
+    queryset         = StockTransaction.objects.select_related('medicine').order_by('-created_date')
+    serializer_class = serializers.StockTransactionSerializer
+
+    def get_queryset(self):
+        query        = self.queryset
+        medicine_id  = self.request.query_params.get('medicine_id')
+        t            = self.request.query_params.get('type')
         if medicine_id:
             query = query.filter(medicine_id=medicine_id)
-
-        transaction_type = self.request.query_params.get('type')
-        if transaction_type:
-            query = query.filter(transaction_type=transaction_type)
-
+        if t:
+            query = query.filter(transaction_type=t)
         return query
 
     def perform_create(self, serializer):
         transaction = serializer.save()
-        inv = transaction.medicine.inventory
+        inv         = transaction.medicine.inventory
+
         if transaction.transaction_type == 'import':
             inv.quantity += transaction.quantity
+
         elif transaction.transaction_type == 'export':
+            if inv.quantity < transaction.quantity:
+                transaction.delete()
+                from rest_framework.exceptions import ValidationError
+                raise ValidationError(
+                    {'detail': f'Không đủ hàng. Tồn kho hiện tại: {inv.quantity}'}
+                )
             inv.quantity -= transaction.quantity
+
         elif transaction.transaction_type == 'adjust':
             inv.quantity = transaction.quantity
+
         inv.save()
 
 
 class PrescriptionViewSet(viewsets.ViewSet, generics.ListCreateAPIView):
-    # Chỉ GET list + POST, không có retrieve
-    queryset = Prescription.objects.select_related('medical_record').prefetch_related('items__medicine')
-    serializer_class = serializers.PrescriptionSerializer
+    """
+    GET  /api/pharmacy/prescriptions/              → danh sách đơn thuốc
+    POST /api/pharmacy/prescriptions/              → tạo đơn thuốc
+    POST /api/pharmacy/prescriptions/{id}/dispense/ → xác nhận cấp thuốc
+    """
+    queryset = Prescription.objects.select_related(
+        'medical_record'
+    ).prefetch_related('items__medicine')
 
     def get_serializer_class(self):
         if self.action == 'create':
@@ -97,25 +196,22 @@ class PrescriptionViewSet(viewsets.ViewSet, generics.ListCreateAPIView):
         return serializers.PrescriptionSerializer
 
     def get_queryset(self):
-        query = self.queryset
-
+        query        = self.queryset
         is_dispensed = self.request.query_params.get('is_dispensed')
         if is_dispensed is not None:
             query = query.filter(is_dispensed=is_dispensed.lower() == 'true')
-
         return query
 
     @action(methods=['post'], url_path='dispense', detail=True)
-    def dispense(self, request, pk):
+    def dispense(self, request, pk=None):
         prescription = self.get_object()
         if prescription.is_dispensed:
             return Response(
-                {'detail': 'Đơn thuốc này đã được cấp phát.'},
+                {'detail': 'Đơn thuốc này đã được cấp phát rồi.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         prescription.is_dispensed = True
         prescription.save()
         return Response(
-            serializers.PrescriptionSerializer(prescription).data,
-            status=status.HTTP_200_OK
+            serializers.PrescriptionSerializer(prescription).data
         )
