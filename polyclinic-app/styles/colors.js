@@ -1,4 +1,4 @@
-export default {
+const COLORS = {
     primary:     '#1D9E75',
     secondary:   '#185FA5',
     danger:      '#EF4444',
@@ -12,3 +12,5 @@ export default {
     textLight:   '#6B7280',
     border:      '#E5E7EB',
 };
+
+export default COLORS;

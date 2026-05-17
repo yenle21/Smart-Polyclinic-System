@@ -6,6 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="0bb9ad0e-cead-42a9-9746-f263c45c6822" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+<<<<<<< Updated upstream
       <change beforePath="$PROJECT_DIR$/polyclinic-app/.claude/settings.json" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/polyclinic-app/App.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/App.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/polyclinic-app/CLAUDE.md" beforeDir="false" />
@@ -23,6 +24,20 @@
       <change beforePath="$PROJECT_DIR$/polyclinic/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/polyclinic/polyclinic/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/polyclinic/settings.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" />
+=======
+      <change beforePath="$PROJECT_DIR$/polyclinic-app/App.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/App.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic-app/configs/api.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/configs/api.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic-app/navigators/AuthNavigator.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/navigators/AuthNavigator.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic-app/navigators/LabNavigator.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/navigators/LabNavigator.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic-app/navigators/PharmacyNavigator.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/navigators/PharmacyNavigator.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic-app/navigators/ReceptionNavigator.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/navigators/ReceptionNavigator.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic-app/navigators/index.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic-app/screens/pharmacy/AlertScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/screens/pharmacy/AlertScreen.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic-app/screens/pharmacy/InvoiceListScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/screens/pharmacy/InvoiceListScreen.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic-app/screens/pharmacy/MedicineListScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/screens/pharmacy/MedicineListScreen.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic-app/screens/reception/AppointmentListScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/screens/reception/AppointmentListScreen.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic-app/styles/colors.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/styles/colors.js" afterDir="false" />
+>>>>>>> Stashed changes
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
