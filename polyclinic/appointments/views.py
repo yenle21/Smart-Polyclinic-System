@@ -5,131 +5,306 @@ from rest_framework.response import Response
 from .models import Schedule, Appointment, Notification, MedicalRecord
 from .serializers import (
     ScheduleSerializer,
-    AppointmentSerializer, AppointmentCreateSerializer, AppointmentCancelSerializer,
+    AppointmentSerializer,
+    AppointmentCreateSerializer,
+    AppointmentCancelSerializer,
+    AppointmentApproveSerializer,
     NotificationSerializer,
     MedicalRecordSerializer,
 )
+from accounts.models import Specialty, Doctor
+from accounts.serializers import SpecialtySerializer, DoctorSerializer
 
 
-# ─────────────────────────────────────────
-#  SCHEDULE — Bệnh nhân xem lịch bác sĩ
-# ─────────────────────────────────────────
 class ScheduleViewSet(viewsets.ViewSet, generics.ListAPIView):
-    serializer_class   = ScheduleSerializer
+    queryset = Schedule.objects.filter(active=True).select_related('doctor__user', 'doctor__specialty')
+    serializer_class = ScheduleSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        qs = Schedule.objects.filter(active=True).select_related('doctor__user', 'doctor__specialty')
+        query = self.queryset
 
-        # Filter theo bác sĩ: /schedules/?doctor=1
         doctor_id = self.request.query_params.get('doctor')
         if doctor_id:
-            qs = qs.filter(doctor_id=doctor_id)
+            query = query.filter(doctor_id=doctor_id)
 
-        # Filter theo ngày: /schedules/?date=2025-06-01
         date = self.request.query_params.get('date')
         if date:
-            qs = qs.filter(work_date=date)
+            query = query.filter(work_date=date)
 
-        return qs
+        specialty_id = self.request.query_params.get('specialty')
+        if specialty_id:
+            query = query.filter(doctor__specialty_id=specialty_id)
+
+        return query
 
 
-# ─────────────────────────────────────────
-#  APPOINTMENT — Bệnh nhân đặt/xem/huỷ lịch
-# ─────────────────────────────────────────
 class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView):
-    serializer_class   = AppointmentSerializer
+    queryset = Appointment.objects.filter(active=True)
+    serializer_class = AppointmentSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
 
-        # Bệnh nhân chỉ thấy lịch của mình
         if user.role == 'patient':
-            return Appointment.objects.filter(
-                patient=user.patient_profile, active=True
+            return self.queryset.filter(
+                patient=user.patient_profile
             ).select_related('schedule__doctor__user', 'schedule__doctor__specialty')
 
-        # Bác sĩ thấy lịch của mình
         if user.role == 'doctor':
-            return Appointment.objects.filter(
-                schedule__doctor=user.doctor_profile, active=True
+            return self.queryset.filter(
+                schedule__doctor=user.doctor_profile
             ).select_related('patient__user', 'schedule')
 
-        return Appointment.objects.filter(active=True)
+        return self.queryset
 
-    # POST /appointments/ — Đặt lịch mới
-    def create(self, request):
+    # Bước 1: Chọn chuyên khoa
+    @action(methods=['get'], url_path='specialties', detail=False)
+    def specialties(self, request):
+        specialties = Specialty.objects.filter(active=True)
+        return Response(SpecialtySerializer(specialties, many=True).data, status=status.HTTP_200_OK)
+
+    # Bước 2: Chọn bác sĩ theo chuyên khoa
+    @action(methods=['get'], url_path='doctors', detail=False)
+    def doctors(self, request):
+        specialty_id = request.query_params.get('specialty_id')
+        if not specialty_id:
+            return Response({'detail': 'Vui lòng chọn chuyên khoa!'}, status=status.HTTP_400_BAD_REQUEST)
+
+        doctors = Doctor.objects.filter(
+            specialty_id=specialty_id, active=True
+        ).select_related('user', 'specialty')
+        return Response(DoctorSerializer(doctors, many=True).data, status=status.HTTP_200_OK)
+
+    # Bước 3: Chọn lịch trống của bác sĩ
+    @action(methods=['get'], url_path='schedules', detail=False)
+    def schedules(self, request):
+        doctor_id = request.query_params.get('doctor_id')
+        if not doctor_id:
+            return Response({'detail': 'Vui lòng chọn bác sĩ!'}, status=status.HTTP_400_BAD_REQUEST)
+
+        qs = Schedule.objects.filter(
+            doctor_id=doctor_id, active=True
+        ).select_related('doctor__user', 'doctor__specialty')
+
+        date = request.query_params.get('date')
+        if date:
+            qs = qs.filter(work_date=date)
+
+        qs = [s for s in qs if s.available_slots() > 0]
+        return Response(ScheduleSerializer(qs, many=True).data, status=status.HTTP_200_OK)
+
+    # Bước 4: Đặt lịch hẹn
+    @action(methods=['post'], url_path='book', detail=False)
+    def book(self, request):
         if request.user.role != 'patient':
-            return Response({'detail': 'Chỉ bệnh nhân mới đặt lịch được.'}, status=403)
+            return Response({'detail': 'Chỉ bệnh nhân mới được đặt lịch.'}, status=status.HTTP_403_FORBIDDEN)
 
-        serializer = AppointmentCreateSerializer(data=request.data, context={'request': request})
-        serializer.is_valid(raise_exception=True)
-        appointment = serializer.save()
+        s = AppointmentCreateSerializer(data=request.data, context={'request': request})
+        s.is_valid(raise_exception=True)
+        appointment = s.save()
+
+        Notification.objects.create(
+            user=request.user,
+            appointment=appointment,
+            type='reminder',
+            title='Đặt lịch thành công',
+            message=f'Bạn đã đặt lịch khám thành công vào ngày {appointment.schedule.work_date} lúc {appointment.appointment_time}.',
+        )
+
         return Response(AppointmentSerializer(appointment).data, status=status.HTTP_201_CREATED)
 
-    # PATCH /appointments/{id}/cancel/ — Huỷ lịch
-    @action(detail=True, methods=['patch'], url_path='cancel')
+    # Xem chi tiết lịch hẹn
+    @action(methods=['get'], url_path='detail', detail=True)
+    def detail(self, request, pk=None):
+        try:
+            appointment = self.get_queryset().get(pk=pk)
+        except Appointment.DoesNotExist:
+            return Response({'detail': 'Không tìm thấy lịch hẹn.'}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response(AppointmentSerializer(appointment).data, status=status.HTTP_200_OK)
+
+    # Huỷ lịch hẹn
+    @action(methods=['patch'], url_path='cancel', detail=True)
     def cancel(self, request, pk=None):
         try:
             appointment = Appointment.objects.get(pk=pk, patient=request.user.patient_profile)
         except Appointment.DoesNotExist:
-            return Response({'detail': 'Không tìm thấy lịch hẹn.'}, status=404)
+            return Response({'detail': 'Không tìm thấy lịch hẹn.'}, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = AppointmentCancelSerializer(appointment, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(AppointmentSerializer(appointment).data)
+        s = AppointmentCancelSerializer(appointment, data=request.data, partial=True)
+        s.is_valid(raise_exception=True)
+        s.save()
+
+        Notification.objects.create(
+            user=request.user,
+            appointment=appointment,
+            type='cancelled',
+            title='Lịch hẹn đã bị huỷ',
+            message=f'Lịch khám ngày {appointment.schedule.work_date} lúc {appointment.appointment_time} đã được huỷ.',
+        )
+
+        return Response(AppointmentSerializer(appointment).data, status=status.HTTP_200_OK)
+
+    # Đổi lịch hẹn
+    @action(methods=['patch'], url_path='change-schedule', detail=True)
+    def change_schedule(self, request, pk=None):
+        if request.user.role != 'patient':
+            return Response({'detail': 'Chỉ bệnh nhân mới được đổi lịch hẹn.'}, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            appointment = Appointment.objects.get(pk=pk, patient=request.user.patient_profile, active=True)
+        except Appointment.DoesNotExist:
+            return Response({'detail': 'Không tìm thấy lịch hẹn.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if appointment.status not in ['pending', 'confirmed']:
+            return Response({'detail': 'Lịch hẹn đã hoàn thành hoặc đã huỷ, không thể thay đổi.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        new_schedule_id = request.data.get('new_schedule_id')
+        if not new_schedule_id:
+            return Response({'detail': 'Vui lòng chọn lịch khám mới!'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            new_schedule = Schedule.objects.get(pk=new_schedule_id, active=True)
+        except Schedule.DoesNotExist:
+            return Response({'detail': 'Lịch khám mới không tồn tại.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if new_schedule.available_slots() <= 0:
+            return Response({'detail': 'Lịch khám mới đã hết chỗ trống!'}, status=status.HTTP_400_BAD_REQUEST)
+
+        appointment.schedule = new_schedule
+        appointment.status = 'pending'
+        appointment.save()
+
+        Notification.objects.create(
+            user=request.user,
+            appointment=appointment,
+            type='reminder',
+            title='Đổi lịch hẹn thành công',
+            message=f'Lịch khám của bạn đã được đổi sang ngày {new_schedule.work_date} lúc {appointment.appointment_time}.',
+        )
+
+        return Response(AppointmentSerializer(appointment).data, status=status.HTTP_200_OK)
+
+    # Duyệt / từ chối lịch hẹn (reception + doctor)
+    @action(methods=['patch'], url_path='approve', detail=True)
+    def approve(self, request, pk=None):
+        user = request.user
+        is_reception = (
+            user.role == 'staff'
+            and hasattr(user, 'staff_profile')
+            and user.staff_profile.department == 'reception'
+        )
+        is_doctor = (user.role == 'doctor')
+
+        if not (is_reception or is_doctor):
+            return Response({'detail': 'Bạn không có quyền thực hiện thao tác này.'}, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            appointment = self.get_queryset().get(pk=pk)
+        except Appointment.DoesNotExist:
+            return Response({'detail': 'Không tìm thấy lịch hẹn.'}, status=status.HTTP_404_NOT_FOUND)
+
+        s = AppointmentApproveSerializer(appointment, data=request.data, partial=True)
+        s.is_valid(raise_exception=True)
+        s.save()
+
+        # Thông báo cho bệnh nhân sau khi duyệt
+        new_status = request.data.get('status')
+        if new_status == 'confirmed':
+            Notification.objects.create(
+                user=appointment.patient.user,
+                appointment=appointment,
+                type='reminder',
+                title='Lịch hẹn đã được xác nhận',
+                message=f'Lịch khám ngày {appointment.schedule.work_date} lúc {appointment.appointment_time} đã được xác nhận.',
+            )
+        elif new_status == 'cancelled':
+            Notification.objects.create(
+                user=appointment.patient.user,
+                appointment=appointment,
+                type='cancelled',
+                title='Lịch hẹn bị từ chối',
+                message=f'Lịch khám ngày {appointment.schedule.work_date} lúc {appointment.appointment_time} đã bị từ chối.',
+            )
+
+        return Response(AppointmentSerializer(appointment).data, status=status.HTTP_200_OK)
 
 
-# ─────────────────────────────────────────
-#  NOTIFICATION — Thông báo của bệnh nhân
-# ─────────────────────────────────────────
 class NotificationViewSet(viewsets.ViewSet, generics.ListAPIView):
-    serializer_class   = NotificationSerializer
+    queryset = Notification.objects.filter(active=True)
+    serializer_class = NotificationSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Notification.objects.filter(user=self.request.user, active=True)
+        return self.queryset.filter(user=self.request.user)
 
-    # PATCH /notifications/{id}/read/ — Đánh dấu đã đọc
-    @action(detail=True, methods=['patch'], url_path='read')
+    @action(methods=['patch'], url_path='read', detail=True)
     def mark_read(self, request, pk=None):
         try:
-            notification = Notification.objects.get(pk=pk, user=request.user)
+            notification = self.get_queryset().get(pk=pk)
         except Notification.DoesNotExist:
-            return Response({'detail': 'Không tìm thấy thông báo.'}, status=404)
+            return Response({'detail': 'Không tìm thấy thông báo.'}, status=status.HTTP_404_NOT_FOUND)
 
         notification.is_read = True
         notification.save()
-        return Response(NotificationSerializer(notification).data)
+        return Response(NotificationSerializer(notification).data, status=status.HTTP_200_OK)
 
 
-# ─────────────────────────────────────────
-#  MEDICAL RECORD — Lịch sử khám bệnh
-# ─────────────────────────────────────────
 class MedicalRecordViewSet(viewsets.ViewSet, generics.ListAPIView):
-    serializer_class   = MedicalRecordSerializer
+    queryset = MedicalRecord.objects.all()
+    serializer_class = MedicalRecordSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
+
         if user.role == 'patient':
-            return MedicalRecord.objects.filter(
+            return self.queryset.filter(
                 appointment__patient=user.patient_profile
             ).select_related('appointment__schedule__doctor__user')
 
         if user.role == 'doctor':
-            return MedicalRecord.objects.filter(
+            return self.queryset.filter(
                 appointment__schedule__doctor=user.doctor_profile
             )
 
-        return MedicalRecord.objects.all()
+        if user.role == 'staff' and hasattr(user, 'staff_profile') and user.staff_profile.department == 'lab':
+            return self.queryset.select_related('appointment__patient__user')
 
-    # GET /medical-records/{id}/ — Xem chi tiết 1 hồ sơ
-    def retrieve(self, request, pk=None):
+        return MedicalRecord.objects.none()
+
+    # Cập nhật hồ sơ / kết quả xét nghiệm
+    @action(methods=['patch'], url_path='update-result', detail=True)
+    def update_result(self, request, pk=None):
+        user = request.user
+        is_doctor = (user.role == 'doctor')
+        is_lab_staff = (
+            user.role == 'staff'
+            and hasattr(user, 'staff_profile')
+            and user.staff_profile.department == 'lab'
+        )
+
+        if not (is_doctor or is_lab_staff):
+            return Response({'detail': 'Chỉ bác sĩ hoặc nhân viên xét nghiệm mới được cập nhật hồ sơ.'}, status=status.HTTP_403_FORBIDDEN)
+
         try:
             record = self.get_queryset().get(pk=pk)
         except MedicalRecord.DoesNotExist:
-            return Response({'detail': 'Không tìm thấy hồ sơ.'}, status=404)
-        return Response(MedicalRecordSerializer(record).data)
+            return Response({'detail': 'Không tìm thấy hồ sơ.'}, status=status.HTTP_404_NOT_FOUND)
+
+        s = MedicalRecordSerializer(record, data=request.data, partial=True)
+        s.is_valid(raise_exception=True)
+        s.save()
+        return Response(MedicalRecordSerializer(record).data, status=status.HTTP_200_OK)
+
+    # Xem chi tiết hồ sơ
+    @action(methods=['get'], url_path='detail', detail=True)
+    def detail(self, request, pk=None):
+        try:
+            record = self.get_queryset().get(pk=pk)
+        except MedicalRecord.DoesNotExist:
+            return Response({'detail': 'Không tìm thấy hồ sơ.'}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response(MedicalRecordSerializer(record).data, status=status.HTTP_200_OK)

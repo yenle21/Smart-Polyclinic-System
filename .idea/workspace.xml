@@ -4,89 +4,54 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="6b1c70b9-6bd4-4a3e-ba1f-53ca55c0f88f" name="Changes" comment="">
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-      <change afterPath="$PROJECT_DIR$/polyclinic/accounts/serializers.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/polyclinic/accounts/urls.py" afterDir="false" />
-=======
-      <change afterPath="$PROJECT_DIR$/polyclinic/appointments/serializers.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/polyclinic/appointments/urls.py" afterDir="false" />
->>>>>>> Stashed changes
+    <list default="true" id="86dc4111-7c79-4fb6-a114-70778ac753c5" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/Smart-Polyclinic-System.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/Smart-Polyclinic-System.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic/accounts/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/accounts/admin.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/polyclinic/accounts/serializers.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/accounts/serializers.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/polyclinic/accounts/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/accounts/urls.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/polyclinic/accounts/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/accounts/views.py" afterDir="false" />
-<<<<<<< Updated upstream
-=======
-      <change afterPath="$PROJECT_DIR$/polyclinic/billing/serializers.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/polyclinic/dashboard/serializers.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/polyclinic/pharmacy/serializers.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/polyclinic/polyclinic/admin.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/Smart-Polyclinic-System.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/Smart-Polyclinic-System.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic/billing/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/billing/admin.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic/billing/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/billing/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic/dashboard/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/dashboard/admin.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic/dashboard/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/dashboard/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic/pharmacy/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/pharmacy/admin.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic/pharmacy/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/pharmacy/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic/pharmacy/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/pharmacy/views.py" afterDir="false" />
->>>>>>> Stashed changes
-      <change beforePath="$PROJECT_DIR$/polyclinic/polyclinic/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/polyclinic/urls.py" afterDir="false" />
-=======
-      <change beforePath="$PROJECT_DIR$/polyclinic/appointments/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/appointments/admin.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic/appointments/serializers.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/appointments/serializers.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/polyclinic/appointments/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/appointments/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic/polyclinic/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/polyclinic/settings.py" afterDir="false" />
->>>>>>> Stashed changes
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="FileTemplateManagerImpl">
-    <option name="RECENT_TEMPLATES">
-      <list>
-        <option value="Python Script" />
-      </list>
-    </option>
-  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory">{
-  &quot;lastFilter&quot;: {
-    &quot;state&quot;: &quot;OPEN&quot;,
-    &quot;assignee&quot;: &quot;yenle21&quot;
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "yenle21"
   }
-}</component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/yenle21/Smart-Polyclinic-System.git&quot;,
-    &quot;accountId&quot;: &quot;62973d97-84cd-4dd4-a3e6-c3db14868980&quot;
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/yenle21/Smart-Polyclinic-System.git",
+    "accountId": "62973d97-84cd-4dd4-a3e6-c3db14868980"
   }
-}</component>
-  <component name="ProjectColorInfo">{
-  &quot;associatedIndex&quot;: 7
-}</component>
-  <component name="ProjectId" id="3DkKY6R9AIBcF5L3nImlAvQbrTA" />
+}]]></component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 2
+}]]></component>
+  <component name="ProjectId" id="3DpqohVjdtMeq0fozbXg2x74Lox" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;NguyenQNhu&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "Yenle"
   }
-}</component>
+}]]></component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -96,11 +61,11 @@
   </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="6b1c70b9-6bd4-4a3e-ba1f-53ca55c0f88f" name="Changes" comment="" />
-      <created>1778820671286</created>
+      <changelist id="86dc4111-7c79-4fb6-a114-70778ac753c5" name="Changes" comment="" />
+      <created>1778989535362</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1778820671286</updated>
+      <updated>1778989535362</updated>
     </task>
     <servers />
   </component>

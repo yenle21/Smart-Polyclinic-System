@@ -14,7 +14,15 @@ class UserViewSet(viewsets.ViewSet, generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     parser_classes = [parsers.MultiPartParser]
-
+    # đăng kí tài khoản
+    @action(methods=['post'], url_path='register', detail=False,
+            permission_classes=[permissions.AllowAny])
+    def register(self, request):
+        s = RegisterSerializer(data=request.data)
+        s.is_valid(raise_exception=True)
+        s.save()
+        return Response(s.data, status=status.HTTP_201_CREATED)
+    # xem và cập nhật thông tin of user đang đăng nhập
     @action(methods=['get', 'patch'], url_path='current-user', detail=False,
             permission_classes=[permissions.IsAuthenticated])
     def current_user(self, request):
@@ -32,26 +40,16 @@ class DoctorViewSet(viewsets.ViewSet, generics.ListAPIView):
 
 
 class PatientViewSet(viewsets.ViewSet, generics.ListAPIView):
-    queryset = Patient.objects.filter(active=True)
-    serializer_class = PatientSerializer
-
-
-class PatientsMe(APIView):  # ← đổi tên
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
+    queryset = Patient.objects.all()
+    serializer_class = PatientProfileSerializer
+    parser_classes = [parsers.MultiPartParser]
+    # xem và cập nhật hồ sơ bệnh nhân đang đăng nhập
+    @action(methods=['get', 'patch'], url_path='profile', detail=False,
+            permission_classes=[permissions.IsAuthenticated])
+    def profile(self, request):
         patient = request.user.patient_profile
-        serializer = PatientProfileSerializer(patient)
-        return Response(serializer.data)
-
-    def patch(self, request):
-        patient = request.user.patient_profile
-        serializer = PatientUpdateSerializer(patient, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(PatientProfileSerializer(patient).data)
-
-
-class RegisterView(generics.CreateAPIView):
-    queryset = User.objects.all()
-    serializer_class = RegisterSerializer
+        if request.method == 'PATCH':
+            s = PatientUpdateSerializer(patient, data=request.data, partial=True)
+            s.is_valid(raise_exception=True)
+            patient = s.save()
+        return Response(PatientProfileSerializer(patient).data, status=status.HTTP_200_OK)

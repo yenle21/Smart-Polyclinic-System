@@ -1,28 +1,29 @@
 from rest_framework import serializers
 
-from .models import Patient, User, Doctor, Staff
+from .models import Patient, User, Doctor, Staff, Specialty
 
 
+# Lấy danh sách user
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'phone', 'role', 'avatar']
-
+# lấy danh sách bệnh nhân
 class PatientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Patient
         fields = '__all__'
-
+# lấy danh sách bác sĩ
 class DoctorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Doctor
         fields = '__all__'
-
+# lấy danh sách nhân viên
 class StaffSerializer(serializers.ModelSerializer):
     class Meta:
         model = Staff
         fields = '__all__'
-
+# bệnh nhân đăng kí tài khoản
 class RegisterSerializer(serializers.ModelSerializer):
     password         = serializers.CharField(write_only=True)
     password_confirm = serializers.CharField(write_only=True)
@@ -31,12 +32,12 @@ class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model  = User
         fields = ['username', 'password', 'password_confirm', 'email', 'phone']
-
+    # kiểm tra username
     def validate_username(self, value):
         if not value.isalnum():
             raise serializers.ValidationError('Username chỉ được chứa chữ và số!')
         return value
-
+    # kiểm tra password
     def validate_password(self, value):
         if len(value) < 8:
             raise serializers.ValidationError('Mật khẩu phải ít nhất 8 ký tự!')
@@ -45,36 +46,37 @@ class RegisterSerializer(serializers.ModelSerializer):
         if not any(char.isupper() for char in value):
             raise serializers.ValidationError('Mật khẩu phải có ít nhất 1 chữ hoa!')
         return value
-
+    # kiểm tra email
     def validate_email(self, value):
         if User.objects.filter(email=value).exists():
             raise serializers.ValidationError('Email đã được sử dụng!')
         return value
-
+    # kiểm tra số điện thoại
     def validate_phone(self, value):
         if not value.isdigit():
             raise serializers.ValidationError('Số điện thoại chỉ được chứa số!')
         if len(value) != 10:
             raise serializers.ValidationError('Số điện thoại phải có 10 chữ số!')
         return value
-
+    # kiểm tra mật khẩu với xác nhận mk
     def validate(self, data):
         if data['password'] != data['password_confirm']:
             raise serializers.ValidationError({'password': 'Mật khẩu không khớp!'})
         return data
-
+    # tạo user
     def create(self, validated_data):
         validated_data.pop('password_confirm')
         user = User.objects.create_user(
             **validated_data,
             role='patient'
         )
+        # tự động tạo bệnh nhân khi user đăng kí
         Patient.objects.create(
             user=user,
             full_name=f"{user.first_name} {user.last_name}".strip() or user.username
         )
         return user
-
+# Lấy thông tin hồ sơ bệnh nhân
 class PatientProfileSerializer(serializers.ModelSerializer):
     # Lồng thông tin User vào để hiển thị luôn
     username = serializers.CharField(source='user.username', read_only=True)
@@ -92,7 +94,7 @@ class PatientProfileSerializer(serializers.ModelSerializer):
             'created_date', 'updated_date'
         ]
 
-
+# cập nhật hồ sơ cá nhân
 class PatientUpdateSerializer(serializers.ModelSerializer):
     # Các field của User (optional, không bắt buộc gửi)
     phone  = serializers.CharField(source='user.phone', required=False, allow_null=True)
@@ -117,10 +119,12 @@ class PatientUpdateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Số điện thoại phải có 10 chữ số!')
         return value
 
-    def update(self, instance, validated_data):
+    def update(self, patient, validated_data):
         # Tách user data ra update riêng
         user_data = validated_data.pop('user', {})
-        user = instance.user
+        #lấy và xoá key user ra khỏi dict.
+        #Nếu không có key user thì trả về {} thay vì báo lỗi
+        user = patient.user
 
         for attr, value in user_data.items():
             setattr(user, attr, value)
@@ -128,7 +132,12 @@ class PatientUpdateSerializer(serializers.ModelSerializer):
 
         # Update Patient fields
         for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
+            setattr(patient, attr, value)
+        patient.save()
 
-        return instance
+        return patient
+
+class SpecialtySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Specialty
+        fields = ['id', 'name', 'description']
