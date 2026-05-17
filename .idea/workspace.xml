@@ -4,9 +4,25 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="86dc4111-7c79-4fb6-a114-70778ac753c5" name="Changes" comment="">
+    <list default="true" id="0bb9ad0e-cead-42a9-9746-f263c45c6822" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic-app/.claude/settings.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic-app/App.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/App.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic-app/CLAUDE.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic-app/configs/api.js" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/polyclinic-app/configs/constants.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/configs/constants.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic-app/navigators/AuthNavigator.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/navigators/AuthNavigator.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic-app/navigators/index.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic-app/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic-app/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic-app/reducers/MyUserReducer.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/reducers/MyUserReducer.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic-app/screens/shared/LoginScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/screens/shared/LoginScreen.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic-app/screens/shared/RegisterScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/screens/shared/RegisterScreen.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic/.idea/polyclinic.iml" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/.idea/polyclinic.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic/polyclinic/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/polyclinic/settings.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -16,22 +32,22 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory">{
-  &quot;lastFilter&quot;: {
-    &quot;state&quot;: &quot;OPEN&quot;,
-    &quot;assignee&quot;: &quot;yenle21&quot;
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "yenle21"
   }
-}</component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/yenle21/Smart-Polyclinic-System.git&quot;,
-    &quot;accountId&quot;: &quot;62973d97-84cd-4dd4-a3e6-c3db14868980&quot;
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/yenle21/Smart-Polyclinic-System.git",
+    "accountId": "62973d97-84cd-4dd4-a3e6-c3db14868980"
   }
-}</component>
-  <component name="ProjectColorInfo">{
-  &quot;associatedIndex&quot;: 2
-}</component>
-  <component name="ProjectId" id="3DpqohVjdtMeq0fozbXg2x74Lox" />
+}]]></component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 2
+}]]></component>
+  <component name="ProjectId" id="3DqYC3fOzNkpdGiT6zlfLy1dN2D" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -42,7 +58,7 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "NguyenQNhu"
+    "git-widget-placeholder": "Yenle"
   }
 }]]></component>
   <component name="SharedIndexes">
@@ -54,23 +70,12 @@
   </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="86dc4111-7c79-4fb6-a114-70778ac753c5" name="Changes" comment="" />
-      <created>1778989535362</created>
+      <changelist id="0bb9ad0e-cead-42a9-9746-f263c45c6822" name="Changes" comment="" />
+      <created>1779010935974</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1778989535362</updated>
+      <updated>1779010935974</updated>
     </task>
     <servers />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/polyclinic/accounts/models.py</url>
-          <line>8</line>
-          <option name="timeStamp" value="1" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
   </component>
 </project>

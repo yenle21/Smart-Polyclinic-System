@@ -1,12 +1,12 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL = 'http://10.17.65.80:8000/';
+const BASE_URL = 'http://10.17.65.92:8000/';
 
 export const endpoints = {
     // Auth
     'login':        '/o/token/',
-    'register':     '/users/',
+    'register':     '/users/register/',
     'current-user': '/users/current-user/',
 
     // Pharmacy
