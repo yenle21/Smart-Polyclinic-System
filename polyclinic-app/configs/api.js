@@ -1,32 +1,47 @@
 import axios from 'axios';
-import { BASE_URL, TIMEOUT } from './constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const api = axios.create({
+const BASE_URL = 'http://10.17.65.80:8000/';
+
+export const endpoints = {
+    // Auth
+    'login':        '/o/token/',
+    'register':     '/users/',
+    'current-user': '/users/current-user/',
+
+    // Pharmacy
+    'categories':   '/categories/',
+    'medicines':    '/medicines/',
+    'medicine-detail': (id) => `/medicines/${id}/`,
+    'alerts':       '/medicines/alerts/',
+    'stock-transactions': '/stock-transactions/',
+    'prescriptions':'/prescriptions/',
+    'dispense':     (id) => `/prescriptions/${id}/dispense/`,
+
+    // Billing
+    'invoices':     '/invoices/',
+    'invoice-detail': (id) => `/invoices/${id}/`,
+    'pay-invoice':  (id) => `/invoices/${id}/pay/`,
+
+    // Dashboard
+    'dashboard-overview': '/dashboard/overview/',
+    'dashboard-revenue':  '/dashboard/revenue/',
+    'dashboard-medicines':'/dashboard/medicines/',
+};
+
+const Apis = axios.create({
     baseURL: BASE_URL,
-    timeout: TIMEOUT,
-    headers: { 'Content-Type': 'application/json' },
+    timeout: 10000,
 });
 
 // Tự động gắn token
-api.interceptors.request.use(async (config) => {
-    const token = '1HQP0KQlfbJINwgFW1T8yfcLjUui5y';
-    if (token) config.headers.Authorization = `Bearer ${token}`;
-    return config;
-});
+export const authApis = async () => {
+    const token = await AsyncStorage.getItem('access_token');
+    return axios.create({
+        baseURL: BASE_URL,
+        timeout: 10000,
+        headers: { Authorization: `Bearer ${token}` },
+    });
+};
 
-// Xử lý lỗi chung
-api.interceptors.response.use(
-    (res) => res.data,
-    (err) => {
-        const msg = err.response?.data?.detail
-                 || err.response?.data?.message
-                 || 'Có lỗi xảy ra';
-        if (err.response?.status === 401) {
-            AsyncStorage.removeItem('access_token');
-        }
-        return Promise.reject(msg);
-    }
-);
-
-export default api;
+export default Apis;
