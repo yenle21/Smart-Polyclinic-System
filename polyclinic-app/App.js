@@ -1,20 +1,13 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { PaperProvider } from 'react-native-paper';
+import { AuthProvider } from './src/context/AuthContext';
+import AppNavigator from './src/navigation/AppNavigator';
 
 export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text>Du ma may</Text>
-      <StatusBar style="auto" />
-    </View>
-  );
+    return (
+        <PaperProvider>
+            <AuthProvider>
+                <AppNavigator />
+            </AuthProvider>
+        </PaperProvider>
+    );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
