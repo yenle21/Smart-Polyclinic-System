@@ -6,47 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="86dc4111-7c79-4fb6-a114-70778ac753c5" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/api/appointmentApi.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/api/authApi.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/api/axiosClient.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/api/billingApi.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/api/dashboardApi.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/api/pharmacyApi.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/components/ConfirmDialog.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/components/EmptyState.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/components/ErrorMessage.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/components/LoadingSpinner.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/components/StatusBadge.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/constants/colors.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/constants/config.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/context/AuthContext.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/navigation/AppNavigator.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/navigation/AuthNavigator.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/navigation/MainNavigator.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/screens/appointments/AppointmentDetailScreen.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/screens/appointments/AppointmentListScreen.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/screens/appointments/BookingScreen.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/screens/appointments/DoctorListScreen.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/screens/appointments/NotificationScreen.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/screens/appointments/SpecialtyListScreen.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/screens/auth/LoginScreen.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/screens/auth/ProfileScreen.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/screens/auth/RegisterScreen.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/screens/billing/InvoiceDetailScreen.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/screens/billing/InvoiceListScreen.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/screens/billing/PaymentScreen.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/screens/dashboard/DashboardScreen.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/screens/dashboard/InventoryReportScreen.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/screens/dashboard/RevenueReportScreen.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/screens/pharmacy/AlertScreen.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/screens/pharmacy/CategoryListScreen.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/screens/pharmacy/MedicineDetailScreen.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/screens/pharmacy/MedicineFormScreen.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/screens/pharmacy/MedicineListScreen.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/screens/pharmacy/PrescriptionDetailScreen.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/screens/pharmacy/StockTransactionScreen.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/utils/formatters.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/src/utils/storage.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic-app/configs/constants.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/configs/constants.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
