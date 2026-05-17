@@ -14,6 +14,7 @@ import ProfileScreen           from '../screens/auth/ProfileScreen';
 import NotificationScreen      from '../screens/appointments/NotificationScreen';
 
 // Screens Người B
+import CategoryListScreen from '../screens/pharmacy/CategoryListScreen';
 import MedicineListScreen   from '../screens/pharmacy/MedicineListScreen';
 import MedicineDetailScreen from '../screens/pharmacy/MedicineDetailScreen';
 import MedicineFormScreen   from '../screens/pharmacy/MedicineFormScreen';
@@ -32,7 +33,6 @@ const headerOptions = {
     headerTitleAlign: 'center',
 };
 
-// Stack cho từng tab
 function AppointmentStack() {
     return (
         <Stack.Navigator screenOptions={headerOptions}>
@@ -48,6 +48,7 @@ function AppointmentStack() {
 function PharmacyStack() {
     return (
         <Stack.Navigator screenOptions={headerOptions}>
+            <Stack.Screen name="CategoryList"   component={CategoryListScreen}   options={{ title: 'Danh mục thuốc' }} />
             <Stack.Screen name="MedicineList"   component={MedicineListScreen}   options={{ title: 'Danh sách thuốc' }} />
             <Stack.Screen name="MedicineDetail" component={MedicineDetailScreen} options={{ title: 'Chi tiết thuốc' }} />
             <Stack.Screen name="MedicineForm"   component={MedicineFormScreen}   options={{ title: 'Thêm / Sửa thuốc' }} />
@@ -67,12 +68,13 @@ function BillingStack() {
 }
 
 export default function MainNavigator() {
+    console.log('✅ MainNavigator rendered');
     return (
         <Tab.Navigator
             screenOptions={{
-                headerShown:          false,
+                headerShown:           false,
                 tabBarActiveTintColor: COLORS.primary,
-                tabBarStyle:          { paddingBottom: 5, height: 60 },
+                tabBarStyle:           { paddingBottom: 5, height: 60 },
             }}
         >
             <Tab.Screen

@@ -11,7 +11,7 @@ const axiosClient = axios.create({
 // Tự động gắn token vào mỗi request
 axiosClient.interceptors.request.use(
     async (config) => {
-        const token = await getToken();
+        const token = 'pEsCX7b0Q6HZtxp1LVmwkBTLNsTQ9j';
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }

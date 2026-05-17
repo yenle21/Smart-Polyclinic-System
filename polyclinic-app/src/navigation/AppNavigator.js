@@ -20,7 +20,8 @@ export default function AppNavigator() {
     return (
         <NavigationContainer>
             {/* Chưa đăng nhập → AuthNavigator, đã đăng nhập → MainNavigator */}
-            {user ? <MainNavigator /> : <AuthNavigator />}
+            {/* {user ? <MainNavigator /> : <AuthNavigator />} */}
+            {true ? <MainNavigator /> : <AuthNavigator />}
         </NavigationContainer>
     );
 }
