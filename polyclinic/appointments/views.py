@@ -57,7 +57,11 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView):
                 schedule__doctor=user.doctor_profile
             ).select_related('patient__user', 'schedule')
 
-        return self.queryset
+        # Nếu là nhân viên phòng khám (staff) hoặc admin, cho phép quản lý và xem tất cả lịch hẹn
+        if user.role == 'staff' or user.is_superuser:
+            return self.queryset
+
+        return self.queryset.none()
 
     # Bước 1: Chọn chuyên khoa
     @action(methods=['get'], url_path='specialties', detail=False)
@@ -159,7 +163,8 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView):
             return Response({'detail': 'Không tìm thấy lịch hẹn.'}, status=status.HTTP_404_NOT_FOUND)
 
         if appointment.status not in ['pending', 'confirmed']:
-            return Response({'detail': 'Lịch hẹn đã hoàn thành hoặc đã huỷ, không thể thay đổi.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'Lịch hẹn đã hoàn thành hoặc đã huỷ, không thể thay đổi.'},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         new_schedule_id = request.data.get('new_schedule_id')
         if not new_schedule_id:
@@ -187,18 +192,16 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView):
 
         return Response(AppointmentSerializer(appointment).data, status=status.HTTP_200_OK)
 
-    # Duyệt / từ chối lịch hẹn (reception + doctor)
+    # Duyệt / từ chối lịch hẹn (staff + doctor)
     @action(methods=['patch'], url_path='approve', detail=True)
     def approve(self, request, pk=None):
         user = request.user
-        is_reception = (
-            user.role == 'staff'
-            and hasattr(user, 'staff_profile')
-            and user.staff_profile.department == 'reception'
-        )
+
+        # Chỉ cần kiểm tra xem role là staff hoặc doctor
+        is_clinic_staff = (user.role == 'staff')
         is_doctor = (user.role == 'doctor')
 
-        if not (is_reception or is_doctor):
+        if not (is_clinic_staff or is_doctor or user.is_superuser):
             return Response({'detail': 'Bạn không có quyền thực hiện thao tác này.'}, status=status.HTTP_403_FORBIDDEN)
 
         try:
@@ -270,7 +273,8 @@ class MedicalRecordViewSet(viewsets.ViewSet, generics.ListAPIView):
                 appointment__schedule__doctor=user.doctor_profile
             )
 
-        if user.role == 'staff' and hasattr(user, 'staff_profile') and user.staff_profile.department == 'lab':
+        # Toàn bộ nhân viên phòng khám (staff) được xem danh sách hồ sơ bệnh án để phục vụ phát thuốc/lấy bệnh phẩm
+        if user.role == 'staff':
             return self.queryset.select_related('appointment__patient__user')
 
         return MedicalRecord.objects.none()
@@ -280,14 +284,11 @@ class MedicalRecordViewSet(viewsets.ViewSet, generics.ListAPIView):
     def update_result(self, request, pk=None):
         user = request.user
         is_doctor = (user.role == 'doctor')
-        is_lab_staff = (
-            user.role == 'staff'
-            and hasattr(user, 'staff_profile')
-            and user.staff_profile.department == 'lab'
-        )
+        is_clinic_staff = (user.role == 'staff')
 
-        if not (is_doctor or is_lab_staff):
-            return Response({'detail': 'Chỉ bác sĩ hoặc nhân viên xét nghiệm mới được cập nhật hồ sơ.'}, status=status.HTTP_403_FORBIDDEN)
+        if not (is_doctor or is_clinic_staff):
+            return Response({'detail': 'Chỉ bác sĩ hoặc nhân viên phòng khám mới được cập nhật hồ sơ.'},
+                            status=status.HTTP_403_FORBIDDEN)
 
         try:
             record = self.get_queryset().get(pk=pk)

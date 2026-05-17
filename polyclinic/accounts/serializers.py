@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Patient, User, Doctor, Staff, Specialty
+from .models import Patient, User, Doctor, Specialty
 
 
 # Lấy danh sách user
@@ -17,11 +17,6 @@ class PatientSerializer(serializers.ModelSerializer):
 class DoctorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Doctor
-        fields = '__all__'
-# lấy danh sách nhân viên
-class StaffSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Staff
         fields = '__all__'
 # bệnh nhân đăng kí tài khoản
 class RegisterSerializer(serializers.ModelSerializer):

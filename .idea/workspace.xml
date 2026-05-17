@@ -6,23 +6,10 @@
   <component name="ChangeListManager">
     <list default="true" id="0bb9ad0e-cead-42a9-9746-f263c45c6822" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/.claude/settings.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/App.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/App.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/CLAUDE.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/configs/api.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/configs/constants.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/configs/constants.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/navigators/AuthNavigator.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/navigators/AuthNavigator.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/navigators/index.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/reducers/MyUserReducer.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/reducers/MyUserReducer.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/screens/shared/LoginScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/screens/shared/LoginScreen.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/screens/shared/RegisterScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/screens/shared/RegisterScreen.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic/.idea/polyclinic.iml" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/.idea/polyclinic.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic/polyclinic/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/polyclinic/settings.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic/accounts/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/accounts/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic/accounts/serializers.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/accounts/serializers.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic/appointments/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/appointments/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic/appointments/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/appointments/views.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -77,5 +64,15 @@
       <updated>1779010935974</updated>
     </task>
     <servers />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/polyclinic/appointments/views.py</url>
+          <option name="timeStamp" value="2" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>
