@@ -18,7 +18,7 @@ export default function App() {
     const [user, dispatch] = useReducer(MyUserReducer, null);
 
     const getNavigator = () => {
-        return <StaffNavigator />;
+        
         
         if (!user) return <AuthNavigator />;
 

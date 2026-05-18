@@ -34,6 +34,15 @@ class InvoiceViewSet(viewsets.ViewSet,
         patient_id = self.request.query_params.get('patient_id')
         date_from  = self.request.query_params.get('date_from')
         date_to    = self.request.query_params.get('date_to')
+        user = self.request.user
+
+        # Phân quyền theo role
+        if user.role == 'patient':
+            query = query.filter(patient=user.patient_profile)
+        elif user.role == 'staff' or user.role == 'admin':
+            pass  # xem tất cả
+        else:
+            query = query.none()  # doctor không xem hóa đơn
 
         if s:
             query = query.filter(status=s)

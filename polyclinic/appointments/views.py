@@ -59,7 +59,7 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView):
 
         # Nếu là nhân viên phòng khám (staff) hoặc admin, cho phép quản lý và xem tất cả lịch hẹn
         if user.role == 'staff' or user.is_superuser:
-            return self.queryset
+            return Appointment.objects.all()
 
         return self.queryset.none()
 
