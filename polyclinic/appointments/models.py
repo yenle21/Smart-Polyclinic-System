@@ -1,4 +1,4 @@
-# appointments/models.py
+
 from django.db import models
 from cloudinary.models import CloudinaryField
 from accounts.models import Doctor, Patient, BaseModel
