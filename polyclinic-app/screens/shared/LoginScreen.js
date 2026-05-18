@@ -10,11 +10,10 @@ import loginstyles from "../../styles/loginstyles";
 
 const ROLES = [
     { key: 'doctor',        label: '🩺  Bác sĩ'   },
-    { key: 'pharmacy',      label: '💊  Dược sĩ'   },
+    { key: 'staff',      label: '💊  Nhân viên y tế'   },
     { key: 'admin',         label: '🛡️  Admin'     },
     { key: 'patient',       label: '🧑‍⚕️  Bệnh nhân' },
-    { key: 'receptionist',  label: '🗂️  Lễ tân'    },
-    { key: 'lab',           label: '🔬  Lab'       },
+   
 ];
 
 const Login = () => {

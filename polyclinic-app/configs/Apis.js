@@ -36,7 +36,7 @@ const Apis = axios.create({
 
 // Tự động gắn token
 export const authApis = async () => {
-    const token = await AsyncStorage.getItem('access_token');
+    const token = '1HQP0KQlfbJINwgFW1T8yfcLjUui5y';
     return axios.create({
         baseURL: BASE_URL,
         timeout: 10000,

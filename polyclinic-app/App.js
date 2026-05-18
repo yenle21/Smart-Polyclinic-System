@@ -6,28 +6,39 @@ import { theme } from './components/shared/theme';
 import MyUserReducer from './reducers/MyUserReducer';
 import { MyUserContext } from './configs/Contexts';
 
-import AuthNavigator from './navigators/AuthNavigator';
-import PatientNavigator from './navigators/PatientNavigator'; // Đảm bảo dòng import này chính xác
+import AuthNavigator      from './navigators/AuthNavigator';
+import PatientNavigator   from './navigators/PatientNavigator';
+import DoctorNavigator    from './navigators/DoctorNavigator';
+
+import StaffNavigator from './navigators/StaffNavigator';
+
+import AdminNavigator     from './navigators/AdminNavigator';
 
 export default function App() {
     const [user, dispatch] = useReducer(MyUserReducer, null);
+
+    const getNavigator = () => {
+        return <StaffNavigator />;
+        
+        if (!user) return <AuthNavigator />;
+
+        const role       = user.role;
+        const department = user.staff_profile?.department;
+
+        if (role === 'patient') return <PatientNavigator />;
+        if (role === 'doctor')  return <DoctorNavigator />;
+        if (role === 'admin')   return <AdminNavigator />;
+
+        if (role === 'staff')   return <StaffNavigator />;
+
+        return <AuthNavigator />;
+    };
 
     return (
         <MyUserContext.Provider value={[user, dispatch]}>
             <PaperProvider theme={theme}>
                 <NavigationContainer>
-                    {user === null ? (
-                        <AuthNavigator />
-                    ) : (
-                        <>
-                            {/* Khi đăng nhập chọn role 'patient', app sẽ kích hoạt component này */}
-                            {user.role === 'patient' && <PatientNavigator />}
-                            
-                            {/* Bạn có thể tạm thời comment các role khác lại nếu các file đó chưa có code */}
-                            {/* {user.role === 'admin' && <AdminNavigator />} */}
-                            {/* {user.role === 'doctor' && <DoctorNavigator />} */}
-                        </>
-                    )}
+                    {getNavigator()}
                 </NavigationContainer>
             </PaperProvider>
         </MyUserContext.Provider>
