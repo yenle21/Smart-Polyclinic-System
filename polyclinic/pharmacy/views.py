@@ -186,8 +186,10 @@ class PrescriptionViewSet(viewsets.ViewSet, generics.ListCreateAPIView):
     POST /api/pharmacy/prescriptions/              → tạo đơn thuốc
     POST /api/pharmacy/prescriptions/{id}/dispense/ → xác nhận cấp thuốc
     """
+
     queryset = Prescription.objects.select_related(
-        'medical_record'
+        'medical_record__appointment__patient__user',
+        'medical_record__appointment__schedule__doctor__user',
     ).prefetch_related('items__medicine')
 
     def get_serializer_class(self):

@@ -32,6 +32,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical:   14,
         paddingTop:        50,
+        headerBackTitleVisible: false,
     },
     title: { color: colors.white, fontSize: 17, fontWeight: '600' },
 });

@@ -1,7 +1,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL = 'http://10.17.65.92:8000/';
+const BASE_URL = 'http://10.17.64.211:8000/';
 
 export const endpoints = {
     // Auth
@@ -36,12 +36,18 @@ const Apis = axios.create({
 
 // Tự động gắn token
 export const authApis = async () => {
-    const token = '1HQP0KQlfbJINwgFW1T8yfcLjUui5y';
+    // Lấy token động từ bộ nhớ máy
+    const token = await AsyncStorage.getItem('access_token'); 
+    
     return axios.create({
         baseURL: BASE_URL,
         timeout: 10000,
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { 
+            // Nếu có token thì gắn vào, không thì để trống tránh lỗi
+            Authorization: token ? `Bearer ${token}` : "" 
+        },
     });
 };
+
 
 export default Apis;

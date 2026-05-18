@@ -2,6 +2,10 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, Text, StyleSheet } from 'react-native';
 import { IconButton } from 'react-native-paper';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+
+// Shared
+import ProfileScreen from '../screens/shared/ProfileScreen';
 
 // Các màn hình Demo tạm thời cho Bệnh nhân (Bạn có thể tách thành các file riêng sau)
 const PatientHomeScreen = () => (
@@ -43,10 +47,13 @@ const PatientNavigator = () => {
                 component={AppointmentScreen} 
                 options={{ title: 'Lịch hẹn' }} 
             />
-            <Tab.Screen 
-                name="PatientProfile" 
-                component={PatientProfileScreen} 
-                options={{ title: 'Hồ sơ' }} 
+            <Tab.Screen
+                name="ProfileTab"
+                component={ProfileScreen}
+                options={{
+                    tabBarLabel: 'Cá nhân',
+                    tabBarIcon: ({ color }) => <MaterialCommunityIcons name="account" size={24} color={color} />,
+                }}
             />
         </Tab.Navigator>
     );
