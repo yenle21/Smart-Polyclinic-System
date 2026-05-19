@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, FlatList, StyleSheet, RefreshControl } from 'react-native';
-import { Searchbar, Card, Text, Chip } from 'react-native-paper';
+import { Searchbar, Card, Text, Chip, FAB } from 'react-native-paper';
 import { authApis, endpoints } from '../../configs/Apis';
 import COLORS from '../../styles/colors';
 
@@ -53,6 +53,7 @@ export default function MedicineListScreen({ navigation, route }) {
                 </View>
             </Card.Content>
         </Card>
+        
     );
 
     return (
@@ -70,6 +71,7 @@ export default function MedicineListScreen({ navigation, route }) {
                 ListEmptyComponent={<Text style={styles.empty}>Không có thuốc nào</Text>}
             />
         </View>
+
     );
 }
 

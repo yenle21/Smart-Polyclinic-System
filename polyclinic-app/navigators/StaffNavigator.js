@@ -9,8 +9,10 @@ import AppHeader from '../components/shared/AppHeader';
 import CategoryListScreen       from '../screens/staff/CategoryScreen';
 import MedicineListScreen       from '../screens/staff/MedicineListScreen';
 import MedicineDetailScreen     from '../screens/staff/MedicineDetailScreen';
+import MedicineFormScreen     from '../screens/staff/MedicineFormScreen';
 import AlertScreen              from '../screens/staff/AlertScreen';
 import StockTransactionScreen   from '../screens/staff/StockTransactionScreen';
+import StockFormScreen from '../screens/staff/StockFormScreen';
 import PrescriptionScreen       from '../screens/staff/PrescriptionScreen';
 import PrescriptionDetailScreen from '../screens/staff/PrescriptionDetailScreen';
 
@@ -51,7 +53,7 @@ function PharmacyStack() {
             <Stack.Screen name="CategoryList"   component={CategoryListScreen}   options={{ title: 'Danh mục thuốc' }} />
             <Stack.Screen name="MedicineList"   component={MedicineListScreen}   options={{ title: 'Danh sách thuốc' }} />
             <Stack.Screen name="MedicineDetail" component={MedicineDetailScreen} options={{ title: 'Chi tiết thuốc' }} />
-            <Stack.Screen name="StockTransaction" component={StockTransactionScreen} options={{ title: 'Quản lý kho' }} />
+            <Stack.Screen name="MedicineForm" component={MedicineFormScreen} options={{ title: 'Thêm thuốc' }} />
             <Stack.Screen name="Alert"          component={AlertScreen}          options={{ title: 'Cảnh báo kho' }} />
         </Stack.Navigator>
     );
@@ -71,6 +73,24 @@ function InvoiceStack() {
         <Stack.Navigator screenOptions={headerOptions}>
             <Stack.Screen name="InvoiceList"   component={InvoiceListScreen}   options={{ title: 'Hóa đơn' }} />
             <Stack.Screen name="InvoiceDetail" component={InvoiceDetailScreen} options={{ title: 'Chi tiết hóa đơn' }} />
+        </Stack.Navigator>
+    );
+}
+
+function StockStack() {
+    return (
+        <Stack.Navigator screenOptions={headerOptions}>
+            <Stack.Screen name="StockTransaction" component={StockTransactionScreen} options={{ title: 'Quản lý kho' }} />
+            <Stack.Screen name="StockForm"        component={StockFormScreen}        options={{ title: 'Tạo giao dịch' }} />
+        </Stack.Navigator>
+    );
+}
+
+function ProfileStack() {
+    return (
+        <Stack.Navigator screenOptions={headerOptions}>
+            <Stack.Screen name="ProfileHome" component={ProfileScreen}
+                          options={{ title: 'Hồ sơ cá nhân' }} />
         </Stack.Navigator>
     );
 }
@@ -99,6 +119,14 @@ export default function StaffNavigator() {
                 }}
             />
             <Tab.Screen
+                name="StockTab"
+                component={StockStack}
+                options={{
+                    tabBarLabel: 'Kho',
+                    tabBarIcon: ({ color }) => <MaterialCommunityIcons name="warehouse" size={24} color={color} />,
+                }}
+            />
+            <Tab.Screen
                 name="PrescriptionTab"
                 component={PrescriptionStack}
                 options={{
@@ -116,10 +144,11 @@ export default function StaffNavigator() {
             />
             <Tab.Screen
                 name="ProfileTab"
-                component={ProfileScreen}
+                component={ProfileStack}  
                 options={{
                     tabBarLabel: 'Cá nhân',
-                    tabBarIcon: ({ color }) => <MaterialCommunityIcons name="account" size={24} color={color} />,
+                    tabBarIcon: ({ color }) =>
+                        <MaterialCommunityIcons name="account" size={24} color={color} />,
                 }}
             />
         </Tab.Navigator>

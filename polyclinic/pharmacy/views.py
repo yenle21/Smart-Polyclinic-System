@@ -121,7 +121,7 @@ class MedicineViewSet(viewsets.ViewSet,
         })
 
 
-class InventoryViewSet(viewsets.ViewSet,
+class InventoryViewSet(viewsets.ViewSet, generics.ListCreateAPIView,
                        generics.ListAPIView,
                        generics.RetrieveUpdateAPIView):
     """
