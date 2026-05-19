@@ -42,13 +42,13 @@ export default function InvoiceListScreen({ navigation }) {
                         #{item.id} — {item.patient_name}
                     </Text>
                     <Chip textStyle={{ fontSize: 11 }}
-                          style={{ backgroundColor: item.is_paid ? '#D1FAE5' : '#FEE2E2' }}>
-                        {item.is_paid ? 'Đã thanh toán' : 'Chưa thanh toán'}
+                        style={{ backgroundColor: item.status === 'paid' ? '#D1FAE5' : '#FEE2E2' }}>
+                        {item.status === 'paid' ? 'Đã thanh toán' : 'Chưa thanh toán'}
                     </Chip>
                 </View>
                 <Text style={styles.info}>💰 {formatMoney(item.total_amount)}</Text>
                 <Text style={styles.info}>📅 {item.created_date}</Text>
-                {!item.is_paid && (
+                {item.status === 'unpaid' && (
                     <Button mode="contained" onPress={() => handlePay(item.id)}
                             style={styles.btn} buttonColor={COLORS.primary}>
                         Xác nhận thanh toán

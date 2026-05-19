@@ -12,16 +12,17 @@ export default function InvoiceDetailScreen({ route, navigation }) {
     const [invoice, setInvoice] = useState(null);
 
     useEffect(() => {
-        const fetch = async () => {
+        const fetchInvoice = async () => {
             try {
                 const api = await authApis();
-                const res = await api.get(endpoints['invoice-detail'](id));
+                const res = await api.get(`/invoices/${id}/`);
+                console.log('invoices raw:', JSON.stringify(res.data));
                 setInvoice(res.data);
             } catch (err) {
-                console.error('fetchInvoice:', err);
+                console.error(err);
             }
         };
-        fetch();
+        fetchInvoice();
     }, [id]);
 
     const handlePay = async () => {
@@ -29,7 +30,7 @@ export default function InvoiceDetailScreen({ route, navigation }) {
             const api = await authApis();
             await api.post(endpoints['pay-invoice'](id));
             navigation.goBack();
-        } catch (err) { console.error(err); }
+        } catch (err) { console.error('handlePay error:', err.response?.data); }
     };
 
     if (!invoice) return (

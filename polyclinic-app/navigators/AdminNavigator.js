@@ -1,67 +1,121 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, Text, StyleSheet } from 'react-native';
-import { IconButton } from 'react-native-paper';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import COLORS from '../styles/colors';
 
-// Shared
-import ProfileScreen from '../screens/shared/ProfileScreen';
+// ── Screens ──
+import RevenueReportScreen  from '../screens/admin/RevenueReportScreen';
+import MedicineReportScreen from '../screens/admin/MedicineReportScreen';
+import AlertScreen          from '../screens/staff/AlertScreen';
+import ProfileScreen        from '../screens/shared/ProfileScreen';
 
-// Các màn hình Demo tạm thời cho Bệnh nhân (Bạn có thể tách thành các file riêng sau)
-const PatientHomeScreen = () => (
-    <View style={styles.center}><Text style={styles.text}>🏠 Trang chủ Bệnh nhân</Text></View>
-);
-const AppointmentScreen = () => (
-    <View style={styles.center}><Text style={styles.text}>📅 Đặt lịch & Quản lý lịch hẹn</Text></View>
-);
-const PatientProfileScreen = () => (
-    <View style={styles.center}><Text style={styles.text}>🧑‍⚕️ Hồ sơ sức khỏe cá nhân</Text></View>
-);
+const Tab   = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
 
-const Tab = createBottomTabNavigator();
+const headerOpts = {
+    headerTintColor: '#fff',                          
+    headerStyle: { backgroundColor: COLORS.primary },
+    headerTitleStyle: { fontWeight: 'bold' },
+};
 
-const PatientNavigator = () => {
+function RevenueStack() {
+    return (
+        <Stack.Navigator screenOptions={headerOpts}>
+            <Stack.Screen name="RevenueReport" component={RevenueReportScreen}
+                          options={{ title: 'Báo cáo doanh thu' }} />
+        </Stack.Navigator>
+    );
+}
+
+function MedicineStack() {
+    return (
+        <Stack.Navigator screenOptions={headerOpts}>
+            <Stack.Screen name="MedicineReport" component={MedicineReportScreen}
+                          options={{ title: 'Báo cáo dược phẩm' }} />
+        </Stack.Navigator>
+    );
+}
+
+function AlertStack() {
+    return (
+        <Stack.Navigator screenOptions={headerOpts}>
+            <Stack.Screen name="AlertHome" component={AlertScreen}
+                          options={{ title: 'Cảnh báo kho' }} />
+        </Stack.Navigator>
+    );
+}
+
+function ProfileStack() {
+    return (
+        <Stack.Navigator screenOptions={headerOpts}>
+            <Stack.Screen name="ProfileHome" component={ProfileScreen}
+                          options={{ title: 'Hồ sơ cá nhân' }} />
+        </Stack.Navigator>
+    );
+}
+
+function TabIcon({ name, color, size }) {
+    return <MaterialCommunityIcons name={name} size={size} color={color} />;
+}
+
+export default function AdminNavigator() {
     return (
         <Tab.Navigator
-            screenOptions={({ route }) => ({
-                tabBarIcon: ({ color, size }) => {
-                    let iconName;
-                    if (route.name === 'PatientHome') iconName = 'home';
-                    else if (route.name === 'Appointments') iconName = 'calendar';
-                    else if (route.name === 'PatientProfile') iconName = 'account';
-
-                    return <IconButton icon={iconName} size={size} iconColor={color} />;
+            screenOptions={{
+                headerShown:             false,
+                tabBarActiveTintColor:   COLORS.primary,
+                tabBarInactiveTintColor: '#9CA3AF',
+                tabBarStyle: {
+                    backgroundColor: '#fff',
+                    borderTopColor:  '#E5E7EB',
+                    borderTopWidth:  1,
+                    paddingBottom:   6,
+                    paddingTop:      4,
+                    height:          60,
                 },
-                tabBarActiveTintColor: '#2196F3',
-                tabBarInactiveTintColor: 'gray',
-                headerShown: true,
-            })}
+                tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+            }}
         >
-            <Tab.Screen 
-                name="PatientHome" 
-                component={PatientHomeScreen} 
-                options={{ title: 'Trang chủ' }} 
-            />
-            <Tab.Screen 
-                name="Appointments" 
-                component={AppointmentScreen} 
-                options={{ title: 'Lịch hẹn' }} 
-            />
             <Tab.Screen
-                name="ProfileTab"
-                component={ProfileScreen}
+                name="Revenue"
+                component={RevenueStack}
                 options={{
-                    tabBarLabel: 'Cá nhân',
-                    tabBarIcon: ({ color }) => <MaterialCommunityIcons name="account" size={24} color={color} />,
+                    title: 'Doanh thu',
+                    tabBarIcon: ({ color, size }) =>
+                        <TabIcon name="chart-bar" color={color} size={size} />,
+                }}
+            />
+
+            <Tab.Screen
+                name="MedicineRpt"
+                component={MedicineStack}
+                options={{
+                    title: 'Dược phẩm',
+                    tabBarIcon: ({ color, size }) =>
+                        <TabIcon name="pill" color={color} size={size} />,
+                }}
+            />
+
+            <Tab.Screen
+                name="Alerts"
+                component={AlertStack}
+                options={{
+                    title: 'Cảnh báo',
+                    tabBarIcon: ({ color, size }) =>
+                        <TabIcon name="bell-alert" color={color} size={size} />,
+                }}
+            />
+
+            <Tab.Screen
+                name="Profile"
+                component={ProfileStack}
+                options={{
+                    title: 'Cá nhân',
+                    tabBarIcon: ({ color, size }) =>
+                        <TabIcon name="account-circle" color={color} size={size} />,
                 }}
             />
         </Tab.Navigator>
     );
-};
-
-const styles = StyleSheet.create({
-center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f9f9f9' },    text: { fontSize: 18, fontWeight: 'bold', color: '#333' }
-});
-
-// BẮT BUỘC PHẢI CÓ DÒNG NÀY ĐỂ APP.JS KHÔNG BỊ LỖI CRASH
-export default PatientNavigator;
+}

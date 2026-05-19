@@ -36,6 +36,11 @@ class InvoiceViewSet(viewsets.ViewSet,
         date_to    = self.request.query_params.get('date_to')
         user = self.request.user
 
+        query = self.queryset
+
+        print(f'User: {user.username} | Role: {user.role}')
+        print(f'Total before filter: {query.count()}')
+
         # Phân quyền theo role
         if user.role == 'patient':
             query = query.filter(patient=user.patient_profile)

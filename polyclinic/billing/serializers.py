@@ -78,6 +78,10 @@ class InvoicePaySerializer(serializers.ModelSerializer):
     Chỉ dùng khi bệnh nhân thanh toán — chỉ cần gửi payment_method
     Không cho thay đổi số tiền hay thông tin khác
     """
+    payment_method = serializers.ChoiceField(
+        choices=Invoice.PAYMENT_METHOD_CHOICES,
+        default='cash'
+    )
     class Meta:
         model = Invoice
         fields = ['payment_method']

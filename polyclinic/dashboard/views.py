@@ -131,7 +131,7 @@ class DashboardViewSet(viewsets.ViewSet):
             'by_payment_method': by_method,
         })
 
-    @action(detail=False, methods=['get'], url_path='medicines')
+    @action(detail=False, methods=['get'], url_path='medicines-report')
     def medicines(self, request):
         """
         Báo cáo dược phẩm và kho thuốc
