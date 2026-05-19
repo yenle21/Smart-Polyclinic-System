@@ -6,10 +6,22 @@ from .models import Schedule, Appointment, Notification, MedicalRecord, TestResu
 #lịch làm việc của bác sĩ
 class ScheduleSerializer(serializers.ModelSerializer):
     available_slots = serializers.SerializerMethodField()
+    doctor_name     = serializers.CharField(source='doctor.user.get_full_name', read_only=True)
+    specialty_name  = serializers.CharField(source='doctor.specialty.name', read_only=True)
 
     class Meta:
         model  = Schedule
-        fields = ['id', 'doctor', 'work_date', 'start_time', 'end_time', 'max_slots', 'available_slots']
+        fields = [
+            'id',
+            'doctor',
+            'doctor_name',      # ← thêm
+            'specialty_name',   # ← thêm
+            'work_date',
+            'start_time',
+            'end_time',
+            'max_slots',
+            'available_slots',
+        ]
 
     def get_available_slots(self, obj):
         return obj.available_slots()
@@ -39,7 +51,14 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         schedule         = attrs.get('schedule')
         appointment_time = attrs.get('appointment_time')
-        patient          = self.context['request'].user.patient_profile
+
+        # FIX: bắt lỗi nếu chưa có patient_profile
+        try:
+            patient = self.context['request'].user.patient_profile
+        except Exception:
+            raise serializers.ValidationError(
+                'Tài khoản này chưa có hồ sơ bệnh nhân. Vui lòng liên hệ admin!'
+            )
 
         # Kiểm tra còn slot không
         if schedule.available_slots() <= 0:
@@ -56,9 +75,14 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-        patient = self.context['request'].user.patient_profile
+        # FIX: bắt lỗi nếu chưa có patient_profile
+        try:
+            patient = self.context['request'].user.patient_profile
+        except Exception:
+            raise serializers.ValidationError(
+                'Tài khoản này chưa có hồ sơ bệnh nhân. Vui lòng liên hệ admin!'
+            )
         return Appointment.objects.create(patient=patient, **validated_data)
-
 # hủy lịch hẹn
 class AppointmentCancelSerializer(serializers.ModelSerializer):
     class Meta:

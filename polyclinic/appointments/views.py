@@ -15,26 +15,34 @@ from .serializers import (
 from accounts.models import Specialty, Doctor
 from accounts.serializers import SpecialtySerializer, DoctorSerializer
 
-
 class ScheduleViewSet(viewsets.ViewSet, generics.ListAPIView):
-    queryset = Schedule.objects.filter(active=True).select_related('doctor__user', 'doctor__specialty')
+
+    queryset = Schedule.objects.filter(
+        active=True
+    ).select_related(
+        'doctor__user',
+        'doctor__specialty'
+    )
+
     serializer_class = ScheduleSerializer
+
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         query = self.queryset
-
-        doctor_id = self.request.query_params.get('doctor')
-        if doctor_id:
-            query = query.filter(doctor_id=doctor_id)
-
+        # tìm theo tên bác sĩ
+        doctor_name = self.request.query_params.get('doctor')
+        if doctor_name:
+            query = query.filter(doctor__user__last_name__icontains=doctor_name)
+        # lọc theo ngày
         date = self.request.query_params.get('date')
+
         if date:
             query = query.filter(work_date=date)
-
-        specialty_id = self.request.query_params.get('specialty')
-        if specialty_id:
-            query = query.filter(doctor__specialty_id=specialty_id)
+        # lọc theo chuyên khoa
+        specialty_name = self.request.query_params.get('specialty')
+        if specialty_name:
+            query = query.filter(doctor__specialty__name__icontains=specialty_name )
 
         return query
 
