@@ -1,7 +1,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL = 'http://10.17.64.240:8000';
+const BASE_URL = 'http://10.17.64.147:8000';
 
 
 export const endpoints = {
@@ -26,14 +26,25 @@ export const endpoints = {
     'pay-invoice':  (id) => `/invoices/${id}/pay/`,
 
     //Appoinment
-    'schedules':     '/schedules/',
+    'schedules':'/schedules/',
+    'appointments':'/appointments/',
     'appointment-book': '/appointments/book/',
+    'appointment-detail':   (id) => `/appointments/${id}/`,
+    'appointment-cancel':   (id) => `/appointments/${id}/cancel/`,
     //patients
     'patient-profile':   '/patients/profile/',
     //dashboard
     'dashboard-overview': '/overview/',
     'dashboard-revenue':  '/revenue/',
     'dashboard-medicines':'/medicines-report/',
+    'doctor-dashboard': '/doctor/dashboard/',
+    //medical-record
+    'medical-records' :'/medical-records/',
+    'medical-detail':   (id) => `/medical-records/${id}/detail/`,
+    //Noti
+    'notifications':       '/notifications/',
+    'notification-read':   (id) => `/notifications/${id}/read/`,
+    'notifications-read-all': '/notifications/read-all/',
 
 }
 const Apis = axios.create({

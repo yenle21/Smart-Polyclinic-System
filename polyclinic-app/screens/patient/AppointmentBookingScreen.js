@@ -167,15 +167,11 @@ const AppointmentBookingScreen = ({ navigation, route }) => {
             Alert.alert(
                 'Thành công',
                 'Đặt lịch khám thành công!',
-                [{
-                    text: 'OK',
-                    onPress: () => navigation.goBack()
-                }]
             );
 
         } catch (ex) {
 
-            console.error('BOOK ERROR:', ex.response?.data);
+        
 
             const msg =
                 ex.response?.data?.non_field_errors?.[0] ||

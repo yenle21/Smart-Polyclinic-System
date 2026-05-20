@@ -129,7 +129,7 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView):
 
     # Xem chi tiết lịch hẹn
     @action(methods=['get'], url_path='detail', detail=True)
-    def detail(self, request, pk=None):
+    def get_detail(self, request, pk=None):
         try:
             appointment = self.get_queryset().get(pk=pk)
         except Appointment.DoesNotExist:
@@ -251,6 +251,11 @@ class NotificationViewSet(viewsets.ViewSet, generics.ListAPIView):
     def get_queryset(self):
         return self.queryset.filter(user=self.request.user)
 
+    @action(methods=['patch'], url_path='read-all', detail=False)
+    def mark_all_read(self, request):
+        self.get_queryset().filter(is_read=False).update(is_read=True)
+        return Response({'detail': 'Đã đánh dấu tất cả là đã đọc.'}, status=status.HTTP_200_OK)
+
     @action(methods=['patch'], url_path='read', detail=True)
     def mark_read(self, request, pk=None):
         try:
@@ -310,7 +315,7 @@ class MedicalRecordViewSet(viewsets.ViewSet, generics.ListAPIView):
 
     # Xem chi tiết hồ sơ
     @action(methods=['get'], url_path='detail', detail=True)
-    def detail(self, request, pk=None):
+    def get_detail(self, request, pk=None):
         try:
             record = self.get_queryset().get(pk=pk)
         except MedicalRecord.DoesNotExist:

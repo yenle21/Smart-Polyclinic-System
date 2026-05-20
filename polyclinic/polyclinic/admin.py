@@ -18,7 +18,8 @@ from billing.admin import InvoiceModelAdmin
 from dashboard.admin import ReportModelAdmin
 
 from appointments.admin import ScheduleAdmin, AppointmentAdmin, NotificationAdmin, MedicalRecordAdmin, TestResultAdmin
-from accounts.admin import DoctorAdmin,PatientAdmin
+from accounts.admin import DoctorAdmin,PatientAdmin,CustomUserAdmin
+
 
 
 class PolyclinicAdminSite(admin.AdminSite):
@@ -106,4 +107,4 @@ admin_site.register(TestResult,    TestResultAdmin)
 
 admin_site.register(Doctor, DoctorAdmin)
 admin_site.register(Patient, PatientAdmin)
-admin_site.register(User)
+admin_site.register(User, CustomUserAdmin)

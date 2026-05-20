@@ -36,12 +36,15 @@ class InvoiceSerializer(serializers.ModelSerializer):
     total_amount    = serializers.DecimalField(
         max_digits=10, decimal_places=2, read_only=True
     )
+    appointment_type = serializers.CharField(
+        source='appointment.type', read_only=True
+    )
 
     class Meta:
         model = Invoice
         fields = [
             'id',
-            'patient', 'patient_name',
+            'patient', 'patient_name', 'appointment_type',
             'appointment', 'doctor_name', 'specialty_name',
             'consultation_fee', 'medicine_fee', 'service_fee', 'total_amount',
             'status', 'status_display',

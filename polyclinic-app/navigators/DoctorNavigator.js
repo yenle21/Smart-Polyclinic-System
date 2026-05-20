@@ -1,67 +1,110 @@
 import React from 'react';
+import { View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, Text, StyleSheet } from 'react-native';
-import { IconButton } from 'react-native-paper';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-// Shared
+// =========================
+// SCREENS
+// =========================
+import DoctorHomeScreen from '../screens/doctor/DoctorHomeScreen';
+import AppointmentScreen from '../screens/doctor/AppointmentScreen';
 import ProfileScreen from '../screens/shared/ProfileScreen';
+import AppointmentDetailScreenDoctor from '../screens/doctor/AppoimentDetailScreenDoctor';
 
-// Các màn hình Demo tạm thời cho Bệnh nhân (Bạn có thể tách thành các file riêng sau)
-const PatientHomeScreen = () => (
-    <View style={styles.center}><Text style={styles.text}>🏠 Trang chủ Bệnh nhân</Text></View>
-);
-const AppointmentScreen = () => (
-    <View style={styles.center}><Text style={styles.text}>📅 Đặt lịch & Quản lý lịch hẹn</Text></View>
-);
-const PatientProfileScreen = () => (
-    <View style={styles.center}><Text style={styles.text}>🧑‍⚕️ Hồ sơ sức khỏe cá nhân</Text></View>
-);
-
+// =========================
+// NAVIGATOR INIT
+// =========================
 const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
 
-const PatientNavigator = () => {
+// =========================
+// APPOINTMENT STACK
+// =========================
+const AppointmentStack = () => (
+     <Stack.Navigator>
+        {/* LIST SCREEN */}
+        <Stack.Screen
+            name="AppointmentList"
+            component={AppointmentScreen}
+            options={{ title: 'Lịch khám' }}
+        />
+
+        {/* DETAIL SCREEN */}
+        <Stack.Screen
+            name="AppointmentDetail"
+            component={AppointmentDetailScreenDoctor}
+            options={{ title: 'Chi tiết lịch khám' }}
+        />
+    </Stack.Navigator>
+    
+);
+
+// =========================
+// PROFILE STACK (nếu cần mở rộng sau này)
+// =========================
+const ProfileStack = () => (
+    <Stack.Navigator>
+        <Stack.Screen
+            name="ProfileScreen"
+            component={ProfileScreen}
+            options={{ title: 'Cá nhân' }}
+        />
+    </Stack.Navigator>
+);
+
+// =========================
+// MAIN TAB NAVIGATOR
+// =========================
+const DoctorNavigator = () => {
     return (
         <Tab.Navigator
             screenOptions={({ route }) => ({
-                tabBarIcon: ({ color, size }) => {
-                    let iconName;
-                    if (route.name === 'PatientHome') iconName = 'home';
-                    else if (route.name === 'Appointments') iconName = 'calendar';
-                    else if (route.name === 'PatientProfile') iconName = 'account';
-
-                    return <IconButton icon={iconName} size={size} iconColor={color} />;
-                },
+                headerShown: false,
                 tabBarActiveTintColor: '#2196F3',
                 tabBarInactiveTintColor: 'gray',
-                headerShown: true,
+                tabBarStyle: { height: 65, paddingBottom: 5 },
+                tabBarLabelStyle: { fontSize: 12, fontWeight: '600' },
+
+                tabBarIcon: ({ color, size }) => {
+                    let iconName;
+
+                    if (route.name === 'Home') iconName = 'view-dashboard';
+                    else if (route.name === 'Appointments') iconName = 'calendar-clock';
+                    else if (route.name === 'ProfileTab') iconName = 'account-circle';
+
+                    return (
+                        <MaterialCommunityIcons
+                            name={iconName}
+                            size={size}
+                            color={color}
+                        />
+                    );
+                },
             })}
         >
-            <Tab.Screen 
-                name="PatientHome" 
-                component={PatientHomeScreen} 
-                options={{ title: 'Trang chủ' }} 
+            {/* ================= HOME ================= */}
+            <Tab.Screen
+                name="Home"
+                component={DoctorHomeScreen}
+                options={{ tabBarLabel: 'Tổng quan', headerShown: true }}
             />
-            <Tab.Screen 
-                name="Appointments" 
-                component={AppointmentScreen} 
-                options={{ title: 'Lịch hẹn' }} 
+
+            {/* ================= APPOINTMENTS ================= */}
+            <Tab.Screen
+                name="Appointments"
+                component={AppointmentStack}
+                options={{ tabBarLabel: 'Lịch khám' }}
             />
+
+            {/* ================= PROFILE ================= */}
             <Tab.Screen
                 name="ProfileTab"
-                component={ProfileScreen}
-                options={{
-                    tabBarLabel: 'Cá nhân',
-                    tabBarIcon: ({ color }) => <MaterialCommunityIcons name="account" size={24} color={color} />,
-                }}
+                component={ProfileStack}
+                options={{ tabBarLabel: 'Cá nhân' }}
             />
         </Tab.Navigator>
     );
 };
 
-const styles = StyleSheet.create({
-center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f9f9f9' },    text: { fontSize: 18, fontWeight: 'bold', color: '#333' }
-});
-
-// BẮT BUỘC PHẢI CÓ DÒNG NÀY ĐỂ APP.JS KHÔNG BỊ LỖI CRASH
-export default PatientNavigator;
+export default DoctorNavigator;
