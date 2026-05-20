@@ -61,11 +61,14 @@ class Appointment(BaseModel):
 class Notification(BaseModel):
     """Thông báo nhắc lịch hẹn gửi cho bệnh nhân"""
     TYPE_CHOICES = [
-        ('reminder',    'Nhắc lịch hẹn'),
-        ('cancelled',   'Thông báo huỷ'),
-        ('prescription','Đơn thuốc mới'),
-        ('result',      'Kết quả xét nghiệm'),
-        ('general',     'Chung'),
+        ('reminder', 'Nhắc lịch hẹn'),
+        ('confirmed', 'Lịch hẹn được xác nhận'),
+        ('cancelled', 'Thông báo huỷ'),
+        ('result', 'Kết quả xét nghiệm'),
+        ('follow_up', 'Nhắc tái khám'),
+        ('prescription', 'Đơn thuốc mới'),
+        ('invoice', 'Hóa đơn mới'),
+        ('general', 'Chung'),
     ]
 
     user        = models.ForeignKey('accounts.User', on_delete=models.CASCADE, related_name='notifications')

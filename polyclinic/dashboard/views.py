@@ -1,6 +1,7 @@
+from appointments.models import Appointment
 from django.utils import timezone
 from django.db.models import Sum, Count, Avg, F
-from datetime import timedelta
+from datetime import timedelta, date
 from rest_framework import viewsets, generics
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -8,24 +9,16 @@ from rest_framework.permissions import IsAuthenticated
 
 from pharmacy.models import Medicine, Inventory, Prescription
 from billing.models import Invoice
+from rest_framework.views import APIView
+
 from .models import Report
 from . import serializers
+from accounts.models import Doctor
 
 
 class DashboardViewSet(viewsets.ViewSet):
-    """
-    Dashboard tổng quan
-    GET /api/dashboard/overview/          → tổng quan hệ thống
-    GET /api/dashboard/revenue/           → báo cáo doanh thu
-    GET /api/dashboard/medicines/         → báo cáo dược phẩm
-    """
-
     @action(detail=False, methods=['get'], url_path='overview')
     def overview(self, request):
-        """
-        Tổng quan toàn hệ thống
-        GET /api/dashboard/overview/
-        """
         today     = timezone.now().date()
         last_7    = today - timedelta(days=7)
         threshold = today + timedelta(days=30)
@@ -191,3 +184,108 @@ class ReportViewSet(viewsets.ViewSet,
     def perform_create(self, serializer):
         # Tự động gán người tạo
         serializer.save(created_by=self.request.user)
+
+class DoctorDashboardView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        # =========================
+        # CHECK DOCTOR
+        # =========================
+        try:
+            doctor = Doctor.objects.get(user=request.user)
+
+        except Doctor.DoesNotExist:
+
+            return Response(
+                {
+                    "error": "Bạn không phải bác sĩ"
+                },
+                status=403
+            )
+
+        # =========================
+        # TODAY APPOINTMENTS
+        # =========================
+        appointments = Appointment.objects.filter(
+            schedule__doctor=doctor,
+            schedule__work_date=date.today()
+        ).select_related(
+            'patient__user',
+            'schedule'
+        )
+
+        # =========================
+        # STATISTICS
+        # =========================
+        total = appointments.count()
+
+        pending = appointments.filter(
+            status='pending'
+        ).count()
+
+        confirmed = appointments.filter(
+            status='confirmed'
+        ).count()
+
+        completed = appointments.filter(
+            status='completed'
+        ).count()
+
+        cancelled = appointments.filter(
+            status='cancelled'
+        ).count()
+
+        # =========================
+        # APPOINTMENT LIST
+        # =========================
+        appointment_data = []
+
+        for ap in appointments:
+
+            appointment_data.append({
+                "id": ap.id,
+
+                "patient_name":
+                    f"{ap.patient.user.first_name} "
+                    f"{ap.patient.user.last_name}",
+
+                "appointment_time":
+                    str(ap.appointment_time),
+
+                "type":
+                    ap.type,
+
+                "status":
+                    ap.status,
+
+                "reason":
+                    ap.reason,
+            })
+
+        # =========================
+        # RESPONSE
+        # =========================
+        data = {
+
+            "doctor": {
+                "id": doctor.id,
+                "name":
+                    f"{doctor.user.first_name} "
+                    f"{doctor.user.last_name}",
+            },
+
+            "overview": {
+                "total_appointments": total,
+                "pending": pending,
+                "confirmed": confirmed,
+                "completed": completed,
+                "cancelled": cancelled,
+            },
+
+            "appointments": appointment_data,
+        }
+
+        return Response(data)

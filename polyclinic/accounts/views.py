@@ -47,7 +47,17 @@ class PatientViewSet(viewsets.ViewSet, generics.ListAPIView):
     @action(methods=['get', 'patch'], url_path='profile', detail=False,
             permission_classes=[permissions.IsAuthenticated])
     def profile(self, request):
-        patient = request.user.patient_profile
+        try:
+            patient = request.user.patient_profile
+        except Exception:
+            if request.method == 'PATCH':
+                # ✅ Chưa có thì tạo mới
+                patient = Patient.objects.create(user=request.user)
+            else:
+                return Response(
+                    {'detail': 'Tài khoản này chưa có hồ sơ bệnh nhân.'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
         if request.method == 'PATCH':
             s = PatientUpdateSerializer(patient, data=request.data, partial=True)
             s.is_valid(raise_exception=True)
