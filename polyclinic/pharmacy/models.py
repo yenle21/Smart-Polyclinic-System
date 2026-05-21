@@ -88,8 +88,11 @@ class Prescription(BaseModel):
     is_dispensed   = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"Đơn thuốc — {self.medical_record.appointment.patient}"
-
+        try:
+            name = self.medical_record.appointment.patient.user.get_full_name()
+            return "Don thuoc #{} - {}".format(self.id, name)  # dùng .format() thay f-string
+        except:
+            return "Don thuoc #{}".format(self.id)
 
 class PrescriptionItem(BaseModel):
     """Chi tiết từng thuốc trong đơn"""

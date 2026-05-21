@@ -1,8 +1,9 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, FlatList, StyleSheet, RefreshControl } from 'react-native';
 import { Card, Text, Chip } from 'react-native-paper';
 import { authApis, endpoints } from '../../configs/Apis';
 import COLORS from '../../styles/colors';
+import { useFocusEffect } from '@react-navigation/native';
 
 const formatDate = (dateStr) =>
     new Date(dateStr).toLocaleDateString('vi-VN');
@@ -11,7 +12,7 @@ export default function PrescriptionScreen({ navigation }) {
     const [prescriptions, setPrescriptions] = useState([]);
     const [refreshing,    setRefreshing]    = useState(false);
 
-    const fetchPrescriptions = useCallback(async () => {
+    const fetchPrescriptions = async () => {
         try {
             const api = await authApis();
             const res = await api.get(endpoints['prescriptions']);
@@ -21,17 +22,21 @@ export default function PrescriptionScreen({ navigation }) {
         } finally {
             setRefreshing(false);
         }
-    }, []);
+    };
 
-    useEffect(() => { fetchPrescriptions(); }, [fetchPrescriptions]);
+    useFocusEffect(
+        useCallback(() => {
+            fetchPrescriptions();
+        }, [])
+    );
 
     const renderItem = ({ item }) => (
         <Card style={styles.card}
-              onPress={() => navigation.navigate('PrescriptionDetail', { prescription: item })}>
+              onPress={() => navigation.navigate('PrescriptionDetail', { id: item.id })}>
             <Card.Content>
                 <View style={styles.row}>
                     <Text variant="titleMedium" style={styles.name}>
-                        {item.patient_name}
+                        {item.patient_name || 'Chưa có tên'}
                     </Text>
                     <Chip textStyle={{ fontSize: 11 }}
                           style={{ backgroundColor: item.is_dispensed ? '#D1FAE5' : '#FEE2E2' }}>
@@ -53,8 +58,10 @@ export default function PrescriptionScreen({ navigation }) {
                 renderItem={renderItem}
                 contentContainerStyle={styles.list}
                 refreshControl={
-                    <RefreshControl refreshing={refreshing}
-                        onRefresh={() => { setRefreshing(true); fetchPrescriptions(); }} />
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={() => { setRefreshing(true); fetchPrescriptions(); }}
+                    />
                 }
                 ListEmptyComponent={
                     <Text style={styles.empty}>Không có đơn thuốc nào</Text>

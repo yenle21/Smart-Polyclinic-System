@@ -1,12 +1,15 @@
 from django.utils import timezone
 from django.db.models import F
+from django.db import models as db_models
 from datetime import timedelta
 from rest_framework import viewsets, generics, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
 
 from .models import Category, Medicine, Inventory, StockTransaction, Prescription
 from . import serializers
+from billing.models import Invoice
 
 
 class CategoryViewSet(viewsets.ViewSet, generics.ListCreateAPIView):
@@ -149,7 +152,7 @@ class StockTransactionViewSet(viewsets.ViewSet, generics.ListCreateAPIView):
         elif transaction.transaction_type == 'export':
             if inv.quantity < transaction.quantity:
                 transaction.delete()
-                from rest_framework.exceptions import ValidationError
+
                 raise ValidationError(
                     {'detail': f'Không đủ hàng. Tồn kho hiện tại: {inv.quantity}'}
                 )
@@ -161,7 +164,8 @@ class StockTransactionViewSet(viewsets.ViewSet, generics.ListCreateAPIView):
         inv.save()
 
 
-class PrescriptionViewSet(viewsets.ViewSet, generics.ListCreateAPIView):
+
+class PrescriptionViewSet(viewsets.ViewSet, generics.ListCreateAPIView,  generics.RetrieveAPIView):
     queryset = Prescription.objects.select_related(
         'medical_record__appointment__patient__user',
         'medical_record__appointment__schedule__doctor__user',
@@ -173,7 +177,7 @@ class PrescriptionViewSet(viewsets.ViewSet, generics.ListCreateAPIView):
         return serializers.PrescriptionSerializer
 
     def get_queryset(self):
-        query        = self.queryset
+        query = self.queryset
         is_dispensed = self.request.query_params.get('is_dispensed')
         if is_dispensed is not None:
             query = query.filter(is_dispensed=is_dispensed.lower() == 'true')
@@ -185,16 +189,39 @@ class PrescriptionViewSet(viewsets.ViewSet, generics.ListCreateAPIView):
 
         return query
 
-    @action(methods=['post'], url_path='dispense', detail=True)
+    @action(detail=True, methods=['post'], url_path='dispense')
     def dispense(self, request, pk=None):
         prescription = self.get_object()
+
         if prescription.is_dispensed:
             return Response(
-                {'detail': 'Đơn thuốc này đã được cấp phát rồi.'},
+                {'detail': 'Đơn thuốc này đã được xuất rồi.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
         prescription.is_dispensed = True
         prescription.save()
-        return Response(
-            serializers.PrescriptionSerializer(prescription).data
+
+        appointment = prescription.medical_record.appointment
+
+        # Tính tổng tiền thuốc
+        medicine_fee = prescription.items.aggregate(
+            total=db_models.Sum(
+                db_models.F('quantity') * db_models.F('medicine__price'),
+                output_field=db_models.DecimalField()
+            )
+        )['total'] or 0
+
+        invoice, created = Invoice.objects.get_or_create(
+            appointment=appointment,
+            defaults={
+                'patient': appointment.patient,
+                'medicine_fee': medicine_fee,
+            }
         )
+
+        if not created:
+            invoice.medicine_fee = medicine_fee
+            invoice.save()
+
+        return Response({'invoice_id': invoice.id}, status=status.HTTP_200_OK)

@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, Card, Button, Divider, Chip } from 'react-native-paper';
 import { authApis, endpoints } from '../../configs/Apis';
@@ -11,25 +12,26 @@ export default function InvoiceDetailScreen({ route, navigation }) {
     const { id } = route.params;
     const [invoice, setInvoice] = useState(null);
 
-    useEffect(() => {
-        const fetchInvoice = async () => {
-            try {
-                const api = await authApis();
-                const res = await api.get(`/invoices/${id}/`);
-                console.log('invoices raw:', JSON.stringify(res.data));
-                setInvoice(res.data);
-            } catch (err) {
-                console.error(err);
-            }
-        };
-        fetchInvoice();
-    }, [id]);
+    useFocusEffect(
+        useCallback(() => {
+            const fetchInvoice = async () => {
+                try {
+                    const api = await authApis();
+                    const res = await api.get(`/invoices/${id}/`);
+                    setInvoice(res.data);
+                } catch (err) {
+                    console.error(err);
+                }
+            };
+            fetchInvoice();
+        }, [id])
+    );
 
     const handlePay = async () => {
         try {
             const api = await authApis();
             await api.post(endpoints['pay-invoice'](id));
-            navigation.goBack();
+            navigation.replace('InvoiceList');
         } catch (err) { console.error('handlePay error:', err.response?.data); }
     };
 
@@ -37,15 +39,17 @@ export default function InvoiceDetailScreen({ route, navigation }) {
         <View style={styles.center}><Text>Đang tải...</Text></View>
     );
 
+    const isPaid = invoice.status === 'paid';
+
     return (
         <ScrollView style={styles.container}>
             <Card style={styles.card}>
                 <Card.Content>
                     <View style={styles.row}>
                         <Text variant="titleLarge" style={styles.title}>Hóa đơn #{invoice.id}</Text>
-                        <Chip style={{ backgroundColor: invoice.is_paid ? '#D1FAE5' : '#FEE2E2' }}
+                         <Chip style={{ backgroundColor: isPaid ? '#D1FAE5' : '#FEE2E2' }}
                               textStyle={{ fontSize: 11 }}>
-                            {invoice.is_paid ? 'Đã thanh toán' : 'Chưa thanh toán'}
+                            {isPaid ? 'Đã thanh toán' : 'Chưa thanh toán'}
                         </Chip>
                     </View>
 
@@ -59,8 +63,8 @@ export default function InvoiceDetailScreen({ route, navigation }) {
                     <Text variant="titleMedium" style={styles.subtitle}>Chi tiết dịch vụ</Text>
                     {invoice.items?.map((item, i) => (
                         <View key={i} style={styles.itemRow}>
-                            <Text style={styles.itemName}>{item.service_name || item.name}</Text>
-                            <Text style={styles.itemPrice}>{formatMoney(item.amount)}</Text>
+                            <Text style={styles.itemName}>{item.description}</Text>
+                            <Text style={styles.itemPrice}>{formatMoney(item.total_price)}</Text>
                         </View>
                     ))}
 
@@ -72,12 +76,13 @@ export default function InvoiceDetailScreen({ route, navigation }) {
                         </Text>
                     </View>
 
-                    {!invoice.is_paid && (
+                    {!isPaid && (
                         <Button mode="contained" onPress={handlePay}
                                 style={styles.btn} buttonColor={COLORS.primary}>
                             Xác nhận thanh toán
                         </Button>
                     )}
+
                 </Card.Content>
             </Card>
         </ScrollView>
