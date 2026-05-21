@@ -16,32 +16,40 @@ import {
 // SCREENS
 // =====================================================
 
-// Appointment
+// HOME
+import DoctorHomeScreen
+from '../screens/doctor/DoctorHomeScreen';
+
+// APPOINTMENT
 import AppointmentScreen
 from '../screens/doctor/AppointmentScreen';
 
 import AppointmentDetailScreenDoctor
 from '../screens/doctor/AppoimentDetailScreenDoctor';
 
-// Schedule
+// VIDEO CALL
+import VideoCallScreen
+from '../screens/shared/VideoCallScreen';
+
+// SCHEDULE
 import ScheduleManagerScreen
 from '../screens/doctor/ScheduleManagerScreen';
 
-// Medical Record
+// MEDICAL RECORD
 import MedicalRecordListScreen
 from '../screens/doctor/MedicalRecordListScreen';
 
 import MedicalRecordDetailScreen
 from '../screens/doctor/MedicalRecordDetailScreen';
 
+// PRESCRIPTION
 import PrescriptionScreen
 from '../screens/doctor/PrescriptionScreen';
 
-// ← THÊM
 import PrescriptionDetailScreen
 from '../screens/doctor/PrescriptionDetailScreen';
 
-// Profile
+// PROFILE
 import ProfileScreen
 from '../screens/shared/ProfileScreen';
 
@@ -51,6 +59,31 @@ from '../screens/shared/ProfileScreen';
 // =====================================================
 const Tab   = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
+
+
+// =====================================================
+// HOME STACK
+// =====================================================
+const HomeStack = () => (
+    <Stack.Navigator>
+
+        <Stack.Screen
+            name="DoctorHome"
+            component={DoctorHomeScreen}
+            options={{ title: 'Tổng quan' }}
+        />
+
+        <Stack.Screen
+            name="VideoCall"
+            component={VideoCallScreen}
+            options={{
+                headerShown: false,
+                gestureEnabled: false,
+            }}
+        />
+
+    </Stack.Navigator>
+);
 
 
 // =====================================================
@@ -83,6 +116,15 @@ const AppointmentStack = () => (
             options={{ title: 'Kê đơn thuốc' }}
         />
 
+        <Stack.Screen
+            name="VideoCall"
+            component={VideoCallScreen}
+            options={{
+                headerShown: false,
+                gestureEnabled: false,
+            }}
+        />
+
     </Stack.Navigator>
 );
 
@@ -111,7 +153,6 @@ const MedicalStack = () => (
             options={{ title: 'Kê đơn thuốc' }}
         />
 
-        {/* ← THÊM MỚI */}
         <Stack.Screen
             name="PrescriptionDetail"
             component={PrescriptionDetailScreen}
@@ -139,7 +180,7 @@ const ProfileStack = () => (
 
 
 // =====================================================
-// MAIN TAB
+// MAIN TAB NAVIGATOR
 // =====================================================
 const DoctorNavigator = () => (
 
@@ -148,16 +189,16 @@ const DoctorNavigator = () => (
 
             headerShown: false,
 
-            tabBarActiveTintColor:   '#2196F3',
+            tabBarActiveTintColor: '#2196F3',
             tabBarInactiveTintColor: 'gray',
 
             tabBarStyle: {
-                height:        65,
+                height: 65,
                 paddingBottom: 5,
             },
 
             tabBarLabelStyle: {
-                fontSize:   12,
+                fontSize: 12,
                 fontWeight: '600',
             },
 
@@ -166,11 +207,29 @@ const DoctorNavigator = () => (
                 let iconName;
 
                 switch (route.name) {
-                    case 'Appointments': iconName = 'calendar-clock';   break;
-                    case 'Schedule':     iconName = 'calendar-edit';    break;
-                    case 'MedicalTab':   iconName = 'folder-account';   break;
-                    case 'ProfileTab':   iconName = 'account-circle';   break;
-                    default:             iconName = 'circle';
+
+                    case 'Home':
+                        iconName = 'view-dashboard';
+                        break;
+
+                    case 'Appointments':
+                        iconName = 'calendar-clock';
+                        break;
+
+                    case 'Schedule':
+                        iconName = 'calendar-edit';
+                        break;
+
+                    case 'MedicalTab':
+                        iconName = 'folder-account';
+                        break;
+
+                    case 'ProfileTab':
+                        iconName = 'account-circle';
+                        break;
+
+                    default:
+                        iconName = 'circle';
                 }
 
                 return (
@@ -184,28 +243,39 @@ const DoctorNavigator = () => (
         })}
     >
 
+        {/* HOME */}
+        <Tab.Screen
+            name="Home"
+            component={HomeStack}
+            options={{ tabBarLabel: 'Tổng quan' }}
+        />
+
+        {/* APPOINTMENTS */}
         <Tab.Screen
             name="Appointments"
             component={AppointmentStack}
             options={{ tabBarLabel: 'Lịch khám' }}
         />
 
+        {/* SCHEDULE */}
         <Tab.Screen
             name="Schedule"
             component={ScheduleManagerScreen}
             options={{
                 tabBarLabel: 'Lịch làm việc',
                 headerShown: true,
-                title:       'Lịch làm việc',
+                title: 'Lịch làm việc',
             }}
         />
 
+        {/* MEDICAL */}
         <Tab.Screen
             name="MedicalTab"
             component={MedicalStack}
             options={{ tabBarLabel: 'Hồ sơ' }}
         />
 
+        {/* PROFILE */}
         <Tab.Screen
             name="ProfileTab"
             component={ProfileStack}

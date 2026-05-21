@@ -20,17 +20,14 @@ import {
 } from '../../configs/Apis';
 
 const FILTERS = [
-
     {
         label: 'Đã xác nhận',
         value: 'confirmed',
     },
-
     {
         label: 'Đã khám xong',
         value: 'completed',
     },
-
     {
         label: 'Đã huỷ',
         value: 'cancelled',
@@ -39,14 +36,11 @@ const FILTERS = [
 
 const AppointmentScreen = ({ navigation }) => {
 
-    const [appointments, setAppointments] =
-        useState([]);
+    const [appointments, setAppointments] = useState([]);
 
-    const [loading, setLoading] =
-        useState(true);
+    const [loading, setLoading] = useState(true);
 
-    const [refreshing, setRefreshing] =
-        useState(false);
+    const [refreshing, setRefreshing] = useState(false);
 
     const [activeFilter, setActiveFilter] =
         useState('confirmed');
@@ -102,91 +96,100 @@ const AppointmentScreen = ({ navigation }) => {
             a => a.status === activeFilter
         );
 
-    const renderItem = ({ item }) => {
+    const getStatusStyle = (status) => ({
+        confirmed: styles.badgeConfirmed,
+        cancelled: styles.badgeCancelled,
+        completed: styles.badgeCompleted,
+        no_show: styles.badgeNoShow,
+        pending: styles.badgePending,
+    }[status] || styles.badgePending);
 
-        const badgeStyle =
-            item.status === 'confirmed'
-                ? styles.badgeConfirmed
-                : item.status === 'completed'
-                    ? styles.badgeCompleted
-                    : styles.badgeCancelled;
+    const getStatusLabel = (status) => ({
+        confirmed: 'Đã xác nhận',
+        cancelled: 'Đã huỷ',
+        completed: 'Đã khám xong',
+        no_show: 'Vắng mặt',
+        pending: 'Chờ xác nhận',
+    }[status] || 'Chờ xác nhận');
 
-        const badgeText =
-            item.status === 'confirmed'
-                ? 'Đã xác nhận'
-                : item.status === 'completed'
-                    ? 'Đã khám xong'
-                    : 'Đã huỷ';
+    const renderItem = ({ item }) => (
 
-        return (
+        <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() =>
+                navigation.navigate(
+                    'AppointmentDetail',
+                    {
+                        appointment: item,
+                    }
+                )
+            }
+        >
 
-            <TouchableOpacity
-                activeOpacity={0.85}
-                onPress={() =>
-                    navigation.navigate(
-                        'AppointmentDetail',
-                        {
-                            appointment: item,
-                        }
-                    )
-                }
-            >
+            <View style={styles.card}>
 
-                <View style={styles.card}>
+                {/* HEADER */}
+                <View style={styles.headerRow}>
 
-                    <View style={styles.row}>
+                    <View style={styles.avatar}>
+                        <Text style={styles.avatarText}>
+                            {
+                                (item.patient_name || 'U')[0]
+                                    .toUpperCase()
+                            }
+                        </Text>
+                    </View>
 
-                        <View style={styles.avatar}>
-                            <Text style={styles.avatarText}>
-                                {
-                                    item.patient_name?.[0]
-                                        ?.toUpperCase()
-                                }
-                            </Text>
-                        </View>
+                    <View style={{ flex: 1 }}>
 
-                        <View style={{ flex: 1 }}>
+                        <Text style={styles.name}>
+                            {item.patient_name || 'Unknown Patient'}
+                        </Text>
 
-                            <Text style={styles.name}>
-                                {item.patient_name}
-                            </Text>
-
-                            <Text style={styles.specialty}>
-                                {item.specialty_name}
-                            </Text>
-
-                        </View>
-
-                        <View
-                            style={[
-                                styles.badge,
-                                badgeStyle,
-                            ]}
-                        >
-                            <Text style={styles.badgeText}>
-                                {badgeText}
-                            </Text>
-                        </View>
+                        <Text style={styles.specialty}>
+                            {item.specialty_name}
+                        </Text>
 
                     </View>
 
-                    <View style={styles.infoBox}>
-
-                        <Text style={styles.info}>
-                            📅 {item.work_date}
+                    <View
+                        style={[
+                            styles.badge,
+                            getStatusStyle(item.status),
+                        ]}
+                    >
+                        <Text style={styles.badgeText}>
+                            {getStatusLabel(item.status)}
                         </Text>
-
-                        <Text style={styles.info}>
-                            🕒 {item.appointment_time}
-                        </Text>
-
                     </View>
 
                 </View>
 
-            </TouchableOpacity>
-        );
-    };
+                {/* BODY */}
+                <View style={styles.infoBox}>
+
+                    <Text style={styles.infoText}>
+                        📅 {item.work_date}
+                    </Text>
+
+                    <Text style={styles.infoText}>
+                        🕒 {item.appointment_time}
+                    </Text>
+
+                    <Text style={styles.type}>
+                        {
+                            item.type === 'online'
+                                ? '💻 Khám online'
+                                : '🏥 Khám tại phòng khám'
+                        }
+                    </Text>
+
+                </View>
+
+            </View>
+
+        </TouchableOpacity>
+    );
 
     if (loading) {
 
@@ -201,6 +204,7 @@ const AppointmentScreen = ({ navigation }) => {
 
         <View style={styles.container}>
 
+            {/* FILTER */}
             <View style={styles.filterRow}>
 
                 {FILTERS.map(f => (
@@ -228,6 +232,7 @@ const AppointmentScreen = ({ navigation }) => {
                         </Text>
 
                     </TouchableOpacity>
+
                 ))}
 
             </View>
@@ -243,6 +248,14 @@ const AppointmentScreen = ({ navigation }) => {
                         refreshing={refreshing}
                         onRefresh={onRefresh}
                     />
+                }
+                showsVerticalScrollIndicator={false}
+                ListEmptyComponent={
+                    <View style={styles.emptyBox}>
+                        <Text style={styles.emptyText}>
+                            Không có lịch khám
+                        </Text>
+                    </View>
                 }
             />
 
@@ -260,16 +273,17 @@ const styles = StyleSheet.create({
         padding: 12,
     },
 
+    // FILTER
     filterRow: {
         flexDirection: 'row',
-        marginBottom: 12,
+        marginBottom: 14,
         gap: 8,
     },
 
     filterBtn: {
         flex: 1,
         backgroundColor: '#E5E7EB',
-        paddingVertical: 8,
+        paddingVertical: 9,
         borderRadius: 20,
         alignItems: 'center',
     },
@@ -288,17 +302,28 @@ const styles = StyleSheet.create({
         color: '#fff',
     },
 
+    // CARD
     card: {
         backgroundColor: '#fff',
         borderRadius: 16,
         padding: 14,
         marginBottom: 12,
+
+        shadowColor: '#000',
+        shadowOpacity: 0.05,
+        shadowRadius: 10,
+        shadowOffset: {
+            width: 0,
+            height: 4,
+        },
+
         elevation: 2,
     },
 
-    row: {
+    headerRow: {
         flexDirection: 'row',
         alignItems: 'center',
+        marginBottom: 10,
     },
 
     avatar: {
@@ -314,6 +339,7 @@ const styles = StyleSheet.create({
     avatarText: {
         fontWeight: 'bold',
         color: '#2F6FED',
+        fontSize: 16,
     },
 
     name: {
@@ -325,8 +351,10 @@ const styles = StyleSheet.create({
     specialty: {
         color: '#666',
         marginTop: 2,
+        fontSize: 13,
     },
 
+    // BADGE
     badge: {
         paddingHorizontal: 10,
         paddingVertical: 4,
@@ -344,22 +372,51 @@ const styles = StyleSheet.create({
     },
 
     badgeCompleted: {
-        backgroundColor: '#3B82F6',
+        backgroundColor: '#2196F3',
     },
 
     badgeCancelled: {
         backgroundColor: '#EF4444',
     },
 
+    badgePending: {
+        backgroundColor: '#F59E0B',
+    },
+
+    badgeNoShow: {
+        backgroundColor: '#6B7280',
+    },
+
+    // INFO
     infoBox: {
-        marginTop: 10,
+        marginTop: 4,
         gap: 4,
     },
 
-    info: {
+    infoText: {
+        fontSize: 13,
         color: '#333',
     },
 
+    type: {
+        fontSize: 13,
+        marginTop: 4,
+        color: '#2F6FED',
+        fontWeight: '600',
+    },
+
+    // EMPTY
+    emptyBox: {
+        marginTop: 80,
+        alignItems: 'center',
+    },
+
+    emptyText: {
+        color: '#888',
+        fontSize: 14,
+    },
+
+    // LOADING
     center: {
         flex: 1,
         justifyContent: 'center',

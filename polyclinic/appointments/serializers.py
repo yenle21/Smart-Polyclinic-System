@@ -22,8 +22,14 @@ class ScheduleSerializer(serializers.ModelSerializer):
 class AppointmentSerializer(serializers.ModelSerializer):
     doctor_name    = serializers.CharField(source='schedule.doctor.user.get_full_name', read_only=True)
     specialty_name = serializers.CharField(source='schedule.doctor.specialty.name', read_only=True)
-    work_date      = serializers.DateField(source='schedule.work_date', read_only=True)
-    patient_name   = serializers.SerializerMethodField()
+    work_date     = serializers.DateField(source='schedule.work_date', read_only=True)
+    patient_name = serializers.SerializerMethodField()
+    patient_id = serializers.IntegerField(source='patient.user.id', read_only=True)
+
+    class Meta:
+        model = Appointment
+        fields = '__all__'
+
 
     class Meta:
         model  = Appointment
@@ -31,7 +37,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
             'id', 'doctor_name', 'specialty_name', 'work_date', 'patient_name',
             'appointment_time', 'type', 'status',
             'reason', 'notes', 'cancel_reason',
-            'created_date', 'updated_date'
+            'created_date', 'updated_date', 'patient_id'
         ]
         read_only_fields = ['status', 'cancel_reason', 'created_date', 'updated_date']
 
