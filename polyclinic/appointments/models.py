@@ -93,7 +93,11 @@ class MedicalRecord(BaseModel): #Hồ sơ bệnh án, tạo sau khi khám xong
     treatment    = models.TextField(null=True, blank=True)  # Hướng điều trị
     notes        = models.TextField(null=True, blank=True)  # Ghi chú thêm của bác sĩ
     follow_up    = models.DateField(null=True, blank=True)  # Ngày tái khám (nếu có)
-
+    symptoms = models.TextField(blank=True, null=True)
+    blood_pressure = models.CharField(max_length=20, blank=True, null=True)
+    temperature = models.CharField(max_length=10, blank=True, null=True)
+    height = models.CharField(max_length=10, blank=True, null=True)
+    weight = models.CharField(max_length=10, blank=True, null=True)
     def __str__(self):
         return f"Hồ sơ: {self.appointment}"
 

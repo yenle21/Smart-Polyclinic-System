@@ -1,163 +1,997 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
-import { Card, Button, Divider } from 'react-native-paper';
-import { authApis, endpoints } from '../../configs/Apis';
+// AppointmentDetailScreenDoctor.js
 
-const AppointmentDetailScreenDoctor = ({ route, navigation }) => {
+import React, { useState } from 'react';
+import {
+    ScrollView,
+    Text,
+    StyleSheet,
+    Alert,
+    View,
+    TouchableOpacity,
+    Image,
+    Modal,
+    FlatList,
+} from 'react-native';
+
+import {
+    Card,
+    Divider,
+    Button,
+    TextInput,
+} from 'react-native-paper';
+
+import * as ImagePicker from 'expo-image-picker';
+
+import {
+    authApis,
+    endpoints,
+} from '../../configs/Apis';
+
+
+// ─────────────────────────────────────────────────────────────
+// TEST TYPES
+// ─────────────────────────────────────────────────────────────
+const TEST_TYPES = [
+    { label: 'Xét nghiệm máu', value: 'blood' },
+    { label: 'Xét nghiệm nước tiểu', value: 'urine' },
+    { label: 'Xét nghiệm vi sinh', value: 'microbiology' },
+    { label: 'Siêu âm', value: 'ultrasound' },
+    { label: 'X-quang', value: 'xray' },
+    { label: 'CT Scan', value: 'ct_scan' },
+    { label: 'MRI', value: 'mri' },
+    { label: 'Nội soi', value: 'endoscopy' },
+    { label: 'Điện tâm đồ (ECG)', value: 'ecg' },
+    { label: 'Xét nghiệm sinh hóa', value: 'biochemistry' },
+    { label: 'Xét nghiệm miễn dịch', value: 'immunology' },
+    { label: 'Khác', value: 'other' },
+];
+
+
+// ─────────────────────────────────────────────────────────────
+// TYPE SELECTOR
+// ─────────────────────────────────────────────────────────────
+const TestTypeSelector = ({ value, onSelect }) => {
+
+    const [visible, setVisible] = useState(false);
+
+    const selectedLabel =
+        TEST_TYPES.find(t => t.value === value)?.label || '';
+
+    return (
+        <>
+            <TouchableOpacity
+                style={styles.selectorBtn}
+                onPress={() => setVisible(true)}
+            >
+                <Text
+                    style={
+                        value
+                            ? styles.selectorText
+                            : styles.selectorPlaceholder
+                    }
+                >
+                    {selectedLabel || '-- Chọn loại xét nghiệm --'}
+                </Text>
+
+                <Text style={styles.selectorArrow}>▼</Text>
+            </TouchableOpacity>
+
+            <Modal
+                visible={visible}
+                animationType="slide"
+                transparent
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContainer}>
+
+                        <View style={styles.modalHeader}>
+
+                            <Text style={styles.modalTitle}>
+                                Loại xét nghiệm
+                            </Text>
+
+                            <TouchableOpacity
+                                onPress={() => setVisible(false)}
+                            >
+                                <Text style={styles.modalClose}>
+                                    ✕ Đóng
+                                </Text>
+                            </TouchableOpacity>
+
+                        </View>
+
+                        <FlatList
+                            data={TEST_TYPES}
+                            keyExtractor={(item) => item.value}
+                            renderItem={({ item }) => {
+
+                                const isSelected =
+                                    value === item.value;
+
+                                return (
+                                    <TouchableOpacity
+                                        style={[
+                                            styles.typeItem,
+                                            isSelected &&
+                                            styles.typeItemSelected,
+                                        ]}
+                                        onPress={() => {
+                                            onSelect(item.value);
+                                            setVisible(false);
+                                        }}
+                                    >
+                                        <Text
+                                            style={[
+                                                styles.typeItemText,
+                                                isSelected &&
+                                                styles.typeItemTextSelected,
+                                            ]}
+                                        >
+                                            {item.label}
+                                        </Text>
+
+                                        {isSelected && (
+                                            <Text style={styles.checkmark}>
+                                                ✓
+                                            </Text>
+                                        )}
+                                    </TouchableOpacity>
+                                );
+                            }}
+                            ItemSeparatorComponent={() => (
+                                <View style={styles.separator} />
+                            )}
+                        />
+
+                    </View>
+                </View>
+            </Modal>
+        </>
+    );
+};
+
+
+// ─────────────────────────────────────────────────────────────
+// MAIN SCREEN
+// ─────────────────────────────────────────────────────────────
+const AppointmentDetailScreenDoctor = ({
+    route,
+    navigation,
+}) => {
 
     const { appointment } = route.params;
 
-    // =========================
-    // CONFIRM APPOINTMENT
-    // =========================
-    const handleConfirm = async () => {
-        try {
-            const api = await authApis();
+    const [loading, setLoading] = useState(false);
+    const [loadingPrescription, setLoadingPrescription] = useState(false);
 
-            await api.patch(
-                endpoints['appointment-detail'](appointment.id),
-                { status: 'confirmed' }
-            );
+    const [symptoms, setSymptoms] = useState('');
+    const [diagnosis, setDiagnosis] = useState('');
+    const [treatment, setTreatment] = useState('');
+    const [notes, setNotes] = useState('');
 
-            Alert.alert('Thành công', 'Đã xác nhận lịch khám');
+    const [bloodPressure, setBloodPressure] = useState('');
+    const [temperature, setTemperature] = useState('');
+    const [height, setHeight] = useState('');
+    const [weight, setWeight] = useState('');
 
-            navigation.goBack();
-
-        } catch (err) {
-            console.log(err.response?.data || err);
-            Alert.alert('Lỗi', 'Không thể xác nhận');
+    const [testResults, setTestResults] = useState([
+        {
+            type: '',
+            name: '',
+            result: '',
+            imageUri: null,
         }
-    };
+    ]);
 
-    // =========================
-    // CANCEL APPOINTMENT
-    // =========================
-    const handleCancel = async () => {
-        try {
-            const api = await authApis();
-
-            await api.patch(
-                endpoints['appointment-detail'](appointment.id),
-                { status: 'cancelled' }
-            );
-
-            Alert.alert('Thành công', 'Đã huỷ lịch khám');
-
-            navigation.goBack();
-
-        } catch (err) {
-            console.log(err.response?.data || err);
-            Alert.alert('Lỗi', 'Không thể huỷ');
-        }
-    };
-
+    // ─────────────────────────────────────────
+    // STATUS
+    // ─────────────────────────────────────────
     const statusColor =
         appointment.status === 'confirmed'
             ? '#22C55E'
             : appointment.status === 'cancelled'
                 ? '#EF4444'
-                : '#F59E0B';
+                : appointment.status === 'completed'
+                    ? '#3B82F6'
+                    : '#F59E0B';
 
     const statusLabel =
         appointment.status === 'confirmed'
             ? 'Đã xác nhận'
             : appointment.status === 'cancelled'
                 ? 'Đã huỷ'
-                : 'Chờ xác nhận';
+                : appointment.status === 'completed'
+                    ? 'Đã khám xong'
+                    : 'Chờ xác nhận';
+
+    // ─────────────────────────────────────────
+    // UPDATE TEST
+    // ─────────────────────────────────────────
+    const updateTestResult = (index, field, value) => {
+
+        setTestResults(prev => {
+
+            const next = [...prev];
+
+            next[index] = {
+                ...next[index],
+                [field]: value,
+            };
+
+            return next;
+        });
+    };
+
+    const addTestResult = () => {
+        setTestResults(prev => [
+            ...prev,
+            {
+                type: '',
+                name: '',
+                result: '',
+                imageUri: null,
+            }
+        ]);
+    };
+
+    const removeTestResult = (index) => {
+
+        if (testResults.length === 1)
+            return;
+
+        setTestResults(prev =>
+            prev.filter((_, i) => i !== index)
+        );
+    };
+
+    // ─────────────────────────────────────────
+    // PICK IMAGE
+    // ─────────────────────────────────────────
+    const pickImage = async (index) => {
+
+        Alert.alert(
+            'Chọn ảnh',
+            'Bạn muốn chọn ảnh bằng cách nào?',
+            [
+                {
+                    text: '📷 Camera',
+                    onPress: async () => {
+
+                        const permission =
+                            await ImagePicker.requestCameraPermissionsAsync();
+
+                        if (!permission.granted) {
+                            Alert.alert(
+                                'Lỗi',
+                                'Cần cấp quyền camera'
+                            );
+                            return;
+                        }
+
+                        const result =
+                            await ImagePicker.launchCameraAsync({
+                                mediaTypes:
+                                    ImagePicker.MediaTypeOptions.Images,
+                                quality: 0.8,
+                            });
+
+                        if (!result.canceled) {
+                            updateTestResult(
+                                index,
+                                'imageUri',
+                                result.assets[0].uri
+                            );
+                        }
+                    }
+                },
+                {
+                    text: '🖼️ Thư viện',
+                    onPress: async () => {
+
+                        const permission =
+                            await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+                        if (!permission.granted) {
+                            Alert.alert(
+                                'Lỗi',
+                                'Cần cấp quyền thư viện'
+                            );
+                            return;
+                        }
+
+                        const result =
+                            await ImagePicker.launchImageLibraryAsync({
+                                mediaTypes:
+                                    ImagePicker.MediaTypeOptions.Images,
+                                quality: 0.8,
+                            });
+
+                        if (!result.canceled) {
+                            updateTestResult(
+                                index,
+                                'imageUri',
+                                result.assets[0].uri
+                            );
+                        }
+                    }
+                },
+                {
+                    text: 'Huỷ',
+                    style: 'cancel',
+                }
+            ]
+        );
+    };
+
+    // ─────────────────────────────────────────
+    // GET OR CREATE RECORD
+    // ─────────────────────────────────────────
+    const getOrCreateMedicalRecord = async (api) => {
+
+        const payload = {
+            symptoms,
+            diagnosis,
+            treatment,
+            notes,
+            blood_pressure: bloodPressure,
+            temperature,
+            height,
+            weight,
+        };
+
+        try {
+
+            const existingRes = await api.get(
+                endpoints['medical-records'],
+                {
+                    params: {
+                        appointment_id: appointment.id
+                    }
+                }
+            );
+
+            const existingData =
+                Array.isArray(existingRes.data)
+                    ? existingRes.data
+                    : existingRes.data.results || [];
+
+            if (existingData.length > 0) {
+
+                const recordId =
+                    existingData[0].id;
+
+                await api.patch(
+                    endpoints['update-medical-record'](recordId),
+                    payload
+                );
+
+                return recordId;
+            }
+
+        } catch (err) {
+
+            console.log(
+                'GET medical record error:',
+                err.response?.data || err
+            );
+        }
+
+        const createRes = await api.post(
+            '/medical-records/create-record/',
+            {
+                appointment: appointment.id,
+                ...payload,
+            }
+        );
+
+        return createRes.data.id;
+    };
+
+    // ─────────────────────────────────────────
+    // GO PRESCRIPTION
+    // ─────────────────────────────────────────
+    const goToPrescription = async () => {
+
+        try {
+
+            setLoadingPrescription(true);
+
+            const api = await authApis();
+
+            const recordId =
+                await getOrCreateMedicalRecord(api);
+
+            navigation.navigate(
+                'Prescription',
+                { recordId }
+            );
+
+        } catch (err) {
+
+            Alert.alert(
+                'Lỗi',
+                'Không thể mở màn hình kê đơn'
+            );
+
+        } finally {
+            setLoadingPrescription(false);
+        }
+    };
+
+    // ─────────────────────────────────────────
+    // COMPLETE APPOINTMENT
+    // ─────────────────────────────────────────
+    const completeAppointment = async () => {
+
+        try {
+
+            setLoading(true);
+
+            const api =
+                await authApis();
+
+            const recordId =
+                await getOrCreateMedicalRecord(api);
+
+            const validTests =
+                testResults.filter(
+                    t =>
+                        t.name.trim() &&
+                        t.result.trim()
+                );
+
+            for (const test of validTests) {
+
+                if (test.imageUri) {
+
+                    const formData =
+                        new FormData();
+
+                    formData.append(
+                        'name',
+                        test.name
+                    );
+
+                    formData.append(
+                        'result',
+                        test.result
+                    );
+
+                    formData.append(
+                        'type',
+                        test.type
+                    );
+
+                    const filename =
+                        test.imageUri
+                            .split('/')
+                            .pop();
+
+                    formData.append(
+                        'file',
+                        {
+                            uri: test.imageUri,
+                            name: filename,
+                            type: 'image/jpeg',
+                        }
+                    );
+
+                    await api.post(
+                        endpoints['test-results'](recordId),
+                        formData,
+                        {
+                            headers: {
+                                'Content-Type':
+                                    'multipart/form-data'
+                            }
+                        }
+                    );
+
+                } else {
+
+                    await api.post(
+                        endpoints['test-results'](recordId),
+                        {
+                            name: test.name,
+                            result: test.result,
+                            type: test.type,
+                        }
+                    );
+                }
+            }
+
+            await api.patch(
+                endpoints['complete-appointment'](
+                    appointment.id
+                )
+            );
+
+            Alert.alert(
+                'Thành công',
+                'Đã hoàn tất khám'
+            );
+
+            navigation.goBack();
+
+        } catch (err) {
+
+            console.log(
+                err.response?.data || err
+            );
+
+            Alert.alert(
+                'Lỗi',
+                'Không thể hoàn tất khám'
+            );
+
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // ─────────────────────────────────────────
+    // VIEW RECORD
+    // ─────────────────────────────────────────
+    const viewMedicalRecord = async () => {
+
+        try {
+
+            setLoading(true);
+
+            const api = await authApis();
+
+            const res = await api.get(
+                endpoints['medical-records'],
+                {
+                    params: {
+                        appointment_id:
+                            appointment.id
+                    }
+                }
+            );
+
+            const data =
+                Array.isArray(res.data)
+                    ? res.data
+                    : res.data.results || [];
+
+            if (data.length > 0) {
+
+                navigation.navigate(
+                    'MedicalTab',
+                    {
+                        screen:
+                            'MedicalRecordDetailTab',
+                        params: {
+                            record: data[0]
+                        }
+                    }
+                );
+
+            } else {
+
+                Alert.alert(
+                    'Thông báo',
+                    'Không tìm thấy hồ sơ'
+                );
+            }
+
+        } catch (err) {
+
+            Alert.alert(
+                'Lỗi',
+                'Không thể tải hồ sơ'
+            );
+
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <ScrollView style={styles.container}>
 
-            {/* ================= HEADER ================= */}
             <Card style={styles.card}>
+
                 <Card.Title title="Chi tiết lịch khám" />
+
                 <Card.Content>
 
-                    <Text style={styles.label}>Bệnh nhân</Text>
-                    <Text style={styles.value}>{appointment.patient_name}</Text>
+                    {/* PATIENT INFO */}
 
-                    <Divider style={styles.divider} />
+                    <Text style={styles.label}>
+                        Bệnh nhân
+                    </Text>
 
-                    <Text style={styles.label}>Bác sĩ</Text>
-                    <Text style={styles.value}>{appointment.doctor_name}</Text>
-
-                    <Divider style={styles.divider} />
-
-                    <Text style={styles.label}>Chuyên khoa</Text>
-                    <Text style={styles.value}>{appointment.specialty_name}</Text>
-
-                    <Divider style={styles.divider} />
-
-                    <Text style={styles.label}>Ngày khám</Text>
-                    <Text style={styles.value}>{appointment.work_date}</Text>
-
-                    <Divider style={styles.divider} />
-
-                    <Text style={styles.label}>Giờ khám</Text>
-                    <Text style={styles.value}>{appointment.appointment_time}</Text>
-
-                    <Divider style={styles.divider} />
-
-                    <Text style={styles.label}>Hình thức</Text>
                     <Text style={styles.value}>
-                        {appointment.type === 'online'
-                            ? 'Khám online'
-                            : 'Khám tại phòng khám'}
+                        {appointment.patient_name}
                     </Text>
 
                     <Divider style={styles.divider} />
 
-                    <Text style={styles.label}>Trạng thái</Text>
-                    <Text style={[styles.value, { color: statusColor, fontWeight: '700' }]}>
+                    <Text style={styles.label}>
+                        Bác sĩ
+                    </Text>
+
+                    <Text style={styles.value}>
+                        {appointment.doctor_name}
+                    </Text>
+
+                    <Divider style={styles.divider} />
+
+                    <Text style={styles.label}>
+                        Chuyên khoa
+                    </Text>
+
+                    <Text style={styles.value}>
+                        {appointment.specialty_name}
+                    </Text>
+
+                    <Divider style={styles.divider} />
+
+                    <Text style={styles.label}>
+                        Ngày khám
+                    </Text>
+
+                    <Text style={styles.value}>
+                        {appointment.work_date}
+                    </Text>
+
+                    <Divider style={styles.divider} />
+
+                    <Text style={styles.label}>
+                        Giờ khám
+                    </Text>
+
+                    <Text style={styles.value}>
+                        {appointment.appointment_time}
+                    </Text>
+
+                    <Divider style={styles.divider} />
+
+                    <Text style={styles.label}>
+                        Trạng thái
+                    </Text>
+
+                    <Text
+                        style={[
+                            styles.value,
+                            {
+                                color: statusColor,
+                                fontWeight: '700',
+                            }
+                        ]}
+                    >
                         {statusLabel}
                     </Text>
 
-                </Card.Content>
-            </Card>
+                    {/* CONFIRMED */}
 
-            {/* ================= ACTION ================= */}
-            <View style={styles.actions}>
+                    {appointment.status === 'confirmed' && (
+                        <>
 
-                {appointment.status === 'pending' && (
-                    <>
+                            <Divider
+                                style={
+                                    styles.sectionDivider
+                                }
+                            />
+
+                            <Text
+                                style={
+                                    styles.sectionTitle
+                                }
+                            >
+                                🩺 Thông tin bệnh án
+                            </Text>
+
+                            <TextInput
+                                label="Triệu chứng"
+                                mode="outlined"
+                                multiline
+                                value={symptoms}
+                                onChangeText={setSymptoms}
+                                style={styles.input}
+                            />
+
+                            <TextInput
+                                label="Chẩn đoán"
+                                mode="outlined"
+                                multiline
+                                value={diagnosis}
+                                onChangeText={setDiagnosis}
+                                style={styles.input}
+                            />
+
+                            <TextInput
+                                label="Điều trị"
+                                mode="outlined"
+                                multiline
+                                value={treatment}
+                                onChangeText={setTreatment}
+                                style={styles.input}
+                            />
+
+                            <TextInput
+                                label="Ghi chú"
+                                mode="outlined"
+                                multiline
+                                value={notes}
+                                onChangeText={setNotes}
+                                style={styles.input}
+                            />
+
+                            {/* RESULT */}
+
+                            <Text
+                                style={
+                                    styles.sectionTitle
+                                }
+                            >
+                                📋 Kết quả khám
+                            </Text>
+
+                            <View style={styles.row}>
+
+                                <TextInput
+                                    label="Huyết áp"
+                                    mode="outlined"
+                                    value={bloodPressure}
+                                    onChangeText={
+                                        setBloodPressure
+                                    }
+                                    style={[
+                                        styles.input,
+                                        styles.halfInput,
+                                    ]}
+                                />
+
+                                <TextInput
+                                    label="Nhiệt độ"
+                                    mode="outlined"
+                                    value={temperature}
+                                    onChangeText={
+                                        setTemperature
+                                    }
+                                    style={[
+                                        styles.input,
+                                        styles.halfInput,
+                                    ]}
+                                />
+
+                            </View>
+
+                            <View style={styles.row}>
+
+                                <TextInput
+                                    label="Chiều cao"
+                                    mode="outlined"
+                                    value={height}
+                                    onChangeText={setHeight}
+                                    style={[
+                                        styles.input,
+                                        styles.halfInput,
+                                    ]}
+                                />
+
+                                <TextInput
+                                    label="Cân nặng"
+                                    mode="outlined"
+                                    value={weight}
+                                    onChangeText={setWeight}
+                                    style={[
+                                        styles.input,
+                                        styles.halfInput,
+                                    ]}
+                                />
+
+                            </View>
+
+                            {/* TEST */}
+
+                            <Text
+                                style={
+                                    styles.sectionTitle
+                                }
+                            >
+                                🔬 Kết quả xét nghiệm
+                            </Text>
+
+                            {testResults.map(
+                                (test, index) => (
+
+                                    <View
+                                        key={index}
+                                        style={
+                                            styles.testCard
+                                        }
+                                    >
+
+                                        <View
+                                            style={
+                                                styles.itemHeader
+                                            }
+                                        >
+
+                                            <Text
+                                                style={
+                                                    styles.itemTitle
+                                                }
+                                            >
+                                                Xét nghiệm #{index + 1}
+                                            </Text>
+
+                                            {testResults.length > 1 && (
+                                                <TouchableOpacity
+                                                    style={
+                                                        styles.removeBtn
+                                                    }
+                                                    onPress={() =>
+                                                        removeTestResult(index)
+                                                    }
+                                                >
+                                                    <Text
+                                                        style={
+                                                            styles.removeBtnText
+                                                        }
+                                                    >
+                                                        ✕ Xoá
+                                                    </Text>
+                                                </TouchableOpacity>
+                                            )}
+                                        </View>
+
+                                        <Text
+                                            style={
+                                                styles.fieldLabel
+                                            }
+                                        >
+                                            Loại xét nghiệm
+                                        </Text>
+
+                                        <TestTypeSelector
+                                            value={test.type}
+                                            onSelect={(v) =>
+                                                updateTestResult(
+                                                    index,
+                                                    'type',
+                                                    v
+                                                )
+                                            }
+                                        />
+
+                                        <TextInput
+                                            label="Tên xét nghiệm"
+                                            mode="outlined"
+                                            value={test.name}
+                                            onChangeText={(v) =>
+                                                updateTestResult(
+                                                    index,
+                                                    'name',
+                                                    v
+                                                )
+                                            }
+                                            style={styles.input}
+                                        />
+
+                                        <TextInput
+                                            label="Kết quả"
+                                            mode="outlined"
+                                            multiline
+                                            value={test.result}
+                                            onChangeText={(v) =>
+                                                updateTestResult(
+                                                    index,
+                                                    'result',
+                                                    v
+                                                )
+                                            }
+                                            style={styles.input}
+                                        />
+
+                                        <TouchableOpacity
+                                            style={
+                                                styles.imagePickerBtn
+                                            }
+                                            onPress={() =>
+                                                pickImage(index)
+                                            }
+                                        >
+                                            <Text
+                                                style={
+                                                    styles.imagePickerText
+                                                }
+                                            >
+                                                {test.imageUri
+                                                    ? '✏️ Đổi ảnh'
+                                                    : '📎 Đính kèm ảnh'}
+                                            </Text>
+                                        </TouchableOpacity>
+
+                                        {test.imageUri && (
+                                            <Image
+                                                source={{
+                                                    uri:
+                                                        test.imageUri
+                                                }}
+                                                style={
+                                                    styles.imagePreview
+                                                }
+                                            />
+                                        )}
+
+                                    </View>
+                                )
+                            )}
+
+                            <TouchableOpacity
+                                style={styles.addBtn}
+                                onPress={addTestResult}
+                            >
+                                <Text
+                                    style={
+                                        styles.addBtnText
+                                    }
+                                >
+                                    ＋ Thêm xét nghiệm
+                                </Text>
+                            </TouchableOpacity>
+
+                            {/* PRESCRIPTION */}
+
+                            <Button
+                                mode="outlined"
+                                icon="pill"
+                                style={
+                                    styles.prescriptionBtn
+                                }
+                                loading={
+                                    loadingPrescription
+                                }
+                                onPress={
+                                    goToPrescription
+                                }
+                            >
+                                Kê đơn thuốc
+                            </Button>
+
+                            <Button
+                                mode="contained"
+                                style={styles.button}
+                                loading={loading}
+                                onPress={
+                                    completeAppointment
+                                }
+                            >
+                                Hoàn tất khám
+                            </Button>
+
+                        </>
+                    )}
+
+                    {/* COMPLETED */}
+
+                    {appointment.status === 'completed' && (
                         <Button
                             mode="contained"
-                            onPress={handleConfirm}
-                            style={{ marginBottom: 10 }}
+                            style={styles.button}
+                            onPress={viewMedicalRecord}
                         >
-                            Xác nhận lịch
+                            Xem hồ sơ bệnh án
                         </Button>
+                    )}
 
-                        <Button
-                            mode="outlined"
-                            textColor="red"
-                            onPress={handleCancel}
-                        >
-                            Huỷ lịch
-                        </Button>
-                    </>
-                )}
-
-                {appointment.status === 'confirmed' && (
-                    <Button mode="outlined" disabled>
-                        Đã xác nhận
-                    </Button>
-                )}
-
-                {appointment.status === 'cancelled' && (
-                    <Button mode="outlined" textColor="red" disabled>
-                        Đã huỷ
-                    </Button>
-                )}
-
-            </View>
-
+                </Card.Content>
+            </Card>
         </ScrollView>
     );
 };
 
 export default AppointmentDetailScreenDoctor;
 
+
+// ─────────────────────────────────────────────────────────────
+// STYLES
+// ─────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
 
     container: {
@@ -168,6 +1002,7 @@ const styles = StyleSheet.create({
 
     card: {
         borderRadius: 16,
+        paddingBottom: 12,
     },
 
     label: {
@@ -186,7 +1021,219 @@ const styles = StyleSheet.create({
         marginVertical: 6,
     },
 
-    actions: {
-        marginTop: 15,
+    sectionDivider: {
+        marginVertical: 20,
+    },
+
+    sectionTitle: {
+        fontSize: 17,
+        fontWeight: '700',
+        color: '#111',
+        marginBottom: 14,
+        marginTop: 6,
+    },
+
+    input: {
+        marginBottom: 14,
+        backgroundColor: '#fff',
+    },
+
+    row: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        gap: 10,
+    },
+
+    halfInput: {
+        flex: 1,
+    },
+
+    prescriptionBtn: {
+        marginBottom: 16,
+        borderRadius: 10,
+    },
+
+    button: {
+        marginTop: 4,
+        borderRadius: 10,
+        paddingVertical: 5,
+    },
+
+    testCard: {
+        borderWidth: 1,
+        borderColor: '#E0E7FF',
+        borderRadius: 12,
+        padding: 12,
+        marginBottom: 12,
+        backgroundColor: '#F8F9FF',
+    },
+
+    itemHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 8,
+    },
+
+    itemTitle: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: '#3949AB',
+    },
+
+    removeBtn: {
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        backgroundColor: '#FFEBEE',
+        borderRadius: 8,
+    },
+
+    removeBtnText: {
+        color: '#C62828',
+        fontSize: 13,
+        fontWeight: '600',
+    },
+
+    addBtn: {
+        borderWidth: 1.5,
+        borderColor: '#3949AB',
+        borderStyle: 'dashed',
+        borderRadius: 10,
+        paddingVertical: 12,
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+
+    addBtnText: {
+        color: '#3949AB',
+        fontWeight: '700',
+        fontSize: 15,
+    },
+
+    selectorBtn: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#DDD',
+        borderRadius: 10,
+        backgroundColor: '#FFF',
+        paddingHorizontal: 14,
+        paddingVertical: 14,
+        marginBottom: 12,
+    },
+
+    selectorText: {
+        fontSize: 15,
+        color: '#111',
+        flex: 1,
+    },
+
+    selectorPlaceholder: {
+        fontSize: 15,
+        color: '#999',
+        flex: 1,
+    },
+
+    selectorArrow: {
+        fontSize: 12,
+        color: '#666',
+    },
+
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.45)',
+        justifyContent: 'flex-end',
+    },
+
+    modalContainer: {
+        backgroundColor: '#FFF',
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        padding: 16,
+        maxHeight: '70%',
+    },
+
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#111',
+    },
+
+    modalClose: {
+        fontSize: 14,
+        color: '#E53935',
+        fontWeight: '600',
+    },
+
+    typeItem: {
+        paddingVertical: 14,
+        paddingHorizontal: 12,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+
+    typeItemSelected: {
+        backgroundColor: '#E8EAF6',
+        borderRadius: 8,
+    },
+
+    typeItemText: {
+        fontSize: 15,
+        color: '#111',
+    },
+
+    typeItemTextSelected: {
+        color: '#3949AB',
+        fontWeight: '600',
+    },
+
+    checkmark: {
+        color: '#3949AB',
+        fontSize: 16,
+        fontWeight: '700',
+    },
+
+    separator: {
+        height: 1,
+        backgroundColor: '#F0F0F0',
+    },
+
+    imagePickerBtn: {
+        borderWidth: 1.5,
+        borderColor: '#3949AB',
+        borderRadius: 10,
+        paddingVertical: 10,
+        alignItems: 'center',
+        marginBottom: 10,
+    },
+
+    imagePickerText: {
+        color: '#3949AB',
+        fontWeight: '600',
+        fontSize: 14,
+    },
+
+    imagePreview: {
+        width: '100%',
+        height: 180,
+        borderRadius: 10,
+        marginTop: 8,
+    },
+
+    fieldLabel: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#333',
+        marginBottom: 6,
+        marginTop: 6,
     },
 });
