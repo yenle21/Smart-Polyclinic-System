@@ -1,8 +1,9 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, FlatList, StyleSheet, RefreshControl } from 'react-native';
 import { Card, Text, Chip, Button } from 'react-native-paper';
 import { authApis, endpoints } from '../../configs/Apis';
 import COLORS from '../../styles/colors';
+import { useFocusEffect } from '@react-navigation/native';
 
 const formatMoney = (amount) =>
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
@@ -11,7 +12,7 @@ export default function InvoiceListScreen({ navigation }) {
     const [invoices,   setInvoices]   = useState([]);
     const [refreshing, setRefreshing] = useState(false);
 
-    const fetchInvoices = useCallback(async () => {
+    const fetchInvoices = async () => {
         try {
             const api = await authApis();
             const res = await api.get(endpoints['invoices']);
@@ -21,9 +22,13 @@ export default function InvoiceListScreen({ navigation }) {
         } finally {
             setRefreshing(false);
         }
-    }, []);
+    };
 
-    useEffect(() => { fetchInvoices(); }, [fetchInvoices]);
+    useFocusEffect(
+        useCallback(() => {
+            fetchInvoices();
+        }, [])
+    );
 
     const handlePay = async (id) => {
         try {
@@ -32,7 +37,7 @@ export default function InvoiceListScreen({ navigation }) {
             fetchInvoices();
         } catch (err) { console.error(err); }
     };
-
+    
     const renderItem = ({ item }) => (
         <Card style={styles.card}
               onPress={() => navigation.navigate('InvoiceDetail', { id: item.id })}>

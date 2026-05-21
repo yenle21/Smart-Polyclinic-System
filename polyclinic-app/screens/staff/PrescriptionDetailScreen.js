@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, Card, Chip, Button, Divider } from 'react-native-paper';
 import { authApis, endpoints } from '../../configs/Apis';
 import COLORS from '../../styles/colors';
+import { useFocusEffect } from '@react-navigation/native';
 
 const formatMoney = (amount) =>
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
@@ -11,24 +12,41 @@ const formatDate = (dateStr) =>
     new Date(dateStr).toLocaleDateString('vi-VN');
 
 export default function PrescriptionDetailScreen({ route, navigation }) {
-    const { prescription: initial, onDispense } = route.params;
-    const [prescription, setPrescription] = useState(initial);
-    const [loading,      setLoading]      = useState(false);
+    const { id } = route.params;  // ← đổi prescription thành id
+    const [prescription, setPrescription] = useState(null);
+    const [loading, setLoading] = useState(false);
+
+    useFocusEffect(
+        useCallback(() => {
+            const fetch = async () => {
+                try {
+                    const api = await authApis();
+                    const res = await api.get(`${endpoints['prescriptions']}${id}/`);
+                    setPrescription(res.data);
+                } catch (err) {
+                    console.error('fetch error:', err.response?.status, err.config?.url);
+                }
+            };
+            fetch();
+        }, [id])
+    );
 
     const handleDispense = async () => {
         try {
             setLoading(true);
             const api = await authApis();
-            const res = await api.post(endpoints['dispense'](prescription.id));
-            setPrescription(res.data);
-            if (onDispense) onDispense();
+            await api.post(endpoints['dispense'](id));  // ← dùng id trực tiếp
+            navigation.replace('PrescriptionList');
         } catch (err) {
-            console.error('dispense error:', err.response?.data);
+            console.error('dispense error:', err.response?.status, err.response?.data);
         } finally {
             setLoading(false);
         }
     };
 
+    if (!prescription) return (
+        <View style={styles.center}><Text>Đang tải...</Text></View>
+    );
     return (
         <ScrollView style={styles.container}>
             <Card style={styles.card}>
