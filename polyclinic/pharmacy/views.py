@@ -10,10 +10,6 @@ from . import serializers
 
 
 class CategoryViewSet(viewsets.ViewSet, generics.ListCreateAPIView):
-    """
-    GET  /api/pharmacy/categories/    → danh sách
-    POST /api/pharmacy/categories/    → tạo mới
-    """
     queryset         = Category.objects.all()
     serializer_class = serializers.CategorySerializer
 
@@ -28,15 +24,14 @@ class CategoryViewSet(viewsets.ViewSet, generics.ListCreateAPIView):
 class MedicineViewSet(viewsets.ViewSet,
                       generics.ListCreateAPIView,
                       generics.RetrieveUpdateDestroyAPIView):
-    """
-    GET    /api/pharmacy/medicines/           → danh sách + tìm kiếm
-    POST   /api/pharmacy/medicines/           → thêm thuốc
-    GET    /api/pharmacy/medicines/{id}/      → chi tiết
-    PUT    /api/pharmacy/medicines/{id}/      → cập nhật
-    DELETE /api/pharmacy/medicines/{id}/      → ngừng kinh doanh
-    GET    /api/pharmacy/medicines/alerts/    → tất cả cảnh báo kho
-    """
-    queryset        = Medicine.objects.filter(is_active=True).select_related('category', 'inventory')
+
+    # ✅ FIX: dùng prefetch_related thay vì select_related cho inventory
+    # select_related dùng INNER JOIN → mất thuốc không có inventory
+    # prefetch_related dùng query riêng → giữ đủ tất cả thuốc
+    queryset = Medicine.objects.filter(
+        is_active=True
+    ).select_related('category').prefetch_related('inventory')
+
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields   = ['name', 'ingredient']
     ordering_fields = ['name', 'price']
@@ -57,8 +52,8 @@ class MedicineViewSet(viewsets.ViewSet,
         return query
 
     def destroy(self, request, *args, **kwargs):
-        medicine            = self.get_object()
-        medicine.is_active  = False
+        medicine           = self.get_object()
+        medicine.is_active = False
         medicine.save()
         return Response(
             {'message': f'Đã ngừng kinh doanh thuốc {medicine.name}'},
@@ -67,11 +62,6 @@ class MedicineViewSet(viewsets.ViewSet,
 
     @action(detail=False, methods=['get'], url_path='alerts')
     def alerts(self, request):
-        """
-        Gộp tất cả cảnh báo vào 1 endpoint
-        GET /api/pharmacy/medicines/alerts/
-        React Native chỉ cần gọi 1 lần là có đủ thông tin
-        """
         today     = timezone.now().date()
         threshold = today + timedelta(days=30)
 
@@ -81,7 +71,7 @@ class MedicineViewSet(viewsets.ViewSet,
 
         expiring = Inventory.objects.filter(
             expiry_date__lte=threshold,
-            expiry_date__gte=today       # chưa hết hạn nhưng sắp
+            expiry_date__gte=today
         ).select_related('medicine').order_by('expiry_date')
 
         expired = Inventory.objects.filter(
@@ -124,11 +114,6 @@ class MedicineViewSet(viewsets.ViewSet,
 class InventoryViewSet(viewsets.ViewSet, generics.ListCreateAPIView,
                        generics.ListAPIView,
                        generics.RetrieveUpdateAPIView):
-    """
-    GET /api/pharmacy/inventory/       → danh sách tồn kho
-    GET /api/pharmacy/inventory/{id}/  → chi tiết
-    PUT /api/pharmacy/inventory/{id}/  → cập nhật số lượng, hạn dùng
-    """
     queryset         = Inventory.objects.select_related('medicine').all()
     serializer_class = serializers.InventorySerializer
 
@@ -141,17 +126,13 @@ class InventoryViewSet(viewsets.ViewSet, generics.ListCreateAPIView,
 
 
 class StockTransactionViewSet(viewsets.ViewSet, generics.ListCreateAPIView):
-    """
-    GET  /api/pharmacy/transactions/   → lịch sử nhập xuất kho
-    POST /api/pharmacy/transactions/   → tạo giao dịch mới
-    """
     queryset         = StockTransaction.objects.select_related('medicine').order_by('-created_date')
     serializer_class = serializers.StockTransactionSerializer
 
     def get_queryset(self):
-        query        = self.queryset
-        medicine_id  = self.request.query_params.get('medicine_id')
-        t            = self.request.query_params.get('type')
+        query       = self.queryset
+        medicine_id = self.request.query_params.get('medicine_id')
+        t           = self.request.query_params.get('type')
         if medicine_id:
             query = query.filter(medicine_id=medicine_id)
         if t:
@@ -181,12 +162,6 @@ class StockTransactionViewSet(viewsets.ViewSet, generics.ListCreateAPIView):
 
 
 class PrescriptionViewSet(viewsets.ViewSet, generics.ListCreateAPIView):
-    """
-    GET  /api/pharmacy/prescriptions/              → danh sách đơn thuốc
-    POST /api/pharmacy/prescriptions/              → tạo đơn thuốc
-    POST /api/pharmacy/prescriptions/{id}/dispense/ → xác nhận cấp thuốc
-    """
-
     queryset = Prescription.objects.select_related(
         'medical_record__appointment__patient__user',
         'medical_record__appointment__schedule__doctor__user',
@@ -202,6 +177,12 @@ class PrescriptionViewSet(viewsets.ViewSet, generics.ListCreateAPIView):
         is_dispensed = self.request.query_params.get('is_dispensed')
         if is_dispensed is not None:
             query = query.filter(is_dispensed=is_dispensed.lower() == 'true')
+
+        # ← THÊM DÒNG NÀY
+        medical_record_id = self.request.query_params.get('medical_record')
+        if medical_record_id:
+            query = query.filter(medical_record_id=medical_record_id)
+
         return query
 
     @action(methods=['post'], url_path='dispense', detail=True)

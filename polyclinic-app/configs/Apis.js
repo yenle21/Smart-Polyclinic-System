@@ -1,7 +1,9 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL = 'http://192.168.1.222:8000';
+
+const BASE_URL = 'http://192.168.1.223:8000';
+
 
 
 export const endpoints = {
@@ -12,8 +14,6 @@ export const endpoints = {
 
     // Pharmacy
     'categories':   '/categories/',
-    'medicines':    '/medicines/',
-    'medicine-detail': (id) => `/medicines/${id}/`,
     'alerts':       '/medicines/alerts/',
     'inventory':          '/inventory/',
     'stock-transactions': '/stock-transactions/',
@@ -27,8 +27,10 @@ export const endpoints = {
 
     //Appoinment
     'schedules':'/schedules/',
+    'schedules-detail':   (id) => `/schedules/${id}/`,
     'appointments':'/appointments/',
     'appointment-book': '/appointments/book/',
+    'complete-appointment': (id) => `/appointments/${id}/complete/`,
     'appointment-detail':   (id) => `/appointments/${id}/`,
     'appointment-cancel':   (id) => `/appointments/${id}/cancel/`,
     //patients
@@ -41,6 +43,11 @@ export const endpoints = {
     //medical-record
     'medical-records' :'/medical-records/',
     'medical-detail':   (id) => `/medical-records/${id}/detail/`,
+    'medical-create-record':   `/medical-records/create/`,
+    'update-medical-record': (id) => `/medical-records/${id}/update-record/`,
+    'test-results':         (id) => `/medical-records/${id}/test-results/`,
+    'prescriptions':        '/prescriptions/',
+    'medicines':            '/medicines/',
     //Noti
     'notifications':       '/notifications/',
     'notification-read':   (id) => `/notifications/${id}/read/`,

@@ -1,58 +1,86 @@
 ﻿import React, { useContext, useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import {
+    View,
+    Text,
+    ScrollView,
+    TouchableOpacity,
+} from "react-native";
+
 import {
     Button,
     HelperText,
     TextInput,
     Menu,
-    Divider
+    Divider,
 } from "react-native-paper";
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import { useNavigation } from "@react-navigation/native";
-import axios from 'axios';
-import Apis, { authApis, endpoints } from "../../configs/Apis";
+
+import Apis, {
+    authApis,
+    endpoints
+} from "../../configs/Apis";
+
 import { MyUserContext } from "../../configs/Contexts";
+
 import loginstyles from "../../styles/loginstyles";
 
+// =========================
+// ROLES
+// =========================
 const ROLES = [
-    { key: 'doctor', label: '🩺  Bác sĩ' },
-    { key: 'staff', label: '💊  Nhân viên y tế' },
-    { key: 'admin', label: '🛡️  Admin' },
-    { key: 'patient', label: '🧑‍⚕️  Bệnh nhân' },
+    { key: 'doctor',  label: '🩺 Bác sĩ' },
+    { key: 'staff',   label: '💊 Nhân viên y tế' },
+    { key: 'admin',   label: '🛡️ Admin' },
+    { key: 'patient', label: '🧑‍⚕️ Bệnh nhân' },
 ];
 
 const Login = () => {
 
+    // =========================
+    // INPUTS
+    // =========================
     const userInfo = [
         {
             field: 'username',
             title: 'Tên đăng nhập',
             icon: 'account',
-            secureTextEntry: false
         },
         {
             field: 'password',
             title: 'Mật khẩu',
-            icon: 'eye',
-            secureTextEntry: true
+            icon: 'lock',
         },
     ];
 
+    // =========================
+    // STATES
+    // =========================
     const [user, setUser] = useState({});
+
     const [role, setRole] = useState(null);
+
     const [menuVisible, setMenu] = useState(false);
+
     const [err, setErr] = useState(null);
+
     const [loading, setLoading] = useState(false);
 
-    // THÊM STATE HIỆN/ẨN PASSWORD
-    const [showPassword, setShowPassword] = useState(false);
+    const [showPassword, setShowPassword] =
+        useState(false);
 
-    const [, dispatch] = useContext(MyUserContext);
+    const [, dispatch] =
+        useContext(MyUserContext);
 
     const nav = useNavigation();
 
+    // =========================
+    // VALIDATE
+    // =========================
     const validate = () => {
+
         if (!role) {
             setErr('Vui lòng chọn vai trò!');
             return false;
@@ -69,92 +97,141 @@ const Login = () => {
         }
 
         setErr(null);
+
         return true;
     };
 
+    // =========================
+    // LOGIN
+    // =========================
     const login = async () => {
+
         if (!validate())
             return;
 
         try {
+
             setLoading(true);
+
             setErr(null);
 
+            // =========================
+            // GET TOKEN
+            // =========================
             const params = new URLSearchParams();
 
-            params.append('username', user.username);
-            params.append('password', user.password);
-            params.append('client_id', 'n7aGTsfMDLTLWp32Hm9YU6OQGbSDnmHaY77CoWhL');
-            params.append('client_secret', 'bK8au064hR1Mlj77UWiFJNTkBUgmL9PzGv7kWWdi9NFI31RRSF1hA7B3o8Cstu5bIpMO44dfrx5iG7p13PJWNttp81xEltStjRe5y6XtKpH30AqlXxb6cPnllFYkVpmX');
-            params.append('grant_type', 'password');
+            params.append(
+                'username',
+                user.username
+            );
 
-            let res = await Apis.post(
+            params.append(
+                'password',
+                user.password
+            );
+
+            params.append(
+                'client_id',
+                'Qo0xwsPc00Wama0YySwi81z1jfnjPbUxi6xYc5H1'
+            );
+
+            params.append(
+                'client_secret',
+                'SIN6g29BplhvAY0IfUin8OVGnOzAuvbfy9WXbO8FWIitHgzlRYYDYtixGFOQXbpil0DwAOhx5PdVfGjbOOlZaZo2GzVW6WzqsR4kXa927OTC3qxqUtmFRjqauSvebbfS'
+            );
+
+            params.append(
+                'grant_type',
+                'password'
+            );
+
+            const res = await Apis.post(
                 endpoints['login'],
                 params,
                 {
                     headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
+                        'Content-Type':
+                            'application/x-www-form-urlencoded'
                     }
                 }
             );
 
-            const accessToken = res.data.access_token;
-            console.log('=== TOKEN FROM API:', accessToken);
+            const accessToken =
+                res.data.access_token;
 
-            await AsyncStorage.setItem('access_token', accessToken);
+            await AsyncStorage.setItem(
+                'access_token',
+                accessToken
+            );
 
+            // =========================
+            // GET CURRENT USER
+            // =========================
+            const api = await authApis();
 
-            const authenticatedApi = axios.create({
-                baseURL: 'http://192.168.1.222:8000',
-                timeout: 10000,
-                headers: { Authorization: `Bearer ${accessToken}` }
-            });
-
-
-            let u = await authenticatedApi.get(
+            const u = await api.get(
                 endpoints['current-user']
             );
-            console.log('=== USER DATA:', JSON.stringify(u.data));
 
+            const currentUser = u.data;
+
+            // =========================
+            // CHECK ROLE
+            // =========================
+            if (currentUser.role !== role.key) {
+
+                setErr(
+                    `Tài khoản này không phải ${role.label}`
+                );
+
+                return;
+            }
+
+            // =========================
+            // LOGIN SUCCESS
+            // =========================
             dispatch({
                 type: 'LOGIN',
-                payload: {
-                    ...u.data,
-                    role: role.key
-                }
+                payload: currentUser
             });
 
         } catch (ex) {
 
-            console.error("--- LỖI ĐĂNG NHẬP CHI TIẾT ---");
+            console.log(
+                'LOGIN ERROR:',
+                ex.response?.data || ex
+            );
 
-            if (ex.response && ex.response.data) {
+            if (ex.response?.data) {
 
-                console.log(
-                    "Nội dung lỗi từ Django trả về:",
-                    ex.response.data
-                );
+                const errCode =
+                    ex.response.data.error;
 
-                if (ex.response.data.error === 'invalid_grant') {
-                    setErr('Tài khoản hoặc mật khẩu không chính xác!');
-                }
+                if (errCode === 'invalid_grant') {
 
-                else if (ex.response.data.error === 'invalid_client') {
-                    setErr('Lỗi cấu hình bảo mật hệ thống!');
-                }
-
-                else {
                     setErr(
-                        `Đăng nhập thất bại: ${ex.response.data.error_description || ex.response.data.error}`
+                        'Tài khoản hoặc mật khẩu không chính xác!'
+                    );
+
+                } else if (
+                    errCode === 'invalid_client'
+                ) {
+
+                    setErr(
+                        'Lỗi cấu hình bảo mật hệ thống!'
+                    );
+
+                } else {
+
+                    setErr(
+                        `Đăng nhập thất bại: ${
+                            ex.response.data.error_description ||
+                            errCode
+                        }`
                     );
                 }
 
             } else {
-
-                console.log(
-                    "Lỗi không có response:",
-                    ex.message
-                );
 
                 setErr(
                     'Không thể kết nối đến máy chủ!'
@@ -162,19 +239,23 @@ const Login = () => {
             }
 
         } finally {
+
             setLoading(false);
         }
     };
 
     return (
+
         <ScrollView
-            contentContainerStyle={loginstyles.container}
+            contentContainerStyle={
+                loginstyles.container
+            }
             keyboardShouldPersistTaps="handled"
         >
 
             <View style={loginstyles.card}>
 
-                {/* Tiêu đề */}
+                {/* TITLE */}
                 <Text style={loginstyles.cardTitle}>
                     🏥 Smart Polyclinic
                 </Text>
@@ -183,7 +264,10 @@ const Login = () => {
                     Chọn vai trò và đăng nhập
                 </Text>
 
-                {/* Dropdown Role */}
+                {/* =========================
+                    ROLE DROPDOWN
+                ========================= */}
+
                 <Menu
                     visible={menuVisible}
                     onDismiss={() => setMenu(false)}
@@ -191,11 +275,16 @@ const Login = () => {
                         <Button
                             mode="outlined"
                             onPress={() => setMenu(true)}
-                            style={loginstyles.dropdownBtn}
-                            contentStyle={loginstyles.dropdownContent}
+                            style={
+                                loginstyles.dropdownBtn
+                            }
+                            contentStyle={
+                                loginstyles.dropdownContent
+                            }
                             labelStyle={[
                                 loginstyles.dropdownLabel,
-                                role && loginstyles.dropdownLabelSelected,
+                                role &&
+                                loginstyles.dropdownLabelSelected
                             ]}
                             icon="chevron-down"
                         >
@@ -208,6 +297,7 @@ const Login = () => {
                 >
 
                     {ROLES.map((r, index) => (
+
                         <React.Fragment key={r.key}>
 
                             <Menu.Item
@@ -215,31 +305,36 @@ const Login = () => {
                                 titleStyle={[
                                     loginstyles.menuItemTitle,
                                     role?.key === r.key &&
-                                    loginstyles.menuItemTitleActive,
+                                    loginstyles.menuItemTitleActive
                                 ]}
                                 style={[
                                     loginstyles.menuItem,
                                     role?.key === r.key &&
-                                    loginstyles.menuItemActive,
+                                    loginstyles.menuItemActive
                                 ]}
                                 onPress={() => {
+
                                     setRole(r);
+
                                     setMenu(false);
+
                                     setErr(null);
                                 }}
                             />
 
                             {index < ROLES.length - 1 &&
-                                <Divider />
-                            }
-
+                                <Divider />}
                         </React.Fragment>
                     ))}
 
                 </Menu>
 
-                {/* Input */}
+                {/* =========================
+                    INPUTS
+                ========================= */}
+
                 {userInfo.map(u => (
+
                     <TextInput
                         key={u.field}
                         value={user[u.field]}
@@ -249,43 +344,40 @@ const Login = () => {
                                 [u.field]: t
                             })
                         }
-
                         style={loginstyles.input}
-
                         label={u.title}
-
                         placeholder={u.title}
-
-                        // PASSWORD TOGGLE
                         secureTextEntry={
                             u.field === 'password'
                                 ? !showPassword
                                 : false
                         }
-
                         right={
-                            u.field === 'password' ? (
-                                <TextInput.Icon
-                                    icon={
-                                        showPassword
-                                            ? "eye-off"
-                                            : "eye"
-                                    }
-
-                                    onPress={() =>
-                                        setShowPassword(!showPassword)
-                                    }
-                                />
-                            ) : (
-                                <TextInput.Icon
-                                    icon={u.icon}
-                                />
-                            )
+                            u.field === 'password'
+                                ? (
+                                    <TextInput.Icon
+                                        icon={
+                                            showPassword
+                                                ? "eye-off"
+                                                : "eye"
+                                        }
+                                        onPress={() =>
+                                            setShowPassword(
+                                                !showPassword
+                                            )
+                                        }
+                                    />
+                                )
+                                : (
+                                    <TextInput.Icon
+                                        icon={u.icon}
+                                    />
+                                )
                         }
                     />
                 ))}
 
-                {/* Error */}
+                {/* ERROR */}
                 <HelperText
                     type="error"
                     visible={!!err}
@@ -294,22 +386,26 @@ const Login = () => {
                     {err}
                 </HelperText>
 
-                {/* Button */}
+                {/* LOGIN BUTTON */}
                 <Button
                     loading={loading}
                     disabled={loading}
                     mode="contained"
                     onPress={login}
                     style={loginstyles.loginBtn}
-                    labelStyle={loginstyles.loginBtnLabel}
+                    labelStyle={
+                        loginstyles.loginBtnLabel
+                    }
                 >
                     Đăng nhập
                 </Button>
 
-                {/* Register */}
+                {/* REGISTER */}
                 <View style={loginstyles.registerRow}>
 
-                    <Text style={loginstyles.registerText}>
+                    <Text style={
+                        loginstyles.registerText
+                    }>
                         Chưa có tài khoản?
                     </Text>
 
@@ -318,7 +414,9 @@ const Login = () => {
                             nav.navigate('Register')
                         }
                     >
-                        <Text style={loginstyles.registerLink}>
+                        <Text style={
+                            loginstyles.registerLink
+                        }>
                             Đăng ký ngay
                         </Text>
                     </TouchableOpacity>

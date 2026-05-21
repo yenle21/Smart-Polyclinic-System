@@ -2,8 +2,6 @@ from rest_framework import serializers
 from .models import Schedule, Appointment, Notification, MedicalRecord, TestResult
 
 
-
-#lịch làm việc của bác sĩ
 class ScheduleSerializer(serializers.ModelSerializer):
     available_slots = serializers.SerializerMethodField()
     doctor_name     = serializers.CharField(source='doctor.user.get_full_name', read_only=True)
@@ -12,76 +10,51 @@ class ScheduleSerializer(serializers.ModelSerializer):
     class Meta:
         model  = Schedule
         fields = [
-            'id',
-            'doctor',
-            'doctor_name',      # ← thêm
-            'specialty_name',   # ← thêm
-            'work_date',
-            'start_time',
-            'end_time',
-            'max_slots',
-            'available_slots',
+            'id', 'doctor', 'doctor_name', 'specialty_name',
+            'work_date', 'start_time', 'end_time', 'max_slots', 'available_slots',
         ]
+        read_only_fields = ['doctor', 'available_slots', 'doctor_name', 'specialty_name']
 
     def get_available_slots(self, obj):
         return obj.available_slots()
 
-#Lịch hẹn
+
 class AppointmentSerializer(serializers.ModelSerializer):
-    doctor_name   = serializers.CharField(source='schedule.doctor.user.get_full_name', read_only=True)
+    doctor_name    = serializers.CharField(source='schedule.doctor.user.get_full_name', read_only=True)
     specialty_name = serializers.CharField(source='schedule.doctor.specialty.name', read_only=True)
-    work_date     = serializers.DateField(source='schedule.work_date', read_only=True)
-    patient_name = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Appointment
-        fields = '__all__'
-
-    def get_patient_name(self, obj):
-        user = obj.patient.user
-
-        full_name = f"{user.first_name} {user.last_name}".strip()
-
-        return full_name if full_name else user.username
+    work_date      = serializers.DateField(source='schedule.work_date', read_only=True)
+    patient_name   = serializers.SerializerMethodField()
 
     class Meta:
         model  = Appointment
         fields = [
-            'id', 'doctor_name', 'specialty_name', 'work_date','patient_name',
+            'id', 'doctor_name', 'specialty_name', 'work_date', 'patient_name',
             'appointment_time', 'type', 'status',
             'reason', 'notes', 'cancel_reason',
             'created_date', 'updated_date'
         ]
         read_only_fields = ['status', 'cancel_reason', 'created_date', 'updated_date']
 
-# bệnh nhân đặt lịch hẹn
+    def get_patient_name(self, obj):
+        return obj.patient.full_name
+
+
 class AppointmentCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model  = Appointment
         fields = ['schedule', 'appointment_time', 'type', 'reason', 'notes']
 
     def validate(self, attrs):
-        schedule         = attrs.get('schedule')
-        appointment_time = attrs.get('appointment_time')
-
-        # FIX: bắt lỗi nếu chưa có patient_profile
+        schedule = attrs.get('schedule')
         try:
             patient = self.context['request'].user.patient_profile
         except Exception:
-            raise serializers.ValidationError(
-                'Tài khoản này chưa có hồ sơ bệnh nhân. Vui lòng liên hệ admin!'
-            )
+            raise serializers.ValidationError('Tài khoản này chưa có hồ sơ bệnh nhân. Vui lòng liên hệ admin!')
 
-        # Kiểm tra còn slot không
         if schedule.available_slots() <= 0:
             raise serializers.ValidationError('Lịch này đã đầy slot!')
 
-        # Kiểm tra bệnh nhân đã đặt trùng lịch chưa
-        existing = Appointment.objects.filter(
-            patient=patient,
-            schedule=schedule
-        ).first()
-
+        existing = Appointment.objects.filter(patient=patient, schedule=schedule).first()
         if existing:
             if existing.status == 'cancelled':
                 raise serializers.ValidationError('Bạn đã từng đặt và hủy lịch này trước đó!')
@@ -90,15 +63,13 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-        # FIX: bắt lỗi nếu chưa có patient_profile
         try:
             patient = self.context['request'].user.patient_profile
         except Exception:
-            raise serializers.ValidationError(
-                'Tài khoản này chưa có hồ sơ bệnh nhân. Vui lòng liên hệ admin!'
-            )
+            raise serializers.ValidationError('Tài khoản này chưa có hồ sơ bệnh nhân. Vui lòng liên hệ admin!')
         return Appointment.objects.create(patient=patient, **validated_data)
-# hủy lịch hẹn
+
+
 class AppointmentCancelSerializer(serializers.ModelSerializer):
     class Meta:
         model  = Appointment
@@ -110,12 +81,25 @@ class AppointmentCancelSerializer(serializers.ModelSerializer):
         appointment.cancel_reason = validated_data.get('cancel_reason', '')
         appointment.status        = 'cancelled'
         appointment.save()
-
         return appointment
 
 
+class AppointmentApproveSerializer(serializers.ModelSerializer):
+    class Meta:
+        model  = Appointment
+        fields = ['status', 'cancel_reason']
 
-#  NOTIFICATION
+    def validate(self, attrs):
+        if self.instance.status != 'pending':
+            raise serializers.ValidationError('Lịch hẹn này đã được xử lý trước đó.')
+
+        new_status    = attrs.get('status')
+        cancel_reason = attrs.get('cancel_reason')
+        if new_status == 'cancelled' and not cancel_reason:
+            raise serializers.ValidationError({'cancel_reason': 'Vui lòng nhập lý do từ chối.'})
+        return attrs
+
+
 class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model  = Notification
@@ -123,48 +107,45 @@ class NotificationSerializer(serializers.ModelSerializer):
         read_only_fields = ['type', 'title', 'message', 'created_date']
 
 
-#  TEST RESULT
 class TestResultSerializer(serializers.ModelSerializer):
     class Meta:
         model  = TestResult
         fields = ['id', 'type', 'name', 'result', 'file', 'tested_at']
 
 
-# ─────────────────────────────────────────
-#  MEDICAL RECORD
-# ─────────────────────────────────────────
 class MedicalRecordSerializer(serializers.ModelSerializer):
-    test_results  = TestResultSerializer(many=True, read_only=True)
-    doctor_name   = serializers.CharField(source='appointment.schedule.doctor.user.get_full_name', read_only=True)
-    work_date     = serializers.DateField(source='appointment.schedule.work_date', read_only=True)
-    specialty = serializers.CharField(
-        source='appointment.schedule.doctor.specialty.name',
-        read_only=True)
+    test_results   = TestResultSerializer(many=True, read_only=True)
+    doctor_name    = serializers.CharField(source='appointment.schedule.doctor.user.get_full_name', read_only=True)
+    patient_name   = serializers.SerializerMethodField()
+    work_date      = serializers.DateField(source='appointment.schedule.work_date', read_only=True)
+    specialty_name = serializers.CharField(source='appointment.schedule.doctor.specialty.name', read_only=True)
 
     class Meta:
         model  = MedicalRecord
         fields = [
-            'id', 'doctor_name', 'work_date', 'specialty',
+            'id', 'appointment',
+            'doctor_name', 'patient_name', 'specialty_name', 'work_date',  # ← THÊM
             'diagnosis', 'treatment', 'notes', 'follow_up',
-            'test_results', 'created_date'
+            'symptoms', 'blood_pressure', 'temperature', 'height', 'weight',
+            'test_results',  # ← THÊM
         ]
 
+    def get_patient_name(self, obj):
+        return obj.appointment.patient.full_name
 
-class AppointmentApproveSerializer(serializers.ModelSerializer):
+
+
+class MedicalRecordCreateSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Appointment
-        fields = ['status', 'cancel_reason']
+        model  = MedicalRecord
+        fields = [
+            'appointment', 'diagnosis', 'treatment', 'notes', 'follow_up',
+            'symptoms', 'blood_pressure', 'temperature', 'height', 'weight',  # ← THÊM
+        ]
 
-    def validate(self, attrs):
-        # Kiểm tra nếu trạng thái hiện tại của lịch không phải là 'pending'
-        if self.instance.status != 'pending':
-            raise serializers.ValidationError('Lịch hẹn này đã được xử lý trước đó.')
-
-        status = attrs.get('status')
-        cancel_reason = attrs.get('cancel_reason')
-
-        # Kiểm tra nếu từ chối thì bắt buộc phải nhập lý do
-        if status == 'cancelled' and not cancel_reason:
-            raise serializers.ValidationError({'cancel_reason': 'Vui lòng nhập lý do từ chối.'})
-
-        return attrs
+    def validate_appointment(self, value):
+        if MedicalRecord.objects.filter(appointment=value).exists():
+            raise serializers.ValidationError(
+                'Hồ sơ bệnh án cho lịch hẹn này đã tồn tại.'
+            )
+        return value
