@@ -31,6 +31,10 @@ class ScheduleViewSet(viewsets.ViewSet, generics.ListAPIView):
 
     def get_queryset(self):
         query = self.queryset
+        print(f'Total schedules: {query.count()}')
+        for s in query:
+            print(f'  ID: {s.id} | date: {s.work_date}')
+
         # tìm theo tên bác sĩ
         doctor_name = self.request.query_params.get('doctor')
         if doctor_name:
@@ -242,7 +246,48 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView):
             )
 
         return Response(AppointmentSerializer(appointment).data, status=status.HTTP_200_OK)
+    # gọi
+    @action(methods=['patch'], url_path='no-show', detail=True)
+    def mark_no_show(self, request, pk=None):
+        if request.user.role != 'doctor':
+            return Response({'detail': 'Chỉ bác sĩ mới được đánh vắng mặt.'}, status=403)
+        try:
+            appointment = Appointment.objects.get(pk=pk, schedule__doctor=request.user.doctor_profile)
+        except Appointment.DoesNotExist:
+            return Response({'detail': 'Không tìm thấy.'}, status=404)
 
+        appointment.status = 'no_show'
+        appointment.save()
+
+        Notification.objects.create(
+            user=appointment.patient.user,
+            appointment=appointment,
+            type='cancelled',
+            title='Vắng mặt',
+            message=f'Bạn đã không có mặt tại lịch khám ngày {appointment.schedule.work_date}.',
+        )
+        return Response(AppointmentSerializer(appointment).data)
+
+    @action(methods=['patch'], url_path='complete', detail=True)
+    def complete(self, request, pk=None):
+        if request.user.role != 'doctor':
+            return Response({'detail': 'Chỉ bác sĩ mới được hoàn thành lịch hẹn.'}, status=403)
+        try:
+            appointment = Appointment.objects.get(pk=pk, schedule__doctor=request.user.doctor_profile)
+        except Appointment.DoesNotExist:
+            return Response({'detail': 'Không tìm thấy.'}, status=404)
+
+        appointment.status = 'completed'
+        appointment.save()
+
+        Notification.objects.create(
+            user=appointment.patient.user,
+            appointment=appointment,
+            type='result',
+            title='Khám xong',
+            message=f'Lịch khám ngày {appointment.schedule.work_date} đã hoàn thành.',
+        )
+        return Response(AppointmentSerializer(appointment).data)
 
 class NotificationViewSet(viewsets.ViewSet, generics.ListAPIView):
     queryset = Notification.objects.filter(active=True)
