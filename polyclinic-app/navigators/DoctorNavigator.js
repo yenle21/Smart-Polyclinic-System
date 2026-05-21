@@ -11,6 +11,7 @@ import DoctorHomeScreen from '../screens/doctor/DoctorHomeScreen';
 import AppointmentScreen from '../screens/doctor/AppointmentScreen';
 import ProfileScreen from '../screens/shared/ProfileScreen';
 import AppointmentDetailScreenDoctor from '../screens/doctor/AppoimentDetailScreenDoctor';
+import VideoCallScreen from '../screens/shared/VideoCallScreen';
 
 // =========================
 // NAVIGATOR INIT
@@ -36,6 +37,12 @@ const AppointmentStack = () => (
             component={AppointmentDetailScreenDoctor}
             options={{ title: 'Chi tiết lịch khám' }}
         />
+
+        <Stack.Screen
+            name="VideoCall"
+            component={VideoCallScreen}
+            options={{ headerShown: false, gestureEnabled: false }}
+        />
     </Stack.Navigator>
     
 );
@@ -49,6 +56,24 @@ const ProfileStack = () => (
             name="ProfileScreen"
             component={ProfileScreen}
             options={{ title: 'Cá nhân' }}
+        />
+    </Stack.Navigator>
+);
+
+// =========================
+// HOME STACK — bọc HomeScreen để có VideoCall
+// =========================
+const HomeStack = () => (
+    <Stack.Navigator>
+        <Stack.Screen
+            name="DoctorHome"
+            component={DoctorHomeScreen}
+            options={{ title: 'Tổng quan' }}
+        />
+        <Stack.Screen
+            name="VideoCall"
+            component={VideoCallScreen}
+            options={{ headerShown: false, gestureEnabled: false }}
         />
     </Stack.Navigator>
 );
@@ -86,8 +111,8 @@ const DoctorNavigator = () => {
             {/* ================= HOME ================= */}
             <Tab.Screen
                 name="Home"
-                component={DoctorHomeScreen}
-                options={{ tabBarLabel: 'Tổng quan', headerShown: true }}
+                component={HomeStack}
+                options={{ tabBarLabel: 'Tổng quan', headerShown: false }}
             />
 
             {/* ================= APPOINTMENTS ================= */}

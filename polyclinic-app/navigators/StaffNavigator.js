@@ -25,6 +25,9 @@ import InvoiceListScreen     from '../screens/staff/InvoiceListScreen';
 
 // Shared
 import ProfileScreen from '../screens/shared/ProfileScreen';
+import ChatListScreen from '../screens/shared/ChatListScreen';
+import ChatScreen     from '../screens/shared/ChatScreen';
+
 
 const Tab   = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -95,6 +98,15 @@ function ProfileStack() {
     );
 }
 
+function ChatStack() {
+    return (
+        <Stack.Navigator screenOptions={headerOptions}>
+            <Stack.Screen name="ChatList" component={ChatListScreen} options={{ title: 'Tin nhắn' }} />
+            <Stack.Screen name="Chat"     component={ChatScreen}     options={({ route }) => ({ title: route.params.name })} />
+        </Stack.Navigator>
+    );
+}
+
 export default function StaffNavigator() {
     return (
         <Tab.Navigator screenOptions={{
@@ -140,6 +152,14 @@ export default function StaffNavigator() {
                 options={{
                     tabBarLabel: 'Thanh toán',
                     tabBarIcon: ({ color }) => <MaterialCommunityIcons name="receipt" size={24} color={color} />,
+                }}
+            />
+            <Tab.Screen
+                name="ChatTab"
+                component={ChatStack}
+                options={{
+                    tabBarLabel: 'Tin nhắn',
+                    tabBarIcon: ({ color }) => <MaterialCommunityIcons name="chat" size={24} color={color} />,
                 }}
             />
             <Tab.Screen

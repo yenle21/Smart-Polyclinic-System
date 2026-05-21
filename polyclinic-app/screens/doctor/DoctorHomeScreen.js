@@ -1,495 +1,340 @@
-import React, { useEffect, useState } from 'react';
-
+import React, { useEffect, useState, useRef } from 'react';
 import {
-    View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    FlatList,
-    RefreshControl,
+    View, Text, StyleSheet, ScrollView,
+    FlatList, RefreshControl, Alert, ActivityIndicator as RNActivityIndicator,
 } from 'react-native';
-
-import {
-    Card,
-    Avatar,
-    Chip,
-    ActivityIndicator,
-} from 'react-native-paper';
-
+import { Card, Avatar, Chip, ActivityIndicator, Button } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-
 import { authApis, endpoints } from '../../configs/Apis';
+import { db } from '../../configs/firebase';
+import { ref, set, update, onValue, off } from 'firebase/database';
 
-const DoctorHomeScreen = () => {
+const RING_TIMEOUT = 30000;
+const MAX_ATTEMPTS = 2;
 
-    // =========================
-    // STATES
-    // =========================
-    const [loading, setLoading] = useState(true);
+const DoctorHomeScreen = ({ navigation }) => {
+
+    const [loading, setLoading]       = useState(true);
     const [refreshing, setRefreshing] = useState(false);
-
-    const [doctor, setDoctor] = useState(null);
-
-    const [overview, setOverview] = useState({
-        total_appointments: 0,
-        pending: 0,
-        confirmed: 0,
-        completed: 0,
-        cancelled: 0,
+    const [doctor, setDoctor]         = useState(null);
+    const [overview, setOverview]     = useState({
+        total_appointments: 0, pending: 0, confirmed: 0, completed: 0, cancelled: 0,
     });
-
     const [appointments, setAppointments] = useState([]);
+    const [callingId, setCallingId]       = useState(null);
+    const [attempt, setAttempt]           = useState(0);
+    const [callStatus, setCallStatus]     = useState({});
 
-    // =========================
-    // LOAD DASHBOARD
-    // =========================
+    const timeoutRef  = useRef(null);
+    const listenerRef = useRef(null);
+
+    // ── Kiểm tra hôm nay ─────────────────────────────
+    const isToday = (dateStr) => {
+        const today = new Date();
+        const date  = new Date(dateStr);
+        return (
+            date.getDate()     === today.getDate()     &&
+            date.getMonth()    === today.getMonth()    &&
+            date.getFullYear() === today.getFullYear()
+        );
+    };
+
+    // ── Load dashboard ────────────────────────────────
     const loadData = async () => {
-
         try {
-
             const api = await authApis();
 
-            const res = await api.get(
-                endpoints['doctor-dashboard']
-            );
+            // ✅ Dùng API appointments sẵn có
+            const res  = await api.get(endpoints['appointments']);
+            const data = res.data;
+            const list = Array.isArray(data) ? data : (data.results || []);
 
-            setDoctor(res.data.doctor);
+            // ✅ Lọc lịch hôm nay
+            const todayList = list.filter(item => isToday(item.work_date));
 
-            setOverview(res.data.overview);
+            setAppointments(todayList);
 
-            setAppointments(
-                res.data.appointments || []
-            );
+            // ✅ Tính overview từ list hôm nay
+            setOverview({
+                total_appointments: todayList.length,
+                pending:   todayList.filter(a => a.status === 'pending').length,
+                confirmed: todayList.filter(a => a.status === 'confirmed').length,
+                completed: todayList.filter(a => a.status === 'completed').length,
+                cancelled: todayList.filter(a => a.status === 'cancelled').length,
+            });
 
         } catch (err) {
-
-            console.log(
-                'DOCTOR DASHBOARD ERROR:',
-                err.response?.data || err
-            );
-
+            console.log('LOAD ERROR:', err.response?.data || err);
         } finally {
-
             setLoading(false);
             setRefreshing(false);
         }
     };
+    useEffect(() => { loadData(); }, []);
 
-    // =========================
-    // FIRST LOAD
-    // =========================
+    const onRefresh = () => { setRefreshing(true); loadData(); };
+
+    // ── Cleanup ───────────────────────────────────────
     useEffect(() => {
-        loadData();
+        return () => {
+            clearTimeout(timeoutRef.current);
+            if (listenerRef.current) {
+                off(listenerRef.current.ref, 'value', listenerRef.current.handler);
+            }
+        };
     }, []);
 
-    // =========================
-    // REFRESH
-    // =========================
-    const onRefresh = () => {
-        setRefreshing(true);
-        loadData();
-    };
 
-    // =========================
-    // STATUS COLOR
-    // =========================
-    const getStatusColor = (status) => {
-
-        switch (status) {
-
-            case 'pending':
-                return '#FF9800';
-
-            case 'confirmed':
-                return '#2196F3';
-
-            case 'completed':
-                return '#4CAF50';
-
-            case 'cancelled':
-                return '#F44336';
-
-            default:
-                return '#999';
+    // ── Đánh no_show ─────────────────────────────────
+    const markNoShow = async (appointmentId) => {
+        try {
+            const api = await authApis();
+            await api.patch(`/appointments/${appointmentId}/no-show/`);
+        } catch (e) {
+            console.error('markNoShow error:', e.response?.data || e);
         }
     };
 
-    // =========================
-    // STATUS LABEL
-    // =========================
-    const getStatusLabel = (status) => {
+    // ── Bắt đầu gọi ──────────────────────────────────
+    const startCall = async (appointment, attemptNumber) => {
+        setCallingId(appointment.id);
+        setAttempt(attemptNumber);
+        setCallStatus(prev => ({ ...prev, [appointment.id]: 'calling' }));
 
-        switch (status) {
+        const callRef = ref(db, `calls/${appointment.id}`);
 
-            case 'pending':
-                return 'Đang chờ';
+        await set(callRef, {
+            status:        'calling',
+            attempt:       attemptNumber,
+            startedAt:     Date.now(),
+            appointmentId: appointment.id,
+            patientName:   appointment.patient_name,
+            receiverId:    appointment.patient_id,
+        });
 
-            case 'confirmed':
-                return 'Đã xác nhận';
+        const handler = onValue(callRef, (snapshot) => {
+            const data = snapshot.val();
+            if (!data) return;
 
-            case 'completed':
-                return 'Đã khám';
+            if (data.status === 'accepted') {
+                clearTimeout(timeoutRef.current);
+                off(callRef, 'value', handler);
+                setCallingId(null);
+                setCallStatus(prev => ({ ...prev, [appointment.id]: 'accepted' }));
+                navigation.navigate('VideoCall', { callId: appointment.id.toString() });
+            }
 
-            case 'cancelled':
-                return 'Đã huỷ';
+            if (data.status === 'rejected') {
+                clearTimeout(timeoutRef.current);
+                off(callRef, 'value', handler);
+                setCallingId(null);
+                setCallStatus(prev => ({ ...prev, [appointment.id]: 'rejected' }));
+                Alert.alert('📵 Bệnh nhân từ chối cuộc gọi.');
+            }
+        });
 
-            default:
-                return status;
-        }
+        listenerRef.current = { ref: callRef, handler };
+
+        timeoutRef.current = setTimeout(async () => {
+            off(callRef, 'value', handler);
+            if (attemptNumber < MAX_ATTEMPTS) {
+                Alert.alert(`📞 Lần ${attemptNumber} không bắt máy`, 'Đang gọi lần 2...');
+                await update(callRef, { status: `missed_attempt_${attemptNumber}` });
+                startCall(appointment, attemptNumber + 1);
+            } else {
+                await update(callRef, { status: 'no_show' });
+                setCallingId(null);
+                setCallStatus(prev => ({ ...prev, [appointment.id]: 'no_show' }));
+                await markNoShow(appointment.id);
+                Alert.alert('❌ Vắng mặt', 'Bệnh nhân không bắt máy sau 2 lần gọi.');
+                loadData();
+            }
+        }, RING_TIMEOUT);
     };
 
-    // =========================
-    // APPOINTMENT ITEM
-    // =========================
-    const renderAppointment = ({ item }) => (
+    // ── Huỷ gọi ──────────────────────────────────────
+    const cancelCall = async (appointmentId) => {
+        clearTimeout(timeoutRef.current);
+        if (listenerRef.current) {
+            off(listenerRef.current.ref, 'value', listenerRef.current.handler);
+        }
+        const callRef = ref(db, `calls/${appointmentId}`);
+        await update(callRef, { status: 'cancelled' });
+        setCallingId(null);
+        setCallStatus(prev => ({ ...prev, [appointmentId]: null }));
+    };
 
-        <Card style={styles.appointmentCard}>
+    // ── Status helpers ────────────────────────────────
+    const getStatusColor = (status) => ({
+        pending:   '#FF9800',
+        confirmed: '#2196F3',
+        completed: '#4CAF50',
+        cancelled: '#F44336',
+        no_show:   '#6B7280',
+    }[status] || '#999');
 
-            <Card.Content>
+    const getStatusLabel = (status) => ({
+        pending:   'Đang chờ',
+        confirmed: 'Đã xác nhận',
+        completed: 'Đã khám',
+        cancelled: 'Đã huỷ',
+        no_show:   'Vắng mặt',
+    }[status] || status);
 
-                <View style={styles.rowBetween}>
-
-                    <View style={{ flex: 1 }}>
-
-                        <Text style={styles.patientName}>
-                            {item.patient_name}
-                        </Text>
-
-                        <Text style={styles.subText}>
-                            🕒 {item.appointment_time}
-                        </Text>
-
-                        <Text style={styles.subText}>
-                            📋 {item.reason || 'Không có lý do khám'}
-                        </Text>
-
-                        <Text style={styles.subText}>
-                            💻 {item.type}
-                        </Text>
-
-                    </View>
-
-                    <Chip
-                        style={{
-                            backgroundColor:
-                                getStatusColor(item.status),
-                        }}
-                        textStyle={{
-                            color: '#fff',
-                        }}
-                    >
-                        {getStatusLabel(item.status)}
-                    </Chip>
-
-                </View>
-
-            </Card.Content>
-
-        </Card>
-    );
-
-    // =========================
-    // LOADING
-    // =========================
-    if (loading) {
+    // ── Render appointment ────────────────────────────
+    const renderAppointment = ({ item }) => {
+        const canCall    = item.type === 'online' &&
+                           item.status === 'confirmed' &&
+                           isToday(item.work_date);
+        const isCalling  = callingId === item.id;
+        const thisStatus = callStatus[item.id];
 
         return (
+            <Card style={styles.appointmentCard}>
+                <Card.Content>
+                    <View style={styles.rowBetween}>
+                        <View style={{ flex: 1 }}>
+                            <Text style={styles.patientName}>{item.patient_name}</Text>
+                            <Text style={styles.subText}>🕒 {item.appointment_time}</Text>
+                            <Text style={styles.subText}>📋 {item.reason || 'Không có lý do khám'}</Text>
+                            <Text style={styles.subText}>
+                                {item.type === 'online' ? '💻 Khám online' : '🏥 Tại phòng khám'}
+                            </Text>
+                        </View>
+                        <Chip
+                            style={{ backgroundColor: getStatusColor(item.status) }}
+                            textStyle={{ color: '#fff' }}
+                        >
+                            {getStatusLabel(item.status)}
+                        </Chip>
+                    </View>
+
+                    {/* NÚT GỌI */}
+                    {canCall && thisStatus !== 'no_show' && (
+                        <View style={{ marginTop: 12 }}>
+                            {!isCalling ? (
+                                <Button
+                                    mode="contained"
+                                    icon="phone"
+                                    buttonColor="#22C55E"
+                                    style={{ borderRadius: 20 }}
+                                    onPress={() => startCall(item, 1)}
+                                >
+                                    Bắt đầu gọi
+                                </Button>
+                            ) : (
+                                <View style={styles.callingRow}>
+                                    <RNActivityIndicator size="small" color="#22C55E" />
+                                    <Text style={styles.callingText}>
+                                        Đang gọi... lần {attempt}/{MAX_ATTEMPTS}
+                                    </Text>
+                                    <Button
+                                        mode="outlined"
+                                        icon="phone-hangup"
+                                        textColor="#EF4444"
+                                        style={{ borderColor: '#EF4444', borderRadius: 20 }}
+                                        onPress={() => cancelCall(item.id)}
+                                    >
+                                        Huỷ
+                                    </Button>
+                                </View>
+                            )}
+                        </View>
+                    )}
+
+                    {thisStatus === 'no_show'  && <Text style={styles.noShowText}>❌ Bệnh nhân vắng mặt</Text>}
+                    {thisStatus === 'accepted' && <Text style={styles.acceptedText}>✅ Đã kết nối</Text>}
+                    {thisStatus === 'rejected' && <Text style={styles.noShowText}>📵 Bệnh nhân từ chối</Text>}
+                </Card.Content>
+            </Card>
+        );
+    };
+
+    if (loading) {
+        return (
             <View style={styles.loadingContainer}>
-
-                <ActivityIndicator
-                    size="large"
-                    color="#2196F3"
-                />
-
+                <ActivityIndicator size="large" color="#2196F3" />
             </View>
         );
     }
 
     return (
-
         <ScrollView
             style={styles.container}
-            refreshControl={
-                <RefreshControl
-                    refreshing={refreshing}
-                    onRefresh={onRefresh}
-                />
-            }
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         >
-
-            {/* ========================= */}
             {/* HEADER */}
-            {/* ========================= */}
             <View style={styles.header}>
-
                 <View>
-
-                    <Text style={styles.greeting}>
-                        Xin chào 👋
-                    </Text>
-
-                    <Text style={styles.doctorName}>
-                        BS. {doctor?.name}
-                    </Text>
-
+                    <Text style={styles.greeting}>Xin chào 👋</Text>
+                    <Text style={styles.doctorName}>BS. {doctor?.name}</Text>
                 </View>
-
-                <Avatar.Icon
-                    size={70}
-                    icon="doctor"
-                    style={{
-                        backgroundColor: '#2196F3',
-                    }}
-                />
-
+                <Avatar.Icon size={70} icon="doctor" style={{ backgroundColor: '#2196F3' }} />
             </View>
 
-            {/* ========================= */}
             {/* OVERVIEW */}
-            {/* ========================= */}
-            <Text style={styles.sectionTitle}>
-                Tổng quan hôm nay
-            </Text>
-
+            <Text style={styles.sectionTitle}>Tổng quan hôm nay</Text>
             <View style={styles.statsContainer}>
-
-                {/* TOTAL */}
-                <Card style={styles.statCard}>
-
-                    <Card.Content style={styles.center}>
-
-                        <MaterialCommunityIcons
-                            name="calendar-month"
-                            size={32}
-                            color="#2196F3"
-                        />
-
-                        <Text style={styles.statNumber}>
-                            {overview.total_appointments}
-                        </Text>
-
-                        <Text style={styles.statLabel}>
-                            Tổng lịch
-                        </Text>
-
-                    </Card.Content>
-
-                </Card>
-
-                {/* PENDING */}
-                <Card style={styles.statCard}>
-
-                    <Card.Content style={styles.center}>
-
-                        <MaterialCommunityIcons
-                            name="clock-outline"
-                            size={32}
-                            color="#FF9800"
-                        />
-
-                        <Text style={styles.statNumber}>
-                            {overview.pending}
-                        </Text>
-
-                        <Text style={styles.statLabel}>
-                            Đang chờ
-                        </Text>
-
-                    </Card.Content>
-
-                </Card>
-
-                {/* COMPLETED */}
-                <Card style={styles.statCard}>
-
-                    <Card.Content style={styles.center}>
-
-                        <MaterialCommunityIcons
-                            name="check-circle"
-                            size={32}
-                            color="#4CAF50"
-                        />
-
-                        <Text style={styles.statNumber}>
-                            {overview.completed}
-                        </Text>
-
-                        <Text style={styles.statLabel}>
-                            Đã khám
-                        </Text>
-
-                    </Card.Content>
-
-                </Card>
-
-                {/* CANCELLED */}
-                <Card style={styles.statCard}>
-
-                    <Card.Content style={styles.center}>
-
-                        <MaterialCommunityIcons
-                            name="close-circle"
-                            size={32}
-                            color="#F44336"
-                        />
-
-                        <Text style={styles.statNumber}>
-                            {overview.cancelled}
-                        </Text>
-
-                        <Text style={styles.statLabel}>
-                            Đã huỷ
-                        </Text>
-
-                    </Card.Content>
-
-                </Card>
-
+                {[
+                    { icon: 'calendar-month', color: '#2196F3', value: overview.total_appointments, label: 'Tổng lịch' },
+                    { icon: 'clock-outline',  color: '#FF9800', value: overview.pending,            label: 'Đang chờ' },
+                    { icon: 'check-circle',   color: '#4CAF50', value: overview.completed,          label: 'Đã khám' },
+                    { icon: 'close-circle',   color: '#F44336', value: overview.cancelled,          label: 'Đã huỷ' },
+                ].map((s, i) => (
+                    <Card key={i} style={styles.statCard}>
+                        <Card.Content style={styles.center}>
+                            <MaterialCommunityIcons name={s.icon} size={32} color={s.color} />
+                            <Text style={styles.statNumber}>{s.value}</Text>
+                            <Text style={styles.statLabel}>{s.label}</Text>
+                        </Card.Content>
+                    </Card>
+                ))}
             </View>
 
-            {/* ========================= */}
             {/* APPOINTMENTS */}
-            {/* ========================= */}
-            <Text style={styles.sectionTitle}>
-                Lịch khám hôm nay
-            </Text>
+            <Text style={styles.sectionTitle}>Lịch khám hôm nay</Text>
+            {appointments.length === 0 ? (
+                <Card style={styles.emptyCard}>
+                    <Card.Content>
+                        <Text style={styles.emptyText}>Không có lịch khám hôm nay</Text>
+                    </Card.Content>
+                </Card>
+            ) : (
+                <FlatList
+                    data={appointments}
+                    renderItem={renderAppointment}
+                    keyExtractor={(item) => item.id.toString()}
+                    scrollEnabled={false}
+                />
+            )}
 
-            {
-                appointments.length === 0 ? (
-
-                    <Card style={styles.emptyCard}>
-
-                        <Card.Content>
-
-                            <Text style={styles.emptyText}>
-                                Không có lịch khám hôm nay
-                            </Text>
-
-                        </Card.Content>
-
-                    </Card>
-
-                ) : (
-
-                    <FlatList
-                        data={appointments}
-                        renderItem={renderAppointment}
-                        keyExtractor={(item) =>
-                            item.id.toString()
-                        }
-                        scrollEnabled={false}
-                    />
-
-                )
-            }
-
+            <View style={{ height: 32 }} />
         </ScrollView>
     );
 };
 
 const styles = StyleSheet.create({
-
-    container: {
-        flex: 1,
-        backgroundColor: '#F5F7FA',
-        padding: 15,
-    },
-
-    loadingContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 25,
-    },
-
-    greeting: {
-        fontSize: 18,
-        color: '#777',
-    },
-
-    doctorName: {
-        fontSize: 26,
-        fontWeight: 'bold',
-        color: '#222',
-        marginTop: 5,
-    },
-
-    specialty: {
-        marginTop: 5,
-        color: '#666',
-    },
-
-    sectionTitle: {
-        fontSize: 21,
-        fontWeight: 'bold',
-        marginBottom: 15,
-        color: '#222',
-    },
-
-    statsContainer: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'space-between',
-    },
-
-    statCard: {
-        width: '48%',
-        marginBottom: 15,
-        borderRadius: 16,
-    },
-
-    center: {
-        alignItems: 'center',
-    },
-
-    statNumber: {
-        fontSize: 28,
-        fontWeight: 'bold',
-        marginTop: 10,
-    },
-
-    statLabel: {
-        marginTop: 5,
-        color: '#666',
-    },
-
-    appointmentCard: {
-        marginBottom: 12,
-        borderRadius: 15,
-    },
-
-    rowBetween: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-
-    patientName: {
-        fontSize: 17,
-        fontWeight: 'bold',
-        color: '#222',
-    },
-
-    subText: {
-        marginTop: 5,
-        color: '#666',
-    },
-
-    emptyCard: {
-        borderRadius: 15,
-    },
-
-    emptyText: {
-        textAlign: 'center',
-        color: '#777',
-    },
-
+    container:        { flex: 1, backgroundColor: '#F5F7FA', padding: 15 },
+    loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    header:           { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 25 },
+    greeting:         { fontSize: 18, color: '#777' },
+    doctorName:       { fontSize: 26, fontWeight: 'bold', color: '#222', marginTop: 5 },
+    sectionTitle:     { fontSize: 21, fontWeight: 'bold', marginBottom: 15, color: '#222' },
+    statsContainer:   { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+    statCard:         { width: '48%', marginBottom: 15, borderRadius: 16 },
+    center:           { alignItems: 'center' },
+    statNumber:       { fontSize: 28, fontWeight: 'bold', marginTop: 10 },
+    statLabel:        { marginTop: 5, color: '#666' },
+    appointmentCard:  { marginBottom: 12, borderRadius: 15 },
+    rowBetween:       { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    patientName:      { fontSize: 17, fontWeight: 'bold', color: '#222' },
+    subText:          { marginTop: 5, color: '#666' },
+    emptyCard:        { borderRadius: 15 },
+    emptyText:        { textAlign: 'center', color: '#777' },
+    callingRow:       { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    callingText:      { flex: 1, color: '#22C55E', fontWeight: '600' },
+    noShowText:       { marginTop: 8, color: '#EF4444', fontWeight: '600', fontSize: 13 },
+    acceptedText:     { marginTop: 8, color: '#22C55E', fontWeight: '600', fontSize: 13 },
 });
 
 export default DoctorHomeScreen;
