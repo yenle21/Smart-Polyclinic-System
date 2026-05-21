@@ -10,7 +10,7 @@ import {
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from "@react-navigation/native";
-
+import axios from 'axios';
 import Apis, { authApis, endpoints } from "../../configs/Apis";
 import { MyUserContext } from "../../configs/Contexts";
 import loginstyles from "../../styles/loginstyles";
@@ -84,8 +84,8 @@ const Login = () => {
 
             params.append('username', user.username);
             params.append('password', user.password);
-            params.append('client_id', 'Qo0xwsPc00Wama0YySwi81z1jfnjPbUxi6xYc5H1');
-            params.append('client_secret', 'SIN6g29BplhvAY0IfUin8OVGnOzAuvbfy9WXbO8FWIitHgzlRYYDYtixGFOQXbpil0DwAOhx5PdVfGjbOOlZaZo2GzVW6WzqsR4kXa927OTC3qxqUtmFRjqauSvebbfS');
+            params.append('client_id', 'n7aGTsfMDLTLWp32Hm9YU6OQGbSDnmHaY77CoWhL');
+            params.append('client_secret', 'bK8au064hR1Mlj77UWiFJNTkBUgmL9PzGv7kWWdi9NFI31RRSF1hA7B3o8Cstu5bIpMO44dfrx5iG7p13PJWNttp81xEltStjRe5y6XtKpH30AqlXxb6cPnllFYkVpmX');
             params.append('grant_type', 'password');
 
             let res = await Apis.post(
@@ -98,16 +98,23 @@ const Login = () => {
                 }
             );
 
-            await AsyncStorage.setItem(
-                'access_token',
-                res.data.access_token
-            );
+            const accessToken = res.data.access_token;
+            console.log('=== TOKEN FROM API:', accessToken);
 
-            const authenticatedApi = await authApis();
+            await AsyncStorage.setItem('access_token', accessToken);
+
+
+            const authenticatedApi = axios.create({
+                baseURL: 'http://192.168.1.222:8000',
+                timeout: 10000,
+                headers: { Authorization: `Bearer ${accessToken}` }
+            });
+
 
             let u = await authenticatedApi.get(
                 endpoints['current-user']
             );
+            console.log('=== USER DATA:', JSON.stringify(u.data));
 
             dispatch({
                 type: 'LOGIN',

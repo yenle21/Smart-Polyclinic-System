@@ -27,6 +27,7 @@ class ScheduleViewSet(viewsets.ViewSet, generics.ListAPIView):
     serializer_class = ScheduleSerializer
 
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = None
 
     def get_queryset(self):
         query = self.queryset

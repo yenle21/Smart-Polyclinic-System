@@ -11,7 +11,7 @@ export default function ProfileScreen() {
     const navigation = useNavigation();
 
     const handleLogout = async () => {
-        await AsyncStorage.removeItem('token');
+        await AsyncStorage.removeItem('access_token');
         dispatch({ type: 'LOGOUT' });
     };
 
@@ -19,11 +19,19 @@ export default function ProfileScreen() {
         <View style={styles.container}>
             {/* HEADER */}
             <View style={styles.header}>
-                <Avatar.Icon
-                    size={60}
-                    icon="account"
-                    style={styles.avatar}
-                />
+                {user?.avatar ? (
+                    <Avatar.Image
+                        size={80}
+                        source={{ uri: user.avatar }}
+                        style={styles.avatar}
+                    />
+                ) : (
+                    <Avatar.Icon
+                        size={80}
+                        icon="account"
+                        style={styles.avatar}
+                    />
+                )}
 
 
                 <Text style={styles.role}>
