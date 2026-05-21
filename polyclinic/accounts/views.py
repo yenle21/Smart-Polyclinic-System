@@ -13,7 +13,7 @@ from .serializers import UserSerializer, DoctorSerializer, PatientSerializer, Re
 class UserViewSet(viewsets.ViewSet, generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    parser_classes = [parsers.MultiPartParser]
+    parser_classes = [parsers.MultiPartParser, parsers.FormParser]
     # đăng kí tài khoản
     @action(methods=['post'], url_path='register', detail=False,
             permission_classes=[permissions.AllowAny])

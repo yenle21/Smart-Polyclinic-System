@@ -5,6 +5,12 @@ from .models import Patient, User, Doctor, Specialty
 
 # Lấy danh sách user
 class UserSerializer(serializers.ModelSerializer):
+    avatar = serializers.SerializerMethodField()
+
+    def get_avatar(self, obj):
+        if obj.avatar:
+            return obj.avatar.url
+        return None
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'phone', 'role', 'avatar']
@@ -23,10 +29,11 @@ class RegisterSerializer(serializers.ModelSerializer):
     password         = serializers.CharField(write_only=True)
     password_confirm = serializers.CharField(write_only=True)
     email            = serializers.EmailField(required=True)
+    avatar = serializers.ImageField(required=False, allow_null=True)
 
     class Meta:
         model  = User
-        fields = ['username', 'password', 'password_confirm', 'email', 'phone']
+        fields = ['username', 'password', 'password_confirm', 'email', 'phone', 'avatar']
     # kiểm tra username
     def validate_username(self, value):
         if not value.isalnum():
@@ -61,10 +68,15 @@ class RegisterSerializer(serializers.ModelSerializer):
     # tạo user
     def create(self, validated_data):
         validated_data.pop('password_confirm')
+        avatar = validated_data.pop('avatar', None)
         user = User.objects.create_user(
             **validated_data,
             role='patient'
         )
+
+        if avatar:
+            user.avatar = avatar  # Cloudinary tự upload khi save
+            user.save()
         # tự động tạo bệnh nhân khi user đăng kí
         Patient.objects.create(
             user=user,

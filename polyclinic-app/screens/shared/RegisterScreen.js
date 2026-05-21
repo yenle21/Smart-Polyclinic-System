@@ -36,7 +36,7 @@ const Register = () => {
             return;
         }
         const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            mediaTypes: ['images'],
             allowsEditing: true,
             aspect: [1, 1],
             quality: 0.8,
@@ -75,16 +75,17 @@ const Register = () => {
 
             if (avatar) {
                 const filename  = avatar.uri.split('/').pop();
-                const extension = filename.split('.').pop();
+                const ext = filename.split('.').pop().toLowerCase();
+                const mimeType = ext === 'jpg' ? 'jpeg' : ext;
                 data.append('avatar', {
                     uri:  avatar.uri,
                     name: filename,
-                    type: `image/${extension}`,
+                    type: `image/${mimeType}`,
                 });
             }
 
-            await Apis.post(endpoints['register'], data, {
-                headers: { 'Content-Type': 'multipart/form-data' },
+           await Apis.post(endpoints['register'], data, {
+                headers: { 'Content-Type': undefined },
             });
 
             Alert.alert(
