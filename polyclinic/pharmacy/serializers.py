@@ -106,10 +106,7 @@ class PrescriptionItemSerializer(serializers.ModelSerializer):
 
 class PrescriptionSerializer(serializers.ModelSerializer):
     items              = PrescriptionItemSerializer(many=True, read_only=True)
-    patient_name       = serializers.CharField(
-        source='medical_record.appointment.patient.user.get_full_name',
-        read_only=True
-    )
+    patient_name = serializers.SerializerMethodField()
     doctor_name        = serializers.CharField(
         source='medical_record.appointment.schedule.doctor.user.get_full_name',
         read_only=True
@@ -130,6 +127,11 @@ class PrescriptionSerializer(serializers.ModelSerializer):
             item.quantity * item.medicine.price
             for item in obj.items.all()
         )
+
+    def get_patient_name(self, obj):
+        user = obj.medical_record.appointment.patient.user
+        full_name = user.get_full_name().strip()
+        return full_name if full_name else user.username
 
 
 class PrescriptionCreateSerializer(serializers.ModelSerializer):

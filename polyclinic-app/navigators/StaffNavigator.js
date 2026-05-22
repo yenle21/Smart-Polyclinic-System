@@ -4,6 +4,12 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import COLORS from '../styles/colors';
 import AppHeader from '../components/shared/AppHeader';
+import { useEffect, useState, useContext } from 'react';
+import { MyUserContext } from '../configs/Contexts';
+import { db } from '../configs/firebase';
+import { ref, onValue } from 'firebase/database';
+import { View } from 'react-native';
+import { Badge } from 'react-native-paper';
 
 // Pharmacy
 import CategoryListScreen       from '../screens/staff/CategoryScreen';
@@ -108,12 +114,32 @@ function ChatStack() {
 }
 
 export default function StaffNavigator() {
+    const [user]        = useContext(MyUserContext);
+    const [unreadChat, setUnreadChat] = useState(0);
+
+    // ✅ Lắng nghe tổng unread_staff từ Firebase
+    useEffect(() => {
+        if (!user?.id) return;
+        const chatsRef = ref(db, 'chats');
+        const unsub = onValue(chatsRef, (snapshot) => {
+            const data = snapshot.val();
+            if (!data) { setUnreadChat(0); return; }
+            
+            // Tổng tất cả unread_staff
+            const total = Object.values(data)
+                .reduce((sum, chat) => sum + (chat.unread_staff || 0), 0);
+            setUnreadChat(total);
+        });
+        return () => unsub();
+    }, [user?.id]);
     return (
         <Tab.Navigator screenOptions={{
             headerShown:           false,
             tabBarActiveTintColor: COLORS.primary,
             tabBarStyle:           { paddingBottom: 5, height: 60 },
+            
         }}>
+
             <Tab.Screen
                 name="AppointmentTab"
                 component={AppointmentStack}
@@ -159,9 +185,24 @@ export default function StaffNavigator() {
                 component={ChatStack}
                 options={{
                     tabBarLabel: 'Tin nhắn',
-                    tabBarIcon: ({ color }) => <MaterialCommunityIcons name="chat" size={24} color={color} />,
+                    tabBarIcon: ({ color, size }) => (
+                        <View>
+                            <MaterialCommunityIcons name="chat" size={size} color={color} />
+                            {unreadChat > 0 && (
+                                <Badge size={16} style={{
+                                    position: 'absolute',
+                                    top: -4,
+                                    right: -8,
+                                    backgroundColor: 'red',
+                                }}>
+                                    {unreadChat > 99 ? '99+' : unreadChat}
+                                </Badge>
+                            )}
+                        </View>
+                    ),
                 }}
             />
+
             <Tab.Screen
                 name="ProfileTab"
                 component={ProfileStack}  

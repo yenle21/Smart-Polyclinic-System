@@ -13,13 +13,9 @@ class InvoiceItemSerializer(serializers.ModelSerializer):
 
 class InvoiceSerializer(serializers.ModelSerializer):
     # Thông tin bệnh nhân để hiển thị
-    patient_name    = serializers.CharField(
-        source='patient.user.get_full_name', read_only=True
-    )
-    # Thông tin bác sĩ từ appointment → schedule → doctor
-    doctor_name     = serializers.CharField(
-        source='appointment.schedule.doctor.user.get_full_name', read_only=True
-    )
+    patient_name = serializers.SerializerMethodField()
+    doctor_name = serializers.SerializerMethodField()
+
     # Tên chuyên khoa
     specialty_name  = serializers.CharField(
         source='appointment.schedule.doctor.specialty.name', read_only=True
@@ -53,6 +49,17 @@ class InvoiceSerializer(serializers.ModelSerializer):
             'created_date'
         ]
         read_only_fields = ['total_amount', 'paid_at', 'created_date']
+
+    def get_patient_name(self, obj):
+        user = obj.patient.user
+        full_name = user.get_full_name().strip()
+        return full_name if full_name else user.username
+
+    def get_doctor_name(self, obj):
+        user = obj.appointment.schedule.doctor.user
+        full_name = user.get_full_name().strip()
+        return full_name if full_name else user.username
+
 
 
 class InvoiceCreateSerializer(serializers.ModelSerializer):
@@ -99,3 +106,8 @@ class InvoicePaySerializer(serializers.ModelSerializer):
         instance.paid_at = timezone.now()
         instance.save()
         return instance
+
+class InvoiceUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Invoice
+        fields = ['consultation_fee', 'medicine_fee', 'service_fee', 'notes']

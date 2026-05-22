@@ -13,7 +13,7 @@ class UserSerializer(serializers.ModelSerializer):
         return None
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'phone', 'role', 'avatar']
+        fields = ['id', 'username', 'email', 'phone', 'role', 'avatar', 'first_name', 'last_name']
 # lấy danh sách bệnh nhân
 class PatientSerializer(serializers.ModelSerializer):
     class Meta:

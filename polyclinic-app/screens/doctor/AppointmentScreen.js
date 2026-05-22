@@ -29,8 +29,8 @@ const FILTERS = [
         value: 'completed',
     },
     {
-        label: 'Đã huỷ',
-        value: 'cancelled',
+        label: 'Vắng mặt',
+        value: 'no_show',
     },
 ];
 
@@ -91,10 +91,21 @@ const AppointmentScreen = ({ navigation }) => {
 
     }, []);
 
-    const filteredData =
-        appointments.filter(
-            a => a.status === activeFilter
-        );
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const filteredData = appointments.filter(a => {
+        if (a.status !== activeFilter) return false;
+        
+        // Tab "confirmed" chỉ hiện ngày >= hôm nay
+        if (activeFilter === 'confirmed') {
+            const workDate = new Date(a.work_date);
+            workDate.setHours(0, 0, 0, 0);
+            return workDate >= today;
+        }
+        
+        return true;
+    });
 
     const getStatusStyle = (status) => ({
         confirmed: styles.badgeConfirmed,

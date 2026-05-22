@@ -43,6 +43,8 @@ const DoctorHomeScreen = ({ navigation }) => {
     const loadData = async () => {
         try {
             const api = await authApis();
+            const userRes = await api.get(endpoints['current-user']);
+            setDoctor(userRes.data);
 
             // ✅ Dùng API appointments sẵn có
             const res  = await api.get(endpoints['appointments']);
@@ -50,18 +52,25 @@ const DoctorHomeScreen = ({ navigation }) => {
             const list = Array.isArray(data) ? data : (data.results || []);
 
             // ✅ Lọc lịch hôm nay
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const filteredList = list.filter(item => {
+                return isToday(item.work_date) && item.status !== 'cancelled'
+            });
             const todayList = list.filter(item => isToday(item.work_date));
 
-            setAppointments(todayList);
+            setAppointments(filteredList);
 
             // ✅ Tính overview từ list hôm nay
+            const allToday = list.filter(item => isToday(item.work_date));
             setOverview({
-                total_appointments: todayList.length,
-                pending:   todayList.filter(a => a.status === 'pending').length,
-                confirmed: todayList.filter(a => a.status === 'confirmed').length,
-                completed: todayList.filter(a => a.status === 'completed').length,
-                cancelled: todayList.filter(a => a.status === 'cancelled').length,
+                total_appointments: allToday.length,
+                confirmed: allToday.filter(a => a.status === 'confirmed').length,
+                completed: allToday.filter(a => a.status === 'completed').length,
+                no_show:   allToday.filter(a => a.status === 'no_show').length,
             });
+
 
         } catch (err) {
             console.log('LOAD ERROR:', err.response?.data || err);
@@ -183,14 +192,13 @@ const DoctorHomeScreen = ({ navigation }) => {
 
     // ── Render appointment ────────────────────────────
     const renderAppointment = ({ item }) => {
-        const canCall    = item.type === 'online' &&
-                           item.status === 'confirmed' &&
+        const canCall    = item.type === 'online' && item.status === 'confirmed' &&
                            isToday(item.work_date);
         const isCalling  = callingId === item.id;
         const thisStatus = callStatus[item.id];
 
         return (
-            <Card style={styles.appointmentCard}>
+            <Card style={styles.appointmentCard} onPress={() => navigation.navigate('AppointmentDetail', { appointment: item })}>
                 <Card.Content>
                     <View style={styles.rowBetween}>
                         <View style={{ flex: 1 }}>
@@ -267,7 +275,9 @@ const DoctorHomeScreen = ({ navigation }) => {
             <View style={styles.header}>
                 <View>
                     <Text style={styles.greeting}>Xin chào 👋</Text>
-                    <Text style={styles.doctorName}>BS. {doctor?.name}</Text>
+                    <Text style={styles.doctorName}>
+                        BS. {`${doctor?.first_name || ''} ${doctor?.last_name || ''}`.trim() || '---'}
+                    </Text> 
                 </View>
                 <Avatar.Icon size={70} icon="doctor" style={{ backgroundColor: '#2196F3' }} />
             </View>
@@ -276,10 +286,10 @@ const DoctorHomeScreen = ({ navigation }) => {
             <Text style={styles.sectionTitle}>Tổng quan hôm nay</Text>
             <View style={styles.statsContainer}>
                 {[
-                    { icon: 'calendar-month', color: '#2196F3', value: overview.total_appointments, label: 'Tổng lịch' },
-                    { icon: 'clock-outline',  color: '#FF9800', value: overview.pending,            label: 'Đang chờ' },
+                    { icon: 'clock-outline',  color: '#FF9800', value: overview.total_appointments, label: 'Tổng lịch' },
+                    { icon: 'calendar-month', color: '#2196F3', value: overview.confirmed,            label: 'Đã xác nhận' },
                     { icon: 'check-circle',   color: '#4CAF50', value: overview.completed,          label: 'Đã khám' },
-                    { icon: 'close-circle',   color: '#F44336', value: overview.cancelled,          label: 'Đã huỷ' },
+                    { icon: 'close-circle',   color: '#F44336', value: overview.no_show,          label: 'Vắng mặt' },
                 ].map((s, i) => (
                     <Card key={i} style={styles.statCard}>
                         <Card.Content style={styles.center}>

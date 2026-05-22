@@ -16,6 +16,7 @@ export default function PrescriptionScreen({ navigation }) {
         try {
             const api = await authApis();
             const res = await api.get(endpoints['prescriptions']);
+            console.log('=== RAW DATA:', JSON.stringify(res.data));
             setPrescriptions(res.data.results || res.data);
         } catch (err) {
             console.error('fetchPrescriptions:', err);

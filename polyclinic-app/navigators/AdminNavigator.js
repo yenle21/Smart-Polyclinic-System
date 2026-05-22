@@ -9,6 +9,8 @@ import RevenueReportScreen  from '../screens/admin/RevenueReportScreen';
 import MedicineReportScreen from '../screens/admin/MedicineReportScreen';
 import AlertScreen          from '../screens/staff/AlertScreen';
 import ProfileScreen        from '../screens/shared/ProfileScreen';
+import PatientReportScreen from '../screens/admin/PatientReportScreen';
+import DiseaseReportScreen from '../screens/admin/DiseaseReportScreen';
 
 const Tab   = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -33,6 +35,24 @@ function MedicineStack() {
         <Stack.Navigator screenOptions={headerOpts}>
             <Stack.Screen name="MedicineReport" component={MedicineReportScreen}
                           options={{ title: 'Báo cáo dược phẩm' }} />
+        </Stack.Navigator>
+    );
+}
+
+function PatientStack() {
+    return (
+        <Stack.Navigator screenOptions={headerOpts}>
+            <Stack.Screen name="PatientReport" component={PatientReportScreen}
+                          options={{ title: 'Báo cáo bệnh nhân' }} />
+        </Stack.Navigator>
+    );
+}
+
+function DiseaseStack() {
+    return (
+        <Stack.Navigator screenOptions={headerOpts}>
+            <Stack.Screen name="DiseaseReport" component={DiseaseReportScreen}
+                          options={{ title: 'Báo cáo bệnh phổ biến' }} />
         </Stack.Navigator>
     );
 }
@@ -96,6 +116,20 @@ export default function AdminNavigator() {
                         <TabIcon name="pill" color={color} size={size} />,
                 }}
             />
+
+            <Tab.Screen name="PatientRpt" component={PatientStack}
+                options={{
+                    title: 'Bệnh nhân',
+                    tabBarIcon: ({ color, size }) =>
+                        <TabIcon name="account-group" color={color} size={size} />,
+                }} />
+
+            <Tab.Screen name="DiseaseRpt" component={DiseaseStack}
+                options={{
+                    title: 'Bệnh phổ biến',
+                    tabBarIcon: ({ color, size }) =>
+                        <TabIcon name="virus" color={color} size={size} />,
+                }} />
 
             <Tab.Screen
                 name="Alerts"

@@ -177,17 +177,10 @@ class PrescriptionViewSet(viewsets.ViewSet, generics.ListCreateAPIView,  generic
         return serializers.PrescriptionSerializer
 
     def get_queryset(self):
-        query = self.queryset
-        is_dispensed = self.request.query_params.get('is_dispensed')
-        if is_dispensed is not None:
-            query = query.filter(is_dispensed=is_dispensed.lower() == 'true')
-
-        # ← THÊM DÒNG NÀY
-        medical_record_id = self.request.query_params.get('medical_record')
-        if medical_record_id:
-            query = query.filter(medical_record_id=medical_record_id)
-
-        return query
+        return Prescription.objects.select_related(
+            'medical_record__appointment__patient__user',
+            'medical_record__appointment__schedule__doctor__user',
+        ).prefetch_related('items__medicine').order_by('-created_date')
 
     @action(detail=True, methods=['post'], url_path='dispense')
     def dispense(self, request, pk=None):
@@ -204,7 +197,7 @@ class PrescriptionViewSet(viewsets.ViewSet, generics.ListCreateAPIView,  generic
 
         appointment = prescription.medical_record.appointment
 
-        # Tính tổng tiền thuốc
+        # Tính tiền thuốc
         medicine_fee = prescription.items.aggregate(
             total=db_models.Sum(
                 db_models.F('quantity') * db_models.F('medicine__price'),
@@ -212,16 +205,25 @@ class PrescriptionViewSet(viewsets.ViewSet, generics.ListCreateAPIView,  generic
             )
         )['total'] or 0
 
+        # Lấy phí khám từ schedule của bác sĩ
+        consultation_fee = 0
+        try:
+            consultation_fee = appointment.schedule.doctor.consultation_fee or 0
+        except Exception:
+            pass
+
         invoice, created = Invoice.objects.get_or_create(
             appointment=appointment,
             defaults={
                 'patient': appointment.patient,
+                'consultation_fee': consultation_fee,  # ← thêm
                 'medicine_fee': medicine_fee,
             }
         )
 
         if not created:
             invoice.medicine_fee = medicine_fee
+            invoice.consultation_fee = consultation_fee  # ← thêm
             invoice.save()
 
         return Response({'invoice_id': invoice.id}, status=status.HTTP_200_OK)

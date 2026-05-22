@@ -295,6 +295,13 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView):
         )
         return Response(AppointmentSerializer(appointment).data)
 
+    def retrieve(self, request, pk=None):
+        try:
+            appointment = self.get_queryset().get(pk=pk)
+        except Appointment.DoesNotExist:
+            return Response({'detail': 'Không tìm thấy.'}, status=status.HTTP_404_NOT_FOUND)
+        return Response(AppointmentSerializer(appointment).data)
+
     @action(methods=['patch'], url_path='complete', detail=True)
     def complete(self, request, pk=None):
         if request.user.role != 'doctor':

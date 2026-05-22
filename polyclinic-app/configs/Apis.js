@@ -2,7 +2,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
-const BASE_URL = 'http://192.168.1.223:8000';
+const BASE_URL = 'http://10.17.65.73:8000';
 
 
 
@@ -40,6 +40,8 @@ export const endpoints = {
     'dashboard-revenue':  '/revenue/',
     'dashboard-medicines':'/medicines-report/',
     'doctor-dashboard': '/doctor/dashboard/',
+    'patients-report': '/patients-report/',
+    'disease-report':  '/disease-report/',
     //medical-record
     'medical-records' :'/medical-records/',
     'medical-detail':   (id) => `/medical-records/${id}/detail/`,
@@ -48,6 +50,7 @@ export const endpoints = {
     'test-results':         (id) => `/medical-records/${id}/test-results/`,
     'prescriptions':        '/prescriptions/',
     'medicines':            '/medicines/',
+    'medicine-detail': (id) => `/medicines/${id}/`,
     //Noti
     'notifications':       '/notifications/',
     'notification-read':   (id) => `/notifications/${id}/read/`,

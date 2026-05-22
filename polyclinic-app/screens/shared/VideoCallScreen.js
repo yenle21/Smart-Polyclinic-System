@@ -26,9 +26,6 @@ const VideoCallScreen = ({ route, navigation }) => {
         try {
             await update(ref(db, `calls/${callId}`), { status: 'ended' });
             
-            // ✅ Cập nhật appointment status → completed
-            const api = await authApis();
-            await api.patch(`/appointments/${callId}/approve/`, { status: 'completed' });
         } catch (e) {
             if (e.response?.status !== 403) {
                 console.error('endCall error:', e);
