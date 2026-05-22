@@ -27,21 +27,18 @@ import { MyUserContext } from "../../configs/Contexts";
 
 import loginstyles from "../../styles/loginstyles";
 
-// =========================
-// ROLES
-// =========================
+//chọn role để đăng nhập 
 const ROLES = [
     { key: 'doctor',  label: '🩺 Bác sĩ' },
     { key: 'staff',   label: '💊 Nhân viên y tế' },
+    { key: 'pharmacy',   label: '💊 Dược sĩ' },
     { key: 'admin',   label: '🛡️ Admin' },
     { key: 'patient', label: '🧑‍⚕️ Bệnh nhân' },
 ];
 
 const Login = () => {
 
-    // =========================
-    // INPUTS
-    // =========================
+    //input
     const userInfo = [
         {
             field: 'username',
@@ -55,9 +52,7 @@ const Login = () => {
         },
     ];
 
-    // =========================
     // STATES
-    // =========================
     const [user, setUser] = useState({});
 
     const [role, setRole] = useState(null);
@@ -71,14 +66,11 @@ const Login = () => {
     const [showPassword, setShowPassword] =
         useState(false);
 
-    const [, dispatch] =
-        useContext(MyUserContext);
+    const [, dispatch] = useContext(MyUserContext);
 
     const nav = useNavigation();
 
-    // =========================
     // VALIDATE
-    // =========================
     const validate = () => {
 
         if (!role) {
@@ -97,13 +89,9 @@ const Login = () => {
         }
 
         setErr(null);
-
         return true;
     };
-
-    // =========================
-    // LOGIN
-    // =========================
+     // LOGIN
     const login = async () => {
 
         if (!validate())
@@ -115,63 +103,35 @@ const Login = () => {
 
             setErr(null);
 
-            // =========================
-            // GET TOKEN
-            // =========================
+            //lấy token
             const params = new URLSearchParams();
 
-            params.append(
-                'username',
-                user.username
-            );
+            params.append( 'username',user.username );
 
-            params.append(
-                'password',
-                user.password
-            );
+            params.append( 'password',user.password );
 
-            params.append(
-                'client_id',
-                'n7aGTsfMDLTLWp32Hm9YU6OQGbSDnmHaY77CoWhL'
-            );
 
-            params.append(
-                'client_secret',
-                'bK8au064hR1Mlj77UWiFJNTkBUgmL9PzGv7kWWdi9NFI31RRSF1hA7B3o8Cstu5bIpMO44dfrx5iG7p13PJWNttp81xEltStjRe5y6XtKpH30AqlXxb6cPnllFYkVpmX'
-            );
+            params.append( 'client_id','Qo0xwsPc00Wama0YySwi81z1jfnjPbUxi6xYc5H1' );
 
-            params.append(
-                'grant_type',
-                'password'
-            );
+            params.append( 'client_secret','SIN6g29BplhvAY0IfUin8OVGnOzAuvbfy9WXbO8FWIitHgzlRYYDYtixGFOQXbpil0DwAOhx5PdVfGjbOOlZaZo2GzVW6WzqsR4kXa927OTC3qxqUtmFRjqauSvebbfS');
 
-            const res = await Apis.post(
-                endpoints['login'],
+            params.append('grant_type','password' );
+
+            const res = await Apis.post(endpoints['login'],
                 params,
                 {
                     headers: {
-                        'Content-Type':
-                            'application/x-www-form-urlencoded'
+                        'Content-Type':'application/x-www-form-urlencoded'
                     }
                 }
             );
 
-            const accessToken =
-                res.data.access_token;
+            const accessToken =res.data.access_token;
 
-            await AsyncStorage.setItem(
-                'access_token',
-                accessToken
-            );
-
-            // =========================
+            await AsyncStorage.setItem( 'access_token',accessToken);
             // GET CURRENT USER
-            // =========================
             const api = await authApis();
-
-            const u = await api.get(
-                endpoints['current-user']
-            );
+            const u = await api.get( endpoints['current-user'] );
 
             const currentUser = u.data;
 
@@ -180,9 +140,7 @@ const Login = () => {
             // =========================
             if (currentUser.role !== role.key) {
 
-                setErr(
-                    `Tài khoản này không phải ${role.label}`
-                );
+                setErr( `Tài khoản này không phải ${role.label}`);
 
                 return;
             }

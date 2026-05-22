@@ -108,6 +108,30 @@ const registerstyles = StyleSheet.create({
         color: '#1565C0',
         fontWeight: '700',
     },
+    genderWrap: {
+    marginVertical: 8,
+    paddingHorizontal: 4,
+},
+genderLabel: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 4,
+    marginLeft: 4,
+},
+genderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+},
+genderOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+},
+genderOptionLabel: {
+    fontSize: 15,
+    marginLeft: 4,
+},
 });
+
 
 export default registerstyles;

@@ -3,226 +3,251 @@ import {
     View, Text, ScrollView, TouchableOpacity,
     Image, Alert,
 } from "react-native";
+
 import styles from "../../styles/registerstyles";
-import { Button, HelperText, TextInput } from "react-native-paper";
+import { Button, HelperText, TextInput, RadioButton } from "react-native-paper";
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from "@react-navigation/native";
 
 import Apis, { endpoints } from "../../configs/Apis";
 
+// =========================
+// GENDER OPTIONS
+// =========================
+const GENDERS = [
+    { key: 'male', label: '👨 Nam' },
+    { key: 'female', label: '👩 Nữ' },
+];
+
+// =========================
+// FIELD CONFIG (giống pattern của thầy)
+// mỗi object = 1 TextInput
+// =========================
+const userInfo = [
+    { field: 'first_name',        title: 'Họ',                  icon: 'account'        },
+    { field: 'last_name',         title: 'Tên',                 icon: 'account'        },
+    { field: 'username',          title: 'Username',            icon: 'account-circle' },
+    { field: 'email',             title: 'Email',               icon: 'email'          },
+    { field: 'phone',             title: 'SĐT',                 icon: 'phone'          },
+    { field: 'password',          title: 'Mật khẩu',            icon: 'eye', secureTextEntry: true },
+    { field: 'password_confirm',  title: 'Xác nhận mật khẩu',  icon: 'eye', secureTextEntry: true },
+];
+
 const Register = () => {
     const nav = useNavigation();
 
-    const [form, setForm] = useState({
-        username:         '',
-        email:            '',
-        phone:            '',
-        password:         '',
-        password_confirm: '',
-    });
-    const [avatar, setAvatar]     = useState(null);   // { uri }
+    // State lưu toàn bộ dữ liệu form (giống thầy dùng object)
+    const [user, setUser] = useState({});
+    const [avatar, setAvatar] = useState(null);
+    const [err, setErr] = useState(null);
+    const [loading, setLoading] = useState(false);
+
+    // Toggle ẩn/hiện password
     const [showPass, setShowPass] = useState(false);
-    const [showCfm,  setShowCfm]  = useState(false);
-    const [err, setErr]           = useState(null);
-    const [loading, setLoading]   = useState(false);
+    const [showCfm, setShowCfm] = useState(false);
 
-    // ── helpers ─────────────────────────────────────
-    const update = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
+    // =========================
+    // PICK AVATAR
+    // =========================
+    const picker = async () => {
+        const { status } =
+            await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-    const pickAvatar = async () => {
-        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== 'granted') {
-            Alert.alert('Cần quyền truy cập', 'Vui lòng cho phép truy cập thư viện ảnh.');
+            Alert.alert('Cần quyền truy cập', 'Vui lòng cấp quyền ảnh');
             return;
         }
+
         const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'],
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
             aspect: [1, 1],
             quality: 0.8,
         });
-        if (!result.canceled) setAvatar(result.assets[0]);
+
+        if (!result.canceled) {
+            setAvatar(result.assets[0]);
+        }
     };
 
+    // =========================
+    // VALIDATE
+    // =========================
     const validate = () => {
-        if (!form.username.trim())       return setErr('Vui lòng nhập tên đăng nhập'), false;
-        if (!/^[a-zA-Z0-9]+$/.test(form.username)) return setErr('Username chỉ được chứa chữ và số!'), false;
-        if (!form.email.trim())          return setErr('Vui lòng nhập email'), false;
-        if (!/\S+@\S+\.\S+/.test(form.email)) return setErr('Email không hợp lệ'), false;
-        if (!form.phone.trim())          return setErr('Vui lòng nhập số điện thoại'), false;
-        if (!/^\d{10}$/.test(form.phone)) return setErr('Số điện thoại phải có 10 chữ số!'), false;
-        if (!form.password)              return setErr('Vui lòng nhập mật khẩu'), false;
-        if (form.password.length < 8)   return setErr('Mật khẩu phải ít nhất 8 ký tự!'), false;
-        if (!/\d/.test(form.password))  return setErr('Mật khẩu phải có ít nhất 1 số!'), false;
-        if (!/[A-Z]/.test(form.password)) return setErr('Mật khẩu phải có ít nhất 1 chữ hoa!'), false;
-        if (form.password !== form.password_confirm) return setErr('Mật khẩu xác nhận không khớp!'), false;
+        if (!user.first_name?.trim()) return setErr('Nhập họ'), false;
+        if (!user.last_name?.trim()) return setErr('Nhập tên'), false;
+        if (!user.gender) return setErr('Chọn giới tính'), false;
+
+        if (!user.username?.trim()) return setErr('Nhập username'), false;
+        if (!/^[a-zA-Z0-9]+$/.test(user.username))
+            return setErr('Username chỉ chữ và số'), false;
+
+        if (!user.email?.trim()) return setErr('Nhập email'), false;
+        if (!/\S+@\S+\.\S+/.test(user.email))
+            return setErr('Email sai'), false;
+
+        if (!user.phone?.trim()) return setErr('Nhập SĐT'), false;
+        if (!/^\d{10}$/.test(user.phone))
+            return setErr('SĐT phải 10 số'), false;
+
+        if (!user.password) return setErr('Nhập mật khẩu'), false;
+        if (user.password.length < 8)
+            return setErr('>= 8 ký tự'), false;
+        if (!/[A-Z]/.test(user.password))
+            return setErr('Có chữ hoa'), false;
+        if (!/\d/.test(user.password))
+            return setErr('Có số'), false;
+
+        if (user.password !== user.password_confirm)
+            return setErr('Mật khẩu không khớp'), false;
+
         setErr(null);
         return true;
     };
 
+    // =========================
+    // REGISTER
+    // =========================
     const register = async () => {
         if (!validate()) return;
+
         try {
             setLoading(true);
 
-            // Dùng FormData để gửi kèm ảnh
-            const data = new FormData();
-            data.append('username',         form.username.trim());
-            data.append('email',            form.email.trim());
-            data.append('phone',            form.phone.trim());
-            data.append('password',         form.password);
-            data.append('password_confirm', form.password_confirm);
+            const form = new FormData();
 
+            // Duyệt qua tất cả key trong user
+            for (var key of Object.keys(user)) {
+                form.append(key, user[key]);
+            }
+
+            // Xử lý avatar riêng
             if (avatar) {
-                const filename  = avatar.uri.split('/').pop();
-                const ext = filename.split('.').pop().toLowerCase();
-                const mimeType = ext === 'jpg' ? 'jpeg' : ext;
-                data.append('avatar', {
-                    uri:  avatar.uri,
+                const filename = avatar.uri.split('/').pop();
+                const ext = filename.split('.').pop();
+                form.append('avatar', {
+                    uri: avatar.uri,
                     name: filename,
-                    type: `image/${mimeType}`,
+                    type: `image/${ext === 'png' ? 'png' : 'jpeg'}`,
                 });
             }
 
-           await Apis.post(endpoints['register'], data, {
-                headers: { 'Content-Type': undefined },
+            const res = await Apis.post(endpoints['register'], form, {
+                headers: { 'Content-Type': 'multipart/form-data' },
             });
 
-            Alert.alert(
-                '🎉 Đăng ký thành công!',
-                'Tài khoản của bạn đã được tạo. Vui lòng đăng nhập.',
-                [{ text: 'Đăng nhập ngay', onPress: () => nav.navigate('Login') }]
-            );
+            if (res.status === 200 || res.status === 201) {
+                Alert.alert(
+                    "Thành công",
+                    "Đăng ký thành công",
+                    [{ text: "OK", onPress: () => nav.navigate("Login") }]
+                );
+            }
 
         } catch (ex) {
-            console.error(ex?.response?.data || ex);
-            const data = ex?.response?.data;
-            const msg  = data?.username?.[0]
-                      || data?.email?.[0]
-                      || data?.phone?.[0]
-                      || data?.password?.[0]
-                      || data?.password_confirm?.[0]
-                      || data?.non_field_errors?.[0]
-                      || 'Đăng ký thất bại. Vui lòng thử lại!';
-            setErr(msg);
-            console.error('DATA:', JSON.stringify(ex?.response?.data));
+            console.error(ex);
+            const errData = ex?.response?.data;
+            setErr(
+                errData?.username?.[0] ||
+                errData?.email?.[0] ||
+                errData?.phone?.[0] ||
+                errData?.first_name?.[0] ||
+                errData?.last_name?.[0] ||
+                errData?.gender?.[0] ||
+                errData?.password?.[0] ||
+                errData?.password_confirm?.[0] ||
+                errData?.detail ||
+                errData?.non_field_errors?.[0] ||
+                'Đăng ký thất bại'
+            );
         } finally {
             setLoading(false);
         }
     };
 
-    // ── render ──────────────────────────────────────
+    // =========================
+    // UI
+    // =========================
     return (
-        <ScrollView
-            contentContainerStyle={styles.container}
-            keyboardShouldPersistTaps="handled"
-        >
+        <ScrollView contentContainerStyle={styles.container}>
             <View style={styles.card}>
 
-                {/* Tiêu đề */}
-                <Text style={styles.cardTitle}>📋 Tạo tài khoản</Text>
-                <Text style={styles.cardSub}>Điền thông tin để đăng ký</Text>
+                <Text style={styles.cardTitle}>📋 Đăng ký</Text>
 
-                {/* Avatar */}
-                <TouchableOpacity style={styles.avatarWrap} onPress={pickAvatar}>
+                {/* AVATAR */}
+                <TouchableOpacity onPress={picker} style={styles.avatarWrap}>
                     {avatar ? (
                         <Image source={{ uri: avatar.uri }} style={styles.avatarImg} />
                     ) : (
-                        <View style={styles.avatarPlaceholder}>
-                            <Text style={styles.avatarIcon}>📷</Text>
-                            <Text style={styles.avatarText}>Chọn ảnh</Text>
-                        </View>
+                        <Text>📷 Chọn ảnh</Text>
                     )}
-                    <View style={styles.avatarBadge}>
-                        <Text style={styles.avatarBadgeText}>✏️</Text>
-                    </View>
                 </TouchableOpacity>
 
-                {/* Username */}
-                <TextInput
-                    label="Tên đăng nhập"
-                    value={form.username}
-                    onChangeText={t => update('username', t)}
-                    style={styles.input}
-                    autoCapitalize="none"
-                    right={<TextInput.Icon icon="account" />}
-                />
+                {/* RENDER TEXTINPUT TỪ userInfo ARRAY (giống thầy) */}
+                {userInfo.map(u => (
+                    <TextInput
+                        key={u.field}
+                        label={u.title}
+                        value={user[u.field] || ''}
+                        onChangeText={t => setUser({ ...user, [u.field]: t })}
+                        secureTextEntry={
+                            u.field === 'password' ? !showPass :
+                            u.field === 'password_confirm' ? !showCfm :
+                            false
+                        }
+                        right={
+                            u.field === 'password' ? (
+                                <TextInput.Icon
+                                    icon={showPass ? "eye-off" : "eye"}
+                                    onPress={() => setShowPass(!showPass)}
+                                />
+                            ) : u.field === 'password_confirm' ? (
+                                <TextInput.Icon
+                                    icon={showCfm ? "eye-off" : "eye"}
+                                    onPress={() => setShowCfm(!showCfm)}
+                                />
+                            ) : (
+                                <TextInput.Icon icon={u.icon} />
+                            )
+                        }
+                        style={styles.input}
+                    />
+                ))}
 
-                {/* Email */}
-                <TextInput
-                    label="Email"
-                    value={form.email}
-                    onChangeText={t => update('email', t)}
-                    style={styles.input}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    right={<TextInput.Icon icon="email" />}
-                />
+                {/* GENDER — RADIO BUTTON (không map được nên để riêng) */}
+                <View style={styles.genderWrap}>
+                    <Text style={styles.genderLabel}>Giới tính</Text>
+                    <RadioButton.Group
+                        onValueChange={value => setUser({ ...user, gender: value })}
+                        value={user.gender || ''}
+                    >
+                        <View style={styles.genderRow}>
+                            {GENDERS.map(g => (
+                                <TouchableOpacity
+                                    key={g.key}
+                                    style={styles.genderOption}
+                                    onPress={() => setUser({ ...user, gender: g.key })}
+                                >
+                                    <RadioButton.Android value={g.key} />
+                                    <Text style={styles.genderOptionLabel}>{g.label}</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    </RadioButton.Group>
+                </View>
 
-                {/* Số điện thoại */}
-                <TextInput
-                    label="Số điện thoại"
-                    value={form.phone}
-                    onChangeText={t => update('phone', t)}
-                    style={styles.input}
-                    keyboardType="phone-pad"
-                    right={<TextInput.Icon icon="phone" />}
-                />
-
-                {/* Password */}
-                <TextInput
-                    label="Mật khẩu"
-                    value={form.password}
-                    onChangeText={t => update('password', t)}
-                    style={styles.input}
-                    secureTextEntry={!showPass}
-                    right={
-                        <TextInput.Icon
-                            icon={showPass ? 'eye-off' : 'eye'}
-                            onPress={() => setShowPass(!showPass)}
-                        />
-                    }
-                />
-
-                {/* Confirm Password */}
-                <TextInput
-                    label="Xác nhận mật khẩu"
-                    value={form.password_confirm}
-                    onChangeText={t => update('password_confirm', t)}
-                    style={styles.input}
-                    secureTextEntry={!showCfm}
-                    right={
-                        <TextInput.Icon
-                            icon={showCfm ? 'eye-off' : 'eye'}
-                            onPress={() => setShowCfm(!showCfm)}
-                        />
-                    }
-                />
-
-                {/* Lỗi */}
                 <HelperText type="error" visible={!!err}>
                     {err}
                 </HelperText>
 
-                {/* Nút đăng ký */}
                 <Button
                     loading={loading}
                     disabled={loading}
                     mode="contained"
                     onPress={register}
-                    style={styles.registerBtn}
-                    labelStyle={styles.registerBtnLabel}
                 >
                     Đăng ký
                 </Button>
-
-                {/* Link quay lại login */}
-                <View style={styles.loginRow}>
-                    <Text style={styles.loginText}>Đã có tài khoản? </Text>
-                    <TouchableOpacity onPress={() => nav.navigate('Login')}>
-                        <Text style={styles.loginLink}>Đăng nhập</Text>
-                    </TouchableOpacity>
-                </View>
 
             </View>
         </ScrollView>

@@ -7,7 +7,7 @@ import COLORS from '../styles/colors';
 // ── Screens ──
 import RevenueReportScreen  from '../screens/admin/RevenueReportScreen';
 import MedicineReportScreen from '../screens/admin/MedicineReportScreen';
-import AlertScreen          from '../screens/staff/AlertScreen';
+import AlertScreen          from '../screens/pharmacy/AlertScreen';
 import ProfileScreen        from '../screens/shared/ProfileScreen';
 import PatientReportScreen from '../screens/admin/PatientReportScreen';
 import DiseaseReportScreen from '../screens/admin/DiseaseReportScreen';

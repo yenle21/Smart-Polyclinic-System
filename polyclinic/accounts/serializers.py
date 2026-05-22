@@ -1,100 +1,143 @@
 from rest_framework import serializers
-
 from .models import Patient, User, Doctor, Specialty
 
 
-# Lấy danh sách user
+# =========================
+# USER SERIALIZER
+# =========================
 class UserSerializer(serializers.ModelSerializer):
     avatar = serializers.SerializerMethodField()
 
     def get_avatar(self, obj):
-        if obj.avatar:
-            return obj.avatar.url
-        return None
+        return obj.avatar.url if obj.avatar else None
+
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'phone', 'role', 'avatar', 'first_name', 'last_name']
-# lấy danh sách bệnh nhân
+
+
+# =========================
+# PATIENT SERIALIZER
+# =========================
 class PatientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Patient
         fields = '__all__'
-# lấy danh sách bác sĩ
+
+
+# =========================
+# DOCTOR SERIALIZER
+# =========================
 class DoctorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Doctor
         fields = '__all__'
-# bệnh nhân đăng kí tài khoản
+
+
+# =========================
+# REGISTER SERIALIZER
+# =========================
 class RegisterSerializer(serializers.ModelSerializer):
     password         = serializers.CharField(write_only=True)
     password_confirm = serializers.CharField(write_only=True)
     email            = serializers.EmailField(required=True)
-    avatar = serializers.ImageField(required=False, allow_null=True)
+    avatar           = serializers.ImageField(required=False, allow_null=True)
+    first_name       = serializers.CharField(required=True)
+    last_name        = serializers.CharField(required=True)
+    gender           = serializers.ChoiceField(choices=Patient.GENDER_CHOICES, required=True)
 
     class Meta:
-        model  = User
-        fields = ['username', 'password', 'password_confirm', 'email', 'phone', 'avatar']
-    # kiểm tra username
+        model = User
+        fields = [
+            'username', 'password', 'password_confirm',
+            'email', 'phone', 'avatar',
+            'first_name', 'last_name', 'gender',
+        ]
+
+    # =========================
+    # VALIDATIONS
+    # =========================
     def validate_username(self, value):
         if not value.isalnum():
-            raise serializers.ValidationError('Username chỉ được chứa chữ và số!')
+            raise serializers.ValidationError("Username chỉ chứa chữ và số!")
         return value
-    # kiểm tra password
+
     def validate_password(self, value):
         if len(value) < 8:
-            raise serializers.ValidationError('Mật khẩu phải ít nhất 8 ký tự!')
-        if not any(char.isdigit() for char in value):
-            raise serializers.ValidationError('Mật khẩu phải có ít nhất 1 số!')
-        if not any(char.isupper() for char in value):
-            raise serializers.ValidationError('Mật khẩu phải có ít nhất 1 chữ hoa!')
+            raise serializers.ValidationError("Mật khẩu phải >= 8 ký tự!")
+        if not any(c.isdigit() for c in value):
+            raise serializers.ValidationError("Mật khẩu phải có số!")
+        if not any(c.isupper() for c in value):
+            raise serializers.ValidationError("Mật khẩu phải có chữ hoa!")
         return value
-    # kiểm tra email
+
     def validate_email(self, value):
         if User.objects.filter(email=value).exists():
-            raise serializers.ValidationError('Email đã được sử dụng!')
+            raise serializers.ValidationError("Email đã tồn tại!")
         return value
-    # kiểm tra số điện thoại
+
     def validate_phone(self, value):
-        if not value.isdigit():
-            raise serializers.ValidationError('Số điện thoại chỉ được chứa số!')
-        if len(value) != 10:
-            raise serializers.ValidationError('Số điện thoại phải có 10 chữ số!')
+        if value and (not value.isdigit() or len(value) != 10):
+            raise serializers.ValidationError("SĐT phải 10 chữ số!")
         return value
-    # kiểm tra mật khẩu với xác nhận mk
+
     def validate(self, data):
         if data['password'] != data['password_confirm']:
             raise serializers.ValidationError({'password': 'Mật khẩu không khớp!'})
         return data
-    # tạo user
+
+    # =========================
+    # CREATE USER + PATIENT
+    # =========================
     def create(self, validated_data):
         validated_data.pop('password_confirm')
-        avatar = validated_data.pop('avatar', None)
+        avatar     = validated_data.pop('avatar', None)
+        gender     = validated_data.pop('gender')
+        first_name = validated_data.pop('first_name')
+        last_name  = validated_data.pop('last_name')
+
         user = User.objects.create_user(
             **validated_data,
+            first_name=first_name,   # ✅ truyền vào user
+            last_name=last_name,     # ✅ truyền vào user
             role='patient'
         )
 
         if avatar:
-            user.avatar = avatar  # Cloudinary tự upload khi save
+            user.avatar = avatar
             user.save()
-        # tự động tạo bệnh nhân khi user đăng kí
+
         Patient.objects.create(
             user=user,
-            full_name=f"{user.first_name} {user.last_name}".strip() or user.username
+            full_name=f"{first_name} {last_name}".strip(),
+            gender=gender
         )
+
         return user
 
+    # ✅ to_representation nằm đúng trong RegisterSerializer
+    def to_representation(self, instance):
+        return {
+            'id':       instance.id,
+            'username': instance.username,
+            'email':    instance.email,
+            'phone':    instance.phone,
+        }
+
+
+# =========================
+# CREATE DOCTOR
+# =========================
 class CreateDoctorSerializer(serializers.ModelSerializer):
     password         = serializers.CharField(write_only=True)
     password_confirm = serializers.CharField(write_only=True)
-    # Doctor fields
     specialty        = serializers.PrimaryKeyRelatedField(queryset=Specialty.objects.all())
     degree           = serializers.CharField(required=False, allow_blank=True)
     bio              = serializers.CharField(required=False, allow_blank=True)
     consultation_fee = serializers.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     class Meta:
-        model  = User
+        model = User
         fields = [
             'username', 'password', 'password_confirm',
             'first_name', 'last_name', 'email', 'phone',
@@ -124,12 +167,15 @@ class CreateDoctorSerializer(serializers.ModelSerializer):
         return user
 
 
+# =========================
+# CREATE STAFF
+# =========================
 class CreateStaffSerializer(serializers.ModelSerializer):
     password         = serializers.CharField(write_only=True)
     password_confirm = serializers.CharField(write_only=True)
 
     class Meta:
-        model  = User
+        model = User
         fields = [
             'username', 'password', 'password_confirm',
             'first_name', 'last_name', 'email', 'phone',
@@ -143,67 +189,56 @@ class CreateStaffSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data.pop('password_confirm')
         return User.objects.create_user(**validated_data, role='staff')
-# Lấy thông tin hồ sơ bệnh nhân
+
+
+# =========================
+# PATIENT PROFILE
+# =========================
 class PatientProfileSerializer(serializers.ModelSerializer):
-    # Lồng thông tin User vào để hiển thị luôn
     username = serializers.CharField(source='user.username', read_only=True)
-    email    = serializers.EmailField(source='user.email',   read_only=True)
-    phone    = serializers.CharField(source='user.phone',    read_only=True)
-    avatar   = serializers.ImageField(source='user.avatar',  read_only=True)
+    email    = serializers.EmailField(source='user.email', read_only=True)
+    phone    = serializers.CharField(source='user.phone', read_only=True)
+    avatar   = serializers.ImageField(source='user.avatar', read_only=True)
 
     class Meta:
-        model  = Patient
+        model = Patient
         fields = [
-            # Thông tin tài khoản (từ User)
             'username', 'email', 'phone', 'avatar',
-            # Thông tin y tế (từ Patient)
             'id', 'full_name', 'dob', 'gender', 'address',
-            'created_date', 'updated_date'
+            'created_date', 'updated_date',
         ]
 
-# cập nhật hồ sơ cá nhân
+
+# =========================
+# PATIENT UPDATE
+# =========================
 class PatientUpdateSerializer(serializers.ModelSerializer):
-    # Các field của User (optional, không bắt buộc gửi)
-    phone  = serializers.CharField(source='user.phone', required=False, allow_null=True)
-    avatar = serializers.ImageField(source='user.avatar', required=False, allow_null=True)
+    phone  = serializers.CharField(source='user.phone', required=False)
+    avatar = serializers.ImageField(source='user.avatar', required=False)
     email  = serializers.EmailField(source='user.email', required=False)
 
     class Meta:
-        model  = Patient
+        model = Patient
         fields = ['full_name', 'dob', 'gender', 'address', 'phone', 'avatar', 'email']
 
-    def validate_email(self, value):
-        # Kiểm tra email không trùng với user khác
-        user = self.instance.user
-        if User.objects.filter(email=value).exclude(pk=user.pk).exists():
-            raise serializers.ValidationError('Email đã được sử dụng!')
-        return value
-
-    def validate_phone(self, value):
-        if value and not value.isdigit():
-            raise serializers.ValidationError('Số điện thoại chỉ được chứa số!')
-        if value and len(value) != 10:
-            raise serializers.ValidationError('Số điện thoại phải có 10 chữ số!')
-        return value
-
-    def update(self, patient, validated_data):
-        # Tách user data ra update riêng
+    def update(self, instance, validated_data):
         user_data = validated_data.pop('user', {})
-        #lấy và xoá key user ra khỏi dict.
-        #Nếu không có key user thì trả về {} thay vì báo lỗi
-        user = patient.user
+        user = instance.user
 
         for attr, value in user_data.items():
             setattr(user, attr, value)
         user.save()
 
-        # Update Patient fields
         for attr, value in validated_data.items():
-            setattr(patient, attr, value)
-        patient.save()
+            setattr(instance, attr, value)
+        instance.save()
 
-        return patient
+        return instance
 
+
+# =========================
+# SPECIALTY
+# =========================
 class SpecialtySerializer(serializers.ModelSerializer):
     class Meta:
         model = Specialty
