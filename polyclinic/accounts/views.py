@@ -5,9 +5,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import User, Doctor, Patient
+from .models import User, Doctor, Patient, Specialty
 from .serializers import UserSerializer, DoctorSerializer, PatientSerializer, RegisterSerializer, \
-    PatientProfileSerializer, PatientUpdateSerializer
+    PatientProfileSerializer, PatientUpdateSerializer, CreateDoctorSerializer, CreateStaffSerializer, SpecialtySerializer
 
 
 class UserViewSet(viewsets.ViewSet, generics.ListAPIView):
@@ -33,6 +33,25 @@ class UserViewSet(viewsets.ViewSet, generics.ListAPIView):
             u = s.save()
         return Response(UserSerializer(u).data, status=status.HTTP_200_OK)
 
+    @action(methods=['post'], url_path='create-doctor', detail=False,
+            permission_classes=[permissions.IsAuthenticated])
+    def create_doctor(self, request):
+        s = CreateDoctorSerializer(data=request.data)
+        s.is_valid(raise_exception=True)
+        s.save()
+        return Response({'message': 'Tạo tài khoản bác sĩ thành công!'}, status=status.HTTP_201_CREATED)
+
+    @action(methods=['post'], url_path='create-staff', detail=False,
+            permission_classes=[permissions.IsAuthenticated])
+    def create_staff(self, request):
+        s = CreateStaffSerializer(data=request.data)
+        s.is_valid(raise_exception=True)
+        s.save()
+        return Response({'message': 'Tạo tài khoản nhân viên thành công!'}, status=status.HTTP_201_CREATED)
+
+class SpecialtyViewSet(viewsets.ViewSet, generics.ListAPIView):
+    queryset         = Specialty.objects.filter(active=True)
+    serializer_class = SpecialtySerializer
 
 class DoctorViewSet(viewsets.ViewSet, generics.ListAPIView):
     queryset = Doctor.objects.filter(active=True)
