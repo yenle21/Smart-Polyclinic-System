@@ -40,11 +40,6 @@ class ScheduleViewSet(viewsets.ViewSet, generics.ListAPIView):
         for s in query:
             print(f'  ID: {s.id} | date: {s.work_date}')
 
-        # tìm theo tên bác sĩ
-        doctor_name = self.request.query_params.get('doctor')
-        if doctor_name:
-            query = query.filter(doctor__user__last_name__icontains=doctor_name)
-
         date = self.request.query_params.get('date')
         if date:
             query = query.filter(work_date=date)
@@ -283,6 +278,7 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView):
             appointment = Appointment.objects.get(pk=pk, schedule__doctor=request.user.doctor_profile)
         except Appointment.DoesNotExist:
             return Response({'detail': 'Không tìm thấy.'}, status=404)
+
         appointment.status = 'no_show'
         appointment.save()
 

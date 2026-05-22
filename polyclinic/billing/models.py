@@ -69,3 +69,27 @@ class InvoiceItem(BaseModel):
 
     def __str__(self):
         return f"{self.description} x{self.quantity} = {self.total_price}đ"
+
+class PaymentTracking(BaseModel):  # Phải chính xác là PaymentTracking
+    """Theo dõi chi tiết các giao dịch xử lý qua cổng MoMo / VNPAY"""
+    GATEWAY_CHOICES = [
+        ('momo',  'Ví điện tử MoMo'),
+        ('vnpay', 'Cổng thanh toán VNPAY'),
+    ]
+    STATUS_CHOICES = [
+        ('pending', 'Đang xử lý'),
+        ('success', 'Thành công'),
+        ('failed',  'Thất bại'),
+    ]
+
+    invoice        = models.ForeignKey(Invoice, on_delete=models.CASCADE,
+                                       related_name='payment_trackings')
+    gateway        = models.CharField(max_length=10, choices=GATEWAY_CHOICES)
+    order_id       = models.CharField(max_length=100, unique=True, verbose_name="Mã đơn hàng hệ thống")
+    transaction_no = models.CharField(max_length=100, null=True, blank=True, verbose_name="Mã giao dịch đối tác")
+    amount         = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Số tiền thanh toán")
+    status         = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    response_data  = models.TextField(null=True, blank=True, verbose_name="Dữ liệu phản hồi thô")
+
+    def __str__(self):
+        return f"Giao dịch {self.order_id} — {self.gateway} — {self.get_status_display()}"

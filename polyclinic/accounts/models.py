@@ -16,12 +16,13 @@ class User(AbstractUser):
         ('patient', 'Bệnh nhân'),
         ('doctor', 'Bác sĩ'),
         ('staff', 'Nhân viên'),
+        ('pharmacy','Dược sĩ'),
         ('admin', 'Quản trị viên'),
     ]
 
-    avatar = CloudinaryField(null=True)
-    phone = models.CharField(max_length=15, null=True)
-    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='patient')
+    avatar = CloudinaryField(null=True, blank=True)
+    phone = models.CharField(max_length=15, null=True, blank=True)
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='patient')
 
     def __str__(self):
         return self.username
@@ -60,5 +61,5 @@ class Doctor(BaseModel):
     specialty        = models.ForeignKey(Specialty, on_delete=models.PROTECT, related_name='doctors') # related_name='doctors': Lấy tất cả bác sĩ của chuyên khoa.
     # PROTECT là không cho xóa chuyên khoa, nếu còn bác sĩ thuộc chuyên khoa đó
     def __str__(self):
-        return self.user.get_full_name()
+        return self.user.get_full_name() or self.user.username
 

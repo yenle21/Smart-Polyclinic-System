@@ -2,7 +2,8 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
-const BASE_URL = 'http://10.17.65.73:8000';
+const BASE_URL = 'http://10.17.64.133:8000';
+
 
 
 
@@ -27,6 +28,9 @@ export const endpoints = {
     'invoices':     '/invoices/',
     'invoice-detail': (id) => `/invoices/${id}/`,
     'pay-invoice':  (id) => `/invoices/${id}/pay/`,
+    'vnpay-return':      '/invoices/vnpay-return/',   // thêm
+    'momo-return':       '/invoices/momo-return/',    // thêm
+    'momo-ipn':          '/invoices/momo-ipn/', 
 
     //Appoinment
     'schedules':'/schedules/',
@@ -51,7 +55,6 @@ export const endpoints = {
     'medical-create-record':   `/medical-records/create/`,
     'update-medical-record': (id) => `/medical-records/${id}/update-record/`,
     'test-results':         (id) => `/medical-records/${id}/test-results/`,
-    'prescriptions':        '/prescriptions/',
     'medicines':            '/medicines/',
     'medicine-detail': (id) => `/medicines/${id}/`,
     //Noti
@@ -67,16 +70,14 @@ const Apis = axios.create({
 
 // Tự động gắn token
 export const authApis = async () => {
-    // Lấy token động từ bộ nhớ máy
-    const token = await AsyncStorage.getItem('access_token'); 
-    
+    const token = await AsyncStorage.getItem('access_token');
+
     return axios.create({
         baseURL: BASE_URL,
         timeout: 10000,
-        headers: { 
-            // Nếu có token thì gắn vào, không thì để trống tránh lỗi
-            Authorization: token ? `Bearer ${token}` : "" 
-        },
+        headers: token
+            ? { Authorization: `Bearer ${token}` }
+            : {},
     });
 };
 

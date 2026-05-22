@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 from pathlib import Path
 
 from django.conf.global_settings import AUTH_USER_MODEL
+from environ import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -165,6 +166,19 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+env = environ.Env()
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+environ.Env.read_env(BASE_DIR / '.env')
+
+VNPAY_TMN_CODE    = env("VNPAY_TMN_CODE")
+VNPAY_HASH_SECRET = env("VNPAY_HASH_SECRET")
+VNPAY_RETURN_URL  = env("VNPAY_RETURN_URL")
+VNPAY_PAYMENT_URL = env("VNPAY_PAYMENT_URL")
+
+MOMO_REDIRECT_URL = env("MOMO_REDIRECT_URL")
+MOMO_IPN_URL      = env("MOMO_IPN_URL")
 
 CLIENT_ID_NHU = 'n7aGTsfMDLTLWp32Hm9YU6OQGbSDnmHaY77CoWhL'
 CLIENT_SECRET_NHU = 'bK8au064hR1Mlj77UWiFJNTkBUgmL9PzGv7kWWdi9NFI31RRSF1hA7B3o8Cstu5bIpMO44dfrx5iG7p13PJWNttp81xEltStjRe5y6XtKpH30AqlXxb6cPnllFYkVpmX'

@@ -9,7 +9,7 @@ import { MyUserContext } from './configs/Contexts';
 import AuthNavigator      from './navigators/AuthNavigator';
 import PatientNavigator   from './navigators/PatientNavigator';
 import DoctorNavigator    from './navigators/DoctorNavigator';
-
+import PharmacyNavigator    from './navigators/PharmacyNavigator';
 import StaffNavigator from './navigators/StaffNavigator';
 
 import AdminNavigator     from './navigators/AdminNavigator';
@@ -40,7 +40,7 @@ export default function App() {
         if (role === 'patient') return <PatientNavigator />;
         if (role === 'doctor')  return <DoctorNavigator />;
         if (role === 'admin')   return <AdminNavigator />;
-
+        if (role === 'pharmacy')   return <PharmacyNavigator/>;
         if (role === 'staff')   return <StaffNavigator />;
 
         return <AuthNavigator />;

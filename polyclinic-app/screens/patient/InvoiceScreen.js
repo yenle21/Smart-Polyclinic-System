@@ -8,6 +8,7 @@ import {
     Alert,
 } from 'react-native';
 import { Card, Chip, Divider, Button, RadioButton } from 'react-native-paper';
+import * as WebBrowser from 'expo-web-browser';
 import { authApis, endpoints } from '../../configs/Apis';
 
 const STATUS_COLOR = {
@@ -15,7 +16,6 @@ const STATUS_COLOR = {
     paid:   '#4CAF50',
 };
 
-// Tất cả phương thức
 const ALL_METHODS = [
     { value: 'cash',     label: 'Tiền mặt' },
     { value: 'transfer', label: 'Chuyển khoản' },
@@ -25,6 +25,9 @@ const ALL_METHODS = [
 
 // Khám online → không cho tiền mặt
 const ONLINE_METHODS = ALL_METHODS.filter(m => m.value !== 'cash');
+
+// Các phương thức cần redirect ra ngoài
+const REDIRECT_METHODS = ['momo', 'vnpay'];
 
 const InvoiceScreen = () => {
     const [invoices, setInvoices]     = useState([]);
@@ -47,7 +50,7 @@ const InvoiceScreen = () => {
                 ? res.data
                 : (res.data.results ?? []);
             setInvoices(data);
-        }finally {
+        } finally {
             setLoading(false);
         }
     };
@@ -68,7 +71,6 @@ const InvoiceScreen = () => {
     };
 
     const openPay = (inv) => {
-        // Mặc định chọn phương thức đầu tiên phù hợp
         const methods = inv.appointment_type === 'online' ? ONLINE_METHODS : ALL_METHODS;
         setPayMethod(methods[0].value);
         setPayingId(inv.id);
@@ -86,21 +88,73 @@ const InvoiceScreen = () => {
         );
     };
 
+    // =============================================
+    // XỬ LÝ THANH TOÁN
+    // =============================================
     const doPay = async (id) => {
         try {
             setPayLoading(true);
             const api = await authApis();
-            await api.post(endpoints['pay-invoice'](id), {
+            const res = await api.post(endpoints['pay-invoice'](id), {
                 payment_method: payMethod,
             });
-            Alert.alert('Thành công', 'Thanh toán hóa đơn thành công!');
-            setPayingId(null);
-            loadInvoices();
+
+            // MoMo / VNPay → mở browser
+            if (REDIRECT_METHODS.includes(payMethod)) {
+                const paymentUrl = res.data?.payment_url;
+
+                if (!paymentUrl) {
+                    Alert.alert('Lỗi', 'Không nhận được link thanh toán.');
+                    return;
+                }
+
+                // Mở trang thanh toán
+                await WebBrowser.openBrowserAsync(paymentUrl);
+
+                // Sau khi user đóng browser → kiểm tra kết quả
+                await checkPaymentResult(id);
+            } else {
+                // Tiền mặt / chuyển khoản → xong luôn
+                Alert.alert('Thành công', 'Thanh toán hóa đơn thành công!');
+                setPayingId(null);
+                loadInvoices();
+            }
+
         } catch (ex) {
-            const msg = ex.response?.data?.detail || 'Thanh toán thất bại!';
+            const msg = ex.response?.data?.error
+                || ex.response?.data?.detail
+                || 'Thanh toán thất bại!';
             Alert.alert('Lỗi', msg);
         } finally {
             setPayLoading(false);
+        }
+    };
+
+    // =============================================
+    // KIỂM TRA KẾT QUẢ SAU KHI ĐÓNG BROWSER
+    // =============================================
+    const checkPaymentResult = async (id) => {
+        try {
+            const api = await authApis();
+            const res = await api.get(endpoints['invoice-detail'](id));
+            const invoice = res.data;
+
+            if (invoice.status === 'paid') {
+                Alert.alert('Thành công 🎉', 'Thanh toán thành công!');
+                setPayingId(null);
+                loadInvoices();
+            } else {
+                Alert.alert(
+                    'Chưa hoàn tất',
+                    'Giao dịch chưa được xác nhận. Vui lòng kiểm tra lại.',
+                    [
+                        { text: 'Đóng', style: 'cancel' },
+                        { text: 'Thử lại', onPress: () => openPay({ id, appointment_type: null }) },
+                    ]
+                );
+            }
+        } catch {
+            Alert.alert('Lỗi', 'Không thể kiểm tra trạng thái hóa đơn.');
         }
     };
 
@@ -270,6 +324,18 @@ const InvoiceScreen = () => {
                                                 ))}
                                             </RadioButton.Group>
 
+                                            {/* Ghi chú cho MoMo / VNPay */}
+                                            {REDIRECT_METHODS.includes(payMethod) && (
+                                                <Text style={{
+                                                    color: '#1565C0',
+                                                    fontSize: 12,
+                                                    marginTop: 6,
+                                                    marginBottom: 2,
+                                                }}>
+                                                    🔗 Bạn sẽ được chuyển đến trang thanh toán {payMethod === 'momo' ? 'MoMo' : 'VNPay'}
+                                                </Text>
+                                            )}
+
                                             <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
                                                 <Button
                                                     mode="contained"
@@ -284,6 +350,7 @@ const InvoiceScreen = () => {
                                                 <Button
                                                     mode="outlined"
                                                     style={{ flex: 1, borderRadius: 8 }}
+                                                    disabled={payLoading}
                                                     onPress={() => setPayingId(null)}
                                                 >
                                                     Hủy

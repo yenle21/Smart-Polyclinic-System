@@ -7,4 +7,5 @@ router.register('invoices', views.InvoiceViewSet, basename='invoice')
 
 urlpatterns = [
     path('', include(router.urls)),
+
 ]

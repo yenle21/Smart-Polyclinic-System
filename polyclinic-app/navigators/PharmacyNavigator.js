@@ -22,13 +22,6 @@ import StockFormScreen from '../screens/pharmacy/StockFormScreen';
 import PrescriptionScreen       from '../screens/pharmacy/PrescriptionScreen';
 import PrescriptionDetailScreen from '../screens/pharmacy/PrescriptionDetailScreen';
 
-
-// Reception
-import AppointmentListScreen from '../screens/staff/AppointmentListScreen';
-import AppointmentDetailScreen from '../screens/staff/AppointmentDetailScreen';
-import InvoiceDetailScreen   from '../screens/staff/InvoiceDetailScreen';
-import InvoiceListScreen     from '../screens/staff/InvoiceListScreen';
-
 // Shared
 import ProfileScreen from '../screens/shared/ProfileScreen';
 import ChatListScreen from '../screens/shared/ChatListScreen';
@@ -47,21 +40,35 @@ const headerOptions = {
         />
     ),
 };
-function AppointmentStack() {
+
+function PharmacyStack() {
     return (
         <Stack.Navigator screenOptions={headerOptions}>
-            <Stack.Screen name="AppointmentList" component={AppointmentListScreen} options={{ title: 'Quản lý lịch hẹn' }} />
-            <Stack.Screen name="AppointmentDetail" component={AppointmentDetailScreen} options={{ title: 'Chi tiết lịch hẹn' }} />
+            <Stack.Screen name="CategoryList"   component={CategoryListScreen}   options={{ title: 'Danh mục thuốc' }} />
+            <Stack.Screen name="MedicineList"   component={MedicineListScreen}   options={{ title: 'Danh sách thuốc' }} />
+            <Stack.Screen name="MedicineDetail" component={MedicineDetailScreen} options={{ title: 'Chi tiết thuốc' }} />
+            <Stack.Screen name="MedicineForm" component={MedicineFormScreen} options={{ title: 'Thêm thuốc' }} />
+            <Stack.Screen name="Alert"          component={AlertScreen}          options={{ title: 'Cảnh báo kho' }} />
+        </Stack.Navigator>
+    );
+}
+
+function PrescriptionStack() {
+    return (
+        <Stack.Navigator screenOptions={headerOptions}>
+            <Stack.Screen name="PrescriptionList"   component={PrescriptionScreen}       options={{ title: 'Đơn thuốc' }} />
+            <Stack.Screen name="PrescriptionDetail" component={PrescriptionDetailScreen} options={{ title: 'Chi tiết đơn thuốc' }} />
         </Stack.Navigator>
     );
 }
 
 
-function InvoiceStack() {
+
+function StockStack() {
     return (
         <Stack.Navigator screenOptions={headerOptions}>
-            <Stack.Screen name="InvoiceList"   component={InvoiceListScreen}   options={{ title: 'Hóa đơn' }} />
-            <Stack.Screen name="InvoiceDetail" component={InvoiceDetailScreen} options={{ title: 'Chi tiết hóa đơn' }} />
+            <Stack.Screen name="StockTransaction" component={StockTransactionScreen} options={{ title: 'Quản lý kho' }} />
+            <Stack.Screen name="StockForm"        component={StockFormScreen}        options={{ title: 'Tạo giao dịch' }} />
         </Stack.Navigator>
     );
 }
@@ -75,14 +82,6 @@ function ProfileStack() {
     );
 }
 
-function ChatStack() {
-    return (
-        <Stack.Navigator screenOptions={headerOptions}>
-            <Stack.Screen name="ChatList" component={ChatListScreen} options={{ title: 'Tin nhắn' }} />
-            <Stack.Screen name="Chat"     component={ChatScreen}     options={({ route }) => ({ title: route.params.name })} />
-        </Stack.Navigator>
-    );
-}
 
 export default function StaffNavigator() {
     const [user]        = useContext(MyUserContext);
@@ -112,45 +111,30 @@ export default function StaffNavigator() {
         }}>
 
             <Tab.Screen
-                name="AppointmentTab"
-                component={AppointmentStack}
+                name="PharmacyTab"
+                component={PharmacyStack}
                 options={{
-                    tabBarLabel: 'Lịch hẹn',
-                    tabBarIcon: ({ color }) => <MaterialCommunityIcons name="calendar-check" size={24} color={color} />,
+                    tabBarLabel: 'Dược phẩm',
+                    tabBarIcon: ({ color }) => <MaterialCommunityIcons name="pill" size={24} color={color} />,
+                }}
+            />
+            <Tab.Screen
+                name="StockTab"
+                component={StockStack}
+                options={{
+                    tabBarLabel: 'Kho',
+                    tabBarIcon: ({ color }) => <MaterialCommunityIcons name="warehouse" size={24} color={color} />,
+                }}
+            />
+            <Tab.Screen
+                name="PrescriptionTab"
+                component={PrescriptionStack}
+                options={{
+                    tabBarLabel: 'Đơn thuốc',
+                    tabBarIcon: ({ color }) => <MaterialCommunityIcons name="file-document" size={24} color={color} />,
                 }}
             />
             
-            <Tab.Screen
-                name="InvoiceTab"
-                component={InvoiceStack}
-                options={{
-                    tabBarLabel: 'Thanh toán',
-                    tabBarIcon: ({ color }) => <MaterialCommunityIcons name="receipt" size={24} color={color} />,
-                }}
-            />
-            <Tab.Screen
-                name="ChatTab"
-                component={ChatStack}
-                options={{
-                    tabBarLabel: 'Tin nhắn',
-                    tabBarIcon: ({ color, size }) => (
-                        <View>
-                            <MaterialCommunityIcons name="chat" size={size} color={color} />
-                            {unreadChat > 0 && (
-                                <Badge size={16} style={{
-                                    position: 'absolute',
-                                    top: -4,
-                                    right: -8,
-                                    backgroundColor: 'red',
-                                }}>
-                                    {unreadChat > 99 ? '99+' : unreadChat}
-                                </Badge>
-                            )}
-                        </View>
-                    ),
-                }}
-            />
-
             <Tab.Screen
                 name="ProfileTab"
                 component={ProfileStack}  
