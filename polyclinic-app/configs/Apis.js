@@ -11,6 +11,9 @@ export const endpoints = {
     'login':        '/o/token/',
     'register':     '/users/register/',
     'current-user': '/users/current-user/',
+    'create-doctor':  '/users/create-doctor/',
+    'create-staff':   '/users/create-staff/',
+    'specialties':    '/specialties/',
 
     // Pharmacy
     'categories':   '/categories/',

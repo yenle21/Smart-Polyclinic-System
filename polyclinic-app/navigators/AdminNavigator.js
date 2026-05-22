@@ -11,6 +11,7 @@ import AlertScreen          from '../screens/staff/AlertScreen';
 import ProfileScreen        from '../screens/shared/ProfileScreen';
 import PatientReportScreen from '../screens/admin/PatientReportScreen';
 import DiseaseReportScreen from '../screens/admin/DiseaseReportScreen';
+import CreateAccountScreen from '../screens/admin/CreateAccountScreen';
 
 const Tab   = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -53,6 +54,15 @@ function DiseaseStack() {
         <Stack.Navigator screenOptions={headerOpts}>
             <Stack.Screen name="DiseaseReport" component={DiseaseReportScreen}
                           options={{ title: 'Báo cáo bệnh phổ biến' }} />
+        </Stack.Navigator>
+    );
+}
+
+function AccountStack() {
+    return (
+        <Stack.Navigator screenOptions={headerOpts}>
+            <Stack.Screen name="CreateAccount" component={CreateAccountScreen}
+                          options={{ title: 'Tạo tài khoản' }} />
         </Stack.Navigator>
     );
 }
@@ -140,6 +150,13 @@ export default function AdminNavigator() {
                         <TabIcon name="bell-alert" color={color} size={size} />,
                 }}
             />
+
+            <Tab.Screen name="AccountTab" component={AccountStack}
+                options={{
+                    title: 'Tài khoản',
+                    tabBarIcon: ({ color, size }) =>
+                        <TabIcon name="account-plus" color={color} size={size} />,
+                }} />
 
             <Tab.Screen
                 name="Profile"

@@ -83,6 +83,66 @@ class RegisterSerializer(serializers.ModelSerializer):
             full_name=f"{user.first_name} {user.last_name}".strip() or user.username
         )
         return user
+
+class CreateDoctorSerializer(serializers.ModelSerializer):
+    password         = serializers.CharField(write_only=True)
+    password_confirm = serializers.CharField(write_only=True)
+    # Doctor fields
+    specialty        = serializers.PrimaryKeyRelatedField(queryset=Specialty.objects.all())
+    degree           = serializers.CharField(required=False, allow_blank=True)
+    bio              = serializers.CharField(required=False, allow_blank=True)
+    consultation_fee = serializers.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    class Meta:
+        model  = User
+        fields = [
+            'username', 'password', 'password_confirm',
+            'first_name', 'last_name', 'email', 'phone',
+            'specialty', 'degree', 'bio', 'consultation_fee',
+        ]
+
+    def validate(self, data):
+        if data['password'] != data['password_confirm']:
+            raise serializers.ValidationError({'password': 'Mật khẩu không khớp!'})
+        return data
+
+    def create(self, validated_data):
+        specialty        = validated_data.pop('specialty')
+        degree           = validated_data.pop('degree', '')
+        bio              = validated_data.pop('bio', '')
+        consultation_fee = validated_data.pop('consultation_fee', 0)
+        validated_data.pop('password_confirm')
+
+        user = User.objects.create_user(**validated_data, role='doctor')
+        Doctor.objects.create(
+            user=user,
+            specialty=specialty,
+            degree=degree,
+            bio=bio,
+            consultation_fee=consultation_fee,
+        )
+        return user
+
+
+class CreateStaffSerializer(serializers.ModelSerializer):
+    password         = serializers.CharField(write_only=True)
+    password_confirm = serializers.CharField(write_only=True)
+
+    class Meta:
+        model  = User
+        fields = [
+            'username', 'password', 'password_confirm',
+            'first_name', 'last_name', 'email', 'phone',
+        ]
+
+    def validate(self, data):
+        if data['password'] != data['password_confirm']:
+            raise serializers.ValidationError({'password': 'Mật khẩu không khớp!'})
+        return data
+
+    def create(self, validated_data):
+        validated_data.pop('password_confirm')
+        return User.objects.create_user(**validated_data, role='staff')
 # Lấy thông tin hồ sơ bệnh nhân
 class PatientProfileSerializer(serializers.ModelSerializer):
     # Lồng thông tin User vào để hiển thị luôn
