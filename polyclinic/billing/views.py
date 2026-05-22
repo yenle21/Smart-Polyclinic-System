@@ -10,33 +10,36 @@ from . import serializers
 
 class InvoiceViewSet(viewsets.ViewSet,
                      generics.ListCreateAPIView,
-                     generics.RetrieveAPIView):
+                     generics.RetrieveAPIView,
+                     generics.RetrieveUpdateAPIView):
     """
     GET  /api/billing/invoices/           → danh sách + lọc
     POST /api/billing/invoices/           → tạo hóa đơn
     GET  /api/billing/invoices/{id}/      → chi tiết
     POST /api/billing/invoices/{id}/pay/  → thanh toán
     """
-    queryset = Invoice.objects.select_related(
-        'patient__user'
-    ).prefetch_related('items').order_by('-created_date')
+
 
     def get_serializer_class(self):
         if self.action == 'create':
             return serializers.InvoiceCreateSerializer
         if self.action == 'pay':
             return serializers.InvoicePaySerializer
+        if self.action in ['update', 'partial_update']:
+            return serializers.InvoiceUpdateSerializer
         return serializers.InvoiceSerializer
 
     def get_queryset(self):
-        query      = self.queryset
+        query = Invoice.objects.select_related(
+            'patient__user'
+        ).prefetch_related('items').order_by('-created_date')
         s          = self.request.query_params.get('status')
         patient_id = self.request.query_params.get('patient_id')
         date_from  = self.request.query_params.get('date_from')
         date_to    = self.request.query_params.get('date_to')
         user = self.request.user
 
-        query = self.queryset
+        appointment_id = self.request.query_params.get('appointment_id')
 
         print(f'User: {user.username} | Role: {user.role}')
         print(f'Total before filter: {query.count()}')
@@ -46,6 +49,9 @@ class InvoiceViewSet(viewsets.ViewSet,
             query = query.filter(patient=user.patient_profile)
         elif user.role == 'staff' or user.role == 'admin':
             pass  # xem tất cả
+        elif user.role == 'doctor':
+            # Doctor chỉ xem invoice của appointment mình phụ trách
+            query = query.filter(appointment__schedule__doctor__user=user)
         else:
             query = query.none()  # doctor không xem hóa đơn
 
@@ -55,6 +61,8 @@ class InvoiceViewSet(viewsets.ViewSet,
             query = query.filter(patient_id=patient_id)
         if date_from:
             query = query.filter(created_date__date__gte=date_from)
+        if appointment_id:
+            query = query.filter(appointment_id=appointment_id)
         if date_to:
             query = query.filter(created_date__date__lte=date_to)
         return query
@@ -77,3 +85,4 @@ class InvoiceViewSet(viewsets.ViewSet,
                 'paid_at':  str(invoice.paid_at),
             })
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+

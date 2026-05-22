@@ -32,20 +32,19 @@ import {
 // TEST TYPES
 // ─────────────────────────────────────────────────────────────
 const TEST_TYPES = [
-    { label: 'Xét nghiệm máu', value: 'blood' },
-    { label: 'Xét nghiệm nước tiểu', value: 'urine' },
-    { label: 'Xét nghiệm vi sinh', value: 'microbiology' },
-    { label: 'Siêu âm', value: 'ultrasound' },
-    { label: 'X-quang', value: 'xray' },
-    { label: 'CT Scan', value: 'ct_scan' },
-    { label: 'MRI', value: 'mri' },
-    { label: 'Nội soi', value: 'endoscopy' },
-    { label: 'Điện tâm đồ (ECG)', value: 'ecg' },
-    { label: 'Xét nghiệm sinh hóa', value: 'biochemistry' },
-    { label: 'Xét nghiệm miễn dịch', value: 'immunology' },
-    { label: 'Khác', value: 'other' },
+    { label: 'Xét nghiệm máu',        value: 'blood',        price: 150000 },
+    { label: 'Xét nghiệm nước tiểu',  value: 'urine',        price: 100000 },
+    { label: 'Xét nghiệm vi sinh',     value: 'microbiology', price: 200000 },
+    { label: 'Siêu âm',               value: 'ultrasound',   price: 300000 },
+    { label: 'X-quang',               value: 'xray',         price: 250000 },
+    { label: 'CT Scan',               value: 'ct_scan',      price: 800000 },
+    { label: 'MRI',                   value: 'mri',          price: 1200000 },
+    { label: 'Nội soi',               value: 'endoscopy',    price: 500000 },
+    { label: 'Điện tâm đồ (ECG)',     value: 'ecg',          price: 180000 },
+    { label: 'Xét nghiệm sinh hóa',   value: 'biochemistry', price: 220000 },
+    { label: 'Xét nghiệm miễn dịch',  value: 'immunology',   price: 350000 },
+    { label: 'Khác',                  value: 'other',        price: 0 },
 ];
-
 
 // ─────────────────────────────────────────────────────────────
 // TYPE SELECTOR
@@ -104,37 +103,21 @@ const TestTypeSelector = ({ value, onSelect }) => {
                             data={TEST_TYPES}
                             keyExtractor={(item) => item.value}
                             renderItem={({ item }) => {
-
-                                const isSelected =
-                                    value === item.value;
-
+                                const isSelected = value === item.value;
                                 return (
                                     <TouchableOpacity
-                                        style={[
-                                            styles.typeItem,
-                                            isSelected &&
-                                            styles.typeItemSelected,
-                                        ]}
-                                        onPress={() => {
-                                            onSelect(item.value);
-                                            setVisible(false);
-                                        }}
+                                        style={[styles.typeItem, isSelected && styles.typeItemSelected]}
+                                        onPress={() => { onSelect(item.value); setVisible(false); }}
                                     >
-                                        <Text
-                                            style={[
-                                                styles.typeItemText,
-                                                isSelected &&
-                                                styles.typeItemTextSelected,
-                                            ]}
-                                        >
+                                        <Text style={[styles.typeItemText, isSelected && styles.typeItemTextSelected]}>
                                             {item.label}
                                         </Text>
-
-                                        {isSelected && (
-                                            <Text style={styles.checkmark}>
-                                                ✓
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                            <Text style={styles.priceText}>
+                                                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price)}
                                             </Text>
-                                        )}
+                                            {isSelected && <Text style={styles.checkmark}>✓</Text>}
+                                        </View>
                                     </TouchableOpacity>
                                 );
                             }}
@@ -433,12 +416,14 @@ const AppointmentDetailScreenDoctor = ({
             const recordId =
                 await getOrCreateMedicalRecord(api);
 
-            const validTests =
-                testResults.filter(
-                    t =>
-                        t.name.trim() &&
-                        t.result.trim()
-                );
+            const validTests = testResults.filter(t => t.type !== '');
+            const service_fee = validTests.reduce((sum, t) => {
+                const found = TEST_TYPES.find(tt => tt.value === t.type);
+                return sum + (found?.price || 0);
+            }, 0);
+
+            console.log('validTests:', validTests.length);
+            console.log('service_fee:', service_fee);
 
             for (const test of validTests) {
 
@@ -505,6 +490,31 @@ const AppointmentDetailScreenDoctor = ({
                     appointment.id
                 )
             );
+
+            // Tạo hoặc cập nhật invoice với service_fee
+            try {
+                const invoiceRes = await api.get(endpoints['invoices'], {
+                    params: { appointment_id: appointment.id }
+                });
+                const invoices = invoiceRes.data.results || invoiceRes.data;
+                console.log('invoices found:', invoices.length, 'service_fee:', service_fee);
+                
+                if (invoices.length > 0) {
+                    // Cập nhật invoice đã có
+                    await api.patch(endpoints['invoice-detail'](invoices[0].id), { service_fee });
+                } else {
+                    // Tạo invoice mới
+                    await api.post(endpoints['invoices'], {
+                        appointment: appointment.id,
+                        patient:     appointment.patient_id,
+                        service_fee,
+                    });
+                    console.log('patch response:', patchRes.data);
+                }
+            } catch (e) {
+                console.log('invoice error:', e.response?.status, e.response?.data);
+            }
+
 
             Alert.alert(
                 'Thành công',
@@ -1236,4 +1246,8 @@ const styles = StyleSheet.create({
         marginBottom: 6,
         marginTop: 6,
     },
+    priceText: { 
+        color: '#2196F3',
+        fontSize: 13, 
+        fontWeight: '600' },
 });

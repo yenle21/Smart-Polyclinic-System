@@ -31,7 +31,7 @@ export default function InvoiceDetailScreen({ route, navigation }) {
         try {
             const api = await authApis();
             await api.post(endpoints['pay-invoice'](id));
-            navigation.replace('InvoiceList');
+            navigation.goBack();
         } catch (err) { console.error('handlePay error:', err.response?.data); }
     };
 
@@ -61,6 +61,32 @@ export default function InvoiceDetailScreen({ route, navigation }) {
 
                     <Divider style={styles.divider} />
                     <Text variant="titleMedium" style={styles.subtitle}>Chi tiết dịch vụ</Text>
+
+                    {/* Phí khám */}
+                    {invoice.consultation_fee > 0 && (
+                        <View style={styles.itemRow}>
+                            <Text style={styles.itemName}>🩺 Phí khám</Text>
+                            <Text style={styles.itemPrice}>{formatMoney(invoice.consultation_fee)}</Text>
+                        </View>
+                    )}
+
+                    {/* Phí thuốc */}
+                    {invoice.medicine_fee > 0 && (
+                        <View style={styles.itemRow}>
+                            <Text style={styles.itemName}>💊 Phí thuốc</Text>
+                            <Text style={styles.itemPrice}>{formatMoney(invoice.medicine_fee)}</Text>
+                        </View>
+                    )}
+
+                    {/* Phí dịch vụ/xét nghiệm */}
+                    {invoice.service_fee > 0 && (
+                        <View style={styles.itemRow}>
+                            <Text style={styles.itemName}>🔬 Phí dịch vụ</Text>
+                            <Text style={styles.itemPrice}>{formatMoney(invoice.service_fee)}</Text>
+                        </View>
+                    )}
+
+                    {/* InvoiceItems nếu có */}
                     {invoice.items?.map((item, i) => (
                         <View key={i} style={styles.itemRow}>
                             <Text style={styles.itemName}>{item.description}</Text>

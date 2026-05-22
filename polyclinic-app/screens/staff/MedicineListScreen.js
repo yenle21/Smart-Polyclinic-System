@@ -3,6 +3,8 @@ import { View, FlatList, StyleSheet, RefreshControl } from 'react-native';
 import { Searchbar, Card, Text, Chip, FAB } from 'react-native-paper';
 import { authApis, endpoints } from '../../configs/Apis';
 import COLORS from '../../styles/colors';
+import { useFocusEffect } from '@react-navigation/native';
+
 
 const formatMoney = (amount) =>
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
@@ -29,10 +31,12 @@ export default function MedicineListScreen({ navigation, route }) {
         }
     }, [search, categoryId]);
 
-    useEffect(() => {
-        if (categoryName) navigation.setOptions({ title: categoryName });
-        fetchMedicines();
-    }, [fetchMedicines]);
+    useFocusEffect(
+        useCallback(() => {
+            if (categoryName) navigation.setOptions({ title: categoryName });
+            fetchMedicines();
+        }, [fetchMedicines])
+    );
 
     const renderItem = ({ item }) => (
         <Card style={styles.card}

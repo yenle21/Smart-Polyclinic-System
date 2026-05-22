@@ -35,7 +35,8 @@ export default function PrescriptionDetailScreen({ route, navigation }) {
         try {
             setLoading(true);
             const api = await authApis();
-            await api.post(endpoints['dispense'](id));  // ← dùng id trực tiếp
+            await api.post(endpoints['dispense'](id)); 
+            setPrescription(prev => ({ ...prev, is_dispensed: true }));
             navigation.replace('PrescriptionList');
         } catch (err) {
             console.error('dispense error:', err.response?.status, err.response?.data);

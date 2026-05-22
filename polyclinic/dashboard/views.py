@@ -1,4 +1,4 @@
-from appointments.models import Appointment
+from appointments.models import Appointment, MedicalRecord
 from django.utils import timezone
 from django.db.models import Sum, Count, Avg, F
 from datetime import timedelta, date
@@ -7,16 +7,23 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
-from pharmacy.models import Medicine, Inventory, Prescription
+from pharmacy.models import Medicine, Inventory, Prescription, PrescriptionItem
 from billing.models import Invoice
 from rest_framework.views import APIView
 
 from .models import Report
 from . import serializers
-from accounts.models import Doctor
+from accounts.models import Doctor, Patient
+
+from django.db.models.functions import ExtractYear
+from datetime import date
+
+
+
 
 
 class DashboardViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
     @action(detail=False, methods=['get'], url_path='overview')
     def overview(self, request):
         today     = timezone.now().date()
@@ -158,6 +165,74 @@ class DashboardViewSet(viewsets.ViewSet):
             'top_prescribed':   top_prescribed,
         })
 
+    @action(detail=False, methods=['get'], url_path='patients-report')
+    def patients_report(self, request):
+        today = date.today()
+        patients = Patient.objects.select_related('user')
+
+        # Theo giới tính — lấy từ Patient.gender
+        by_gender = list(
+            patients.values('gender')
+            .annotate(count=Count('id'))
+            .order_by('-count')
+        )
+
+        # Theo độ tuổi — lấy từ Patient.dob
+        age_groups = {'0-18': 0, '19-35': 0, '36-50': 0, '51-65': 0, '65+': 0}
+        for p in patients:
+            dob = p.dob
+            if dob:
+                age = today.year - dob.year
+                if age <= 18:
+                    age_groups['0-18'] += 1
+                elif age <= 35:
+                    age_groups['19-35'] += 1
+                elif age <= 50:
+                    age_groups['36-50'] += 1
+                elif age <= 65:
+                    age_groups['51-65'] += 1
+                else:
+                    age_groups['65+'] += 1
+
+        # Theo chuyên khoa
+        by_specialty = list(
+            Appointment.objects.filter(status='completed')
+            .values('schedule__doctor__specialty__name')
+            .annotate(count=Count('id'))
+            .order_by('-count')[:10]
+        )
+
+        return Response({
+            'total_patients': patients.count(),
+            'by_gender': by_gender,
+            'by_age_group': age_groups,
+            'by_specialty': by_specialty,
+        })
+
+    @action(detail=False, methods=['get'], url_path='disease-report')
+    def disease_report(self, request):
+        from appointments.models import MedicalRecord
+
+        # Bệnh phổ biến từ diagnosis
+        by_diagnosis = list(
+            MedicalRecord.objects.exclude(diagnosis='')
+            .exclude(diagnosis__isnull=True)
+            .values('diagnosis')
+            .annotate(count=Count('id'))
+            .order_by('-count')[:15]
+        )
+
+        # Thuốc được kê nhiều nhất
+        top_medicines = list(
+            PrescriptionItem.objects.values('medicine__name')
+            .annotate(total=Sum('quantity'))
+            .order_by('-total')[:10]
+        )
+
+        return Response({
+            'by_diagnosis': by_diagnosis,
+            'top_medicines': top_medicines,
+        })
 
 class ReportViewSet(viewsets.ViewSet,
                     generics.ListCreateAPIView,

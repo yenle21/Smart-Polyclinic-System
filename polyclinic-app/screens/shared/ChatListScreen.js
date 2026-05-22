@@ -45,7 +45,7 @@ export default function ChatListScreen({ navigation }) {
             const chatId  = `chat_${user.id}_${Date.now()}`;
             await set(ref(db, `chats/${chatId}`), {
                 patient_id:     user.id,
-                patient_name:   `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Bệnh nhân',
+                patient_name:   user.username || 'Bệnh nhân',
                 staff_id:       null,
                 staff_name:     'Nhân viên y tế',
                 last_message:   '',

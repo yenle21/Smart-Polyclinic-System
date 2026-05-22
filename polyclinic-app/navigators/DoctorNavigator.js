@@ -74,6 +74,25 @@ const HomeStack = () => (
         />
 
         <Stack.Screen
+            name="AppointmentDetail"
+            component={AppointmentDetailScreenDoctor}
+            options={{ title: 'Chi tiết lịch khám' }}
+        />
+
+        <Stack.Screen
+            name="MedicalRecordDetail"
+            component={MedicalRecordDetailScreen}
+            options={{ title: 'Chi tiết hồ sơ' }}
+        />
+        
+        <Stack.Screen
+            name="Prescription"
+            component={PrescriptionScreen}
+            options={{ title: 'Kê đơn thuốc' }}
+        />
+
+
+        <Stack.Screen
             name="VideoCall"
             component={VideoCallScreen}
             options={{
