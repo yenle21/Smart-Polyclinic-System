@@ -43,6 +43,7 @@ const ProfileStack = () => (
         <Stack.Screen name="AppointmentDetail"   component={AppointmentDetailScreen}   options={{ title: 'Chi tiết lịch hẹn', headerBackTitle: 'Quay lại' }} />
         <Stack.Screen name="MedicalHistory"      component={MedicalHistoryScreen}      options={{ title: 'Lịch sử khám bệnh', headerBackTitle: 'Quay lại' }} />
         <Stack.Screen name="MedicalHistoryDetail" component={MedicalHistoryDetailScreen} options={{ title: 'Chi tiết bệnh án', headerBackTitle: 'Quay lại' }} />
+        <Stack.Screen name="ScheduleScreen"       component={ScheduleScreen}            options={{ title: 'Chọn lịch mới', headerBackTitle: 'Quay lại' }} />
     </Stack.Navigator>
 );
 
@@ -55,7 +56,7 @@ function ChatStack() {
     );
 }
 
-// ✅ Tách TabNavigator ra để dùng useNavigation hook hợp lệ
+// Tách TabNavigator ra để dùng useNavigation hook hợp lệ
 const TabNavigator = () => {
     const [user]          = useContext(MyUserContext);
     const [unreadCount, setUnreadCount] = useState(0);
@@ -79,7 +80,7 @@ const TabNavigator = () => {
         return () => clearInterval(interval);
     }, []);
 
-    // ✅ Lắng nghe Firebase — dùng navigation hook trực tiếp
+    // Lắng nghe Firebase — dùng navigation hook trực tiếp
     useEffect(() => {
         if (!user?.id) return;
         console.log('=== LISTENER STARTED, user.id:', user.id);

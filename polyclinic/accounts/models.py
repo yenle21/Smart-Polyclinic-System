@@ -31,17 +31,16 @@ class Patient(BaseModel):
     GENDER_CHOICES = [
         ('male',   'Nam'),
         ('female', 'Nữ'),
-        ('other',  'Khác'),
     ]
 
-    user       = models.OneToOneField(User, on_delete=models.CASCADE, related_name='patient_profile')
-    full_name  = models.CharField(max_length=100)
     dob        = models.DateField(null=True)
     gender     = models.CharField(max_length=10, choices=GENDER_CHOICES, null=True)
     address    = models.TextField(null=True)
+    full_name = models.CharField(max_length=100)
+    user       = models.OneToOneField(User, on_delete=models.CASCADE, related_name='patient_profile')
 
     def __str__(self):
-        return self.full_name
+        return self.full_name or self.user.get_full_name() or self.user.username
 
 
 class Specialty(BaseModel):
@@ -58,8 +57,7 @@ class Doctor(BaseModel):
     degree           = models.CharField(max_length=100, null=True)
     bio              = models.TextField(null=True)
     consultation_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    specialty        = models.ForeignKey(Specialty, on_delete=models.PROTECT, related_name='doctors') # related_name='doctors': Lấy tất cả bác sĩ của chuyên khoa.
-    # PROTECT là không cho xóa chuyên khoa, nếu còn bác sĩ thuộc chuyên khoa đó
+    specialties = models.ManyToManyField(Specialty, related_name='doctors')    # PROTECT là không cho xóa chuyên khoa, nếu còn bác sĩ thuộc chuyên khoa đó
     def __str__(self):
         return self.user.get_full_name() or self.user.username
 

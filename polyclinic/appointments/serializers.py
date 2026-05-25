@@ -5,7 +5,7 @@ from .models import Schedule, Appointment, Notification, MedicalRecord, TestResu
 class ScheduleSerializer(serializers.ModelSerializer):
     available_slots = serializers.SerializerMethodField()
     doctor_name     = serializers.CharField(source='doctor.user.get_full_name', read_only=True)
-    specialty_name  = serializers.CharField(source='doctor.specialty.name', read_only=True)
+    specialty_name  = serializers.SerializerMethodField()
 
     class Meta:
         model  = Schedule
@@ -18,18 +18,16 @@ class ScheduleSerializer(serializers.ModelSerializer):
     def get_available_slots(self, obj):
         return obj.available_slots()
 
+    def get_specialty_name(self, obj):
+        return ", ".join([s.name for s in obj.doctor.specialties.all()])
+
 
 class AppointmentSerializer(serializers.ModelSerializer):
     doctor_name    = serializers.CharField(source='schedule.doctor.user.get_full_name', read_only=True)
-    specialty_name = serializers.CharField(source='schedule.doctor.specialty.name', read_only=True)
-    work_date     = serializers.DateField(source='schedule.work_date', read_only=True)
-    patient_name = serializers.SerializerMethodField()
-    patient_id = serializers.IntegerField(source='patient.user.id', read_only=True)
-
-    class Meta:
-        model = Appointment
-        fields = '__all__'
-
+    specialty_name = serializers.SerializerMethodField()
+    work_date      = serializers.DateField(source='schedule.work_date', read_only=True)
+    patient_name   = serializers.SerializerMethodField()
+    patient_id     = serializers.IntegerField(source='patient.user.id', read_only=True)
 
     class Meta:
         model  = Appointment
@@ -37,12 +35,18 @@ class AppointmentSerializer(serializers.ModelSerializer):
             'id', 'doctor_name', 'specialty_name', 'work_date', 'patient_name',
             'appointment_time', 'type', 'status',
             'reason', 'notes', 'cancel_reason',
-            'created_date', 'updated_date', 'patient_id'
+            'created_date', 'updated_date', 'patient_id',
         ]
         read_only_fields = ['status', 'cancel_reason', 'created_date', 'updated_date']
 
+    def get_specialty_name(self, obj):
+        return ", ".join([s.name for s in obj.schedule.doctor.specialties.all()])
+
     def get_patient_name(self, obj):
-        return obj.patient.full_name
+        patient = obj.patient
+        if patient.full_name:
+            return patient.full_name
+        return patient.user.get_full_name() or patient.user.username
 
 
 class AppointmentCreateSerializer(serializers.ModelSerializer):
@@ -124,21 +128,27 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
     doctor_name    = serializers.CharField(source='appointment.schedule.doctor.user.get_full_name', read_only=True)
     patient_name   = serializers.SerializerMethodField()
     work_date      = serializers.DateField(source='appointment.schedule.work_date', read_only=True)
-    specialty_name = serializers.CharField(source='appointment.schedule.doctor.specialty.name', read_only=True)
+    specialty_name = serializers.SerializerMethodField()
 
     class Meta:
         model  = MedicalRecord
         fields = [
             'id', 'appointment',
-            'doctor_name', 'patient_name', 'specialty_name', 'work_date',  # ← THÊM
+            'doctor_name', 'patient_name', 'specialty_name', 'work_date',
             'diagnosis', 'treatment', 'notes', 'follow_up',
             'symptoms', 'blood_pressure', 'temperature', 'height', 'weight',
-            'test_results',  # ← THÊM
+            'test_results',
         ]
 
     def get_patient_name(self, obj):
-        return obj.appointment.patient.full_name
+        patient = obj.appointment.patient
+        # Thử full_name trước, nếu rỗng thì lấy từ user
+        if patient.full_name:
+            return patient.full_name
+        return patient.user.get_full_name() or patient.user.username
 
+    def get_specialty_name(self, obj):
+        return ", ".join([s.name for s in obj.appointment.schedule.doctor.specialties.all()])
 
 
 class MedicalRecordCreateSerializer(serializers.ModelSerializer):
@@ -146,7 +156,7 @@ class MedicalRecordCreateSerializer(serializers.ModelSerializer):
         model  = MedicalRecord
         fields = [
             'appointment', 'diagnosis', 'treatment', 'notes', 'follow_up',
-            'symptoms', 'blood_pressure', 'temperature', 'height', 'weight',  # ← THÊM
+            'symptoms', 'blood_pressure', 'temperature', 'height', 'weight',
         ]
 
     def validate_appointment(self, value):

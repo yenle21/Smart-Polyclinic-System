@@ -11,6 +11,7 @@ const STATUS_COLOR = {
     confirmed: '#4CAF50',
     cancelled: '#F44336',
     completed: '#2196F3',
+    no_show:   '#9E9E9E',
 };
 
 const STATUS_LABEL = {
@@ -18,7 +19,10 @@ const STATUS_LABEL = {
     confirmed: 'Đã duyệt',
     cancelled: 'Đã hủy',
     completed: 'Hoàn thành',
+    no_show:   'Vắng mặt',
 };
+
+const getStatusColor = (status) => STATUS_COLOR[status] ?? '#9E9E9E';
 
 const MyAppointmentsScreen = ({ navigation }) => {
     const [appointments, setAppointments] = useState([]);
@@ -52,7 +56,6 @@ const MyAppointmentsScreen = ({ navigation }) => {
     };
 
     return (
-        
         <ScrollView style={{ flex: 1, backgroundColor: '#F5F7FA', padding: 16 }}>
             <Text style={{
                 fontSize: 20, fontWeight: '700',
@@ -98,9 +101,12 @@ const MyAppointmentsScreen = ({ navigation }) => {
                                 </Text>
                                 <Chip
                                     style={{
-                                        backgroundColor: STATUS_COLOR[apt.status] + '22',
+                                        backgroundColor: getStatusColor(apt.status) + '22',
                                     }}
-                                    textStyle={{ color: STATUS_COLOR[apt.status], fontSize: 11 }}
+                                    textStyle={{
+                                        color: getStatusColor(apt.status),
+                                        fontSize: 11,
+                                    }}
                                 >
                                     {STATUS_LABEL[apt.status] || apt.status}
                                 </Chip>

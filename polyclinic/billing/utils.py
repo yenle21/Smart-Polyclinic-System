@@ -13,9 +13,9 @@ from django.conf import settings
 # MOMO CONSTANTS (Sandbox)
 # ====================================
 MOMO_PARTNER_CODE = "MOMO"
-MOMO_ACCESS_KEY = "F8BBA842ECF85"
-MOMO_SECRET_KEY = "K951B6PE1waDMi640xX08PD3vg6EkVlz"
-MOMO_ENDPOINT = "https://test-payment.momo.vn/v2/gateway/api/create"
+MOMO_ACCESS_KEY   = "F8BBA842ECF85"
+MOMO_SECRET_KEY   = "K951B6PE1waDMi640xX08PD3vg6EkVlz"
+MOMO_ENDPOINT     = "https://test-payment.momo.vn/v2/gateway/api/create"
 
 
 # ====================================
@@ -23,19 +23,26 @@ MOMO_ENDPOINT = "https://test-payment.momo.vn/v2/gateway/api/create"
 # ====================================
 def create_vnpay_payment_url(request, invoice_id, total_amount, tracking_order_id):
 
+    # VNPAY yêu cầu amount là số nguyên VNĐ, nhân 100 để ra đơn vị xu
+    # Làm tròn xuống bội số 100 để tránh lỗi "Sai chữ ký" do số lẻ
+    amount_vnd  = int(round(float(total_amount)))   # VD: 39999.99 → 40000
+    amount_xu   = amount_vnd * 100                  # VD: 40000 → 4000000
+
     vnp_params = {
-        'vnp_Version': '2.1.0',
-        'vnp_Command': 'pay',
-        'vnp_TmnCode': settings.VNPAY_TMN_CODE,
-        'vnp_Amount': str(int(float(total_amount) * 100)),
+        'vnp_Version':   '2.1.0',
+        'vnp_Command':   'pay',
+        'vnp_TmnCode':   settings.VNPAY_TMN_CODE,
+        'vnp_Amount':    str(amount_xu),
         'vnp_CreateDate': datetime.now().strftime('%Y%m%d%H%M%S'),
-        'vnp_CurrCode': 'VND',
-        'vnp_IpAddr': request.META.get('REMOTE_ADDR', '127.0.0.1'),
-        'vnp_Locale': 'vn',
+        'vnp_CurrCode':  'VND',
+        'vnp_IpAddr': (
+            '1.1.1.1'
+        ),
+        'vnp_Locale':    'vn',
         'vnp_OrderInfo': f'ThanhToanHoaDon{invoice_id}',
         'vnp_OrderType': 'other',
         'vnp_ReturnUrl': settings.VNPAY_RETURN_URL,
-        'vnp_TxnRef': str(tracking_order_id),
+        'vnp_TxnRef':    str(tracking_order_id),
     }
 
     # Bước 1: Sort A-Z
@@ -65,12 +72,12 @@ def create_vnpay_payment_url(request, invoice_id, total_amount, tracking_order_i
 # ====================================
 def create_momo_payment_url(invoice_id, total_amount, tracking_order_id, redirect_url, ipn_url):
 
-    order_id = tracking_order_id
-    order_info = f"ThanhToanHoaDon{invoice_id}"
-    amount = str(int(float(total_amount)))
-    request_id = str(uuid.uuid4())
+    order_id     = tracking_order_id
+    order_info   = f"ThanhToanHoaDon{invoice_id}"
+    amount       = str(int(round(float(total_amount))))  # làm tròn, không lẻ xu
+    request_id   = str(uuid.uuid4())
     request_type = "payWithMethod"
-    extra_data = ""
+    extra_data   = ""
 
     raw_signature = (
         f"accessKey={MOMO_ACCESS_KEY}"
@@ -94,22 +101,22 @@ def create_momo_payment_url(invoice_id, total_amount, tracking_order_id, redirec
     data = {
         "partnerCode": MOMO_PARTNER_CODE,
         "partnerName": "Test",
-        "storeId": "MomoTestStore",
-        "requestId": request_id,
-        "amount": amount,
-        "orderId": order_id,
-        "orderInfo": order_info,
+        "storeId":     "MomoTestStore",
+        "requestId":   request_id,
+        "amount":      amount,
+        "orderId":     order_id,
+        "orderInfo":   order_info,
         "redirectUrl": redirect_url,
-        "ipnUrl": ipn_url,
-        "lang": "vi",
+        "ipnUrl":      ipn_url,
+        "lang":        "vi",
         "autoCapture": True,
-        "extraData": extra_data,
+        "extraData":   extra_data,
         "requestType": request_type,
-        "signature": signature,
+        "signature":   signature,
     }
 
     body = json.dumps(data).encode('utf-8')
-    req = urllib.request.Request(
+    req  = urllib.request.Request(
         MOMO_ENDPOINT,
         data=body,
         headers={'Content-Type': 'application/json'},

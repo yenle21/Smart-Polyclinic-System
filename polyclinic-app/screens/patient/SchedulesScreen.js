@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
     View,
     Text,
@@ -14,25 +14,25 @@ import {
     Chip,
     Card,
 } from 'react-native-paper';
+import { useFocusEffect } from '@react-navigation/native';   // ← thêm
 import { authApis, endpoints } from '../../configs/Apis';
 import styles from '../../styles/patientstyles';
 
-const AppointmentCreateScreen = ({ navigation }) => {
+const ScheduleScreen = ({ navigation, route }) => {
+
+    // selectMode = true khi được gọi từ AppointmentDetailScreen để đổi lịch
+    const selectMode         = route.params?.selectMode ?? false;
+    const onScheduleSelected = route.params?.onScheduleSelected ?? null;
 
     // =========================
     // STATES
     // =========================
     const [date, setDate]                         = useState('');
-
     const [specialty, setSpecialty]               = useState('');
-
     const [schedules, setSchedules]               = useState([]);
     const [selectedSchedule, setSelectedSchedule] = useState(null);
-
-    // Filter client-side
-    const [hideFullSlots, setHideFullSlots]       = useState(true);
-
-    const [loading, setLoading]                   = useState(false);
+    const [hideFullSlots, setHideFullSlots]        = useState(true);
+    const [loading, setLoading]                    = useState(false);
 
     // =========================
     // FORMAT DATE
@@ -70,13 +70,6 @@ const AppointmentCreateScreen = ({ navigation }) => {
     };
 
     // =========================
-    // LOAD KHI MỞ SCREEN
-    // =========================
-    useEffect(() => {
-        loadSchedules();
-    }, []);
-
-    // =========================
     // LOAD SCHEDULES
     // =========================
     const loadSchedules = async () => {
@@ -112,7 +105,6 @@ const AppointmentCreateScreen = ({ navigation }) => {
                 ? res.data
                 : (res.data.results ?? []);
 
-            // Chỉ giữ lịch từ hôm nay trở đi
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
@@ -121,7 +113,6 @@ const AppointmentCreateScreen = ({ navigation }) => {
                 return workDate >= today;
             });
 
-            // Sắp xếp ngày gần nhất trước
             filtered.sort((a, b) => new Date(a.work_date) - new Date(b.work_date));
 
             setSchedules(filtered);
@@ -134,6 +125,15 @@ const AppointmentCreateScreen = ({ navigation }) => {
             setLoading(false);
         }
     };
+
+    // =========================
+    // TỰ ĐỘNG RELOAD KHI QUAY LẠI MÀN HÌNH NÀY
+    // =========================
+    useFocusEffect(
+        useCallback(() => {
+            loadSchedules();
+        }, [])   // [] = chỉ phụ thuộc vào focus, không re-run khi specialty/date thay đổi
+    );
 
     // =========================
     // FILTER CLIENT-SIDE
@@ -164,7 +164,6 @@ const AppointmentCreateScreen = ({ navigation }) => {
             <Card style={styles.searchCard}>
                 <Card.Content>
 
-                    {/* CHUYÊN KHOA */}
                     <TextInput
                         label="Chuyên khoa"
                         value={specialty}
@@ -179,7 +178,6 @@ const AppointmentCreateScreen = ({ navigation }) => {
                         }
                     />
 
-                    {/* NGÀY KHÁM */}
                     <TextInput
                         label="Ngày khám"
                         value={date}
@@ -192,15 +190,11 @@ const AppointmentCreateScreen = ({ navigation }) => {
                         left={<TextInput.Icon icon="calendar" />}
                         right={
                             date
-                                ? <TextInput.Icon
-                                      icon="close"
-                                      onPress={() => setDate('')}
-                                  />
+                                ? <TextInput.Icon icon="close" onPress={() => setDate('')} />
                                 : null
                         }
                     />
 
-                    {/* TOGGLE ẨN LỊCH HẾT SLOT */}
                     <TouchableOpacity
                         style={{
                             flexDirection: 'row',
@@ -284,7 +278,6 @@ const AppointmentCreateScreen = ({ navigation }) => {
                     ]}>
                         <Card.Content>
 
-                            {/* TOP ROW */}
                             <View style={styles.topRow}>
                                 <View style={styles.doctorRow}>
                                     <Avatar.Icon
@@ -313,7 +306,6 @@ const AppointmentCreateScreen = ({ navigation }) => {
                                 </Chip>
                             </View>
 
-                            {/* INFO CƠ BẢN */}
                             <View style={styles.infoBox}>
                                 <Text style={styles.infoText}>
                                     📅 {formatDate(s.work_date)}
@@ -323,7 +315,6 @@ const AppointmentCreateScreen = ({ navigation }) => {
                                 </Text>
                             </View>
 
-                            {/* NÚT CHỌN */}
                             <Button
                                 mode="outlined"
                                 style={styles.selectBtn}
@@ -339,7 +330,6 @@ const AppointmentCreateScreen = ({ navigation }) => {
                                     : '▼ Xem chi tiết'}
                             </Button>
 
-                            {/* CHI TIẾT */}
                             {selectedSchedule?.id === s.id && (
                                 <View style={{
                                     marginTop: 12,
@@ -356,39 +346,31 @@ const AppointmentCreateScreen = ({ navigation }) => {
                                         🗓️ Chi tiết lịch khám
                                     </Text>
 
-                                    <Text style={styles.infoText}>
-                                        👨‍⚕️ Bác sĩ: {s.doctor_name}
-                                    </Text>
-                                    <Text style={styles.infoText}>
-                                        🏥 Chuyên khoa: {s.specialty_name}
-                                    </Text>
-                                    <Text style={styles.infoText}>
-                                        📅 Ngày khám: {formatDate(s.work_date)}
-                                    </Text>
-                                    <Text style={styles.infoText}>
-                                        ⏰ Giờ bắt đầu: {s.start_time}
-                                    </Text>
-                                    <Text style={styles.infoText}>
-                                        ⏰ Giờ kết thúc: {s.end_time}
-                                    </Text>
-                                    <Text style={styles.infoText}>
-                                        🪑 Slot còn lại: {s.available_slots}
-                                    </Text>
+                                    <Text style={styles.infoText}>👨‍⚕️ Bác sĩ: {s.doctor_name}</Text>
+                                    <Text style={styles.infoText}>🏥 Chuyên khoa: {s.specialty_name}</Text>
+                                    <Text style={styles.infoText}>📅 Ngày khám: {formatDate(s.work_date)}</Text>
+                                    <Text style={styles.infoText}>⏰ Giờ bắt đầu: {s.start_time}</Text>
+                                    <Text style={styles.infoText}>⏰ Giờ kết thúc: {s.end_time}</Text>
+                                    <Text style={styles.infoText}>🪑 Slot còn lại: {s.available_slots}</Text>
 
                                     <Button
                                         mode="contained"
-                                        icon="calendar-check"
+                                        icon={selectMode ? "calendar-check" : "calendar-check"}
                                         style={[styles.bookBtn, { marginTop: 12 }]}
                                         labelStyle={styles.bookBtnText}
                                         disabled={s.available_slots === 0}
-                                        onPress={() =>
-                                            navigation.navigate(
-                                                'AppointmentBooking',
-                                                { schedule: s }
-                                            )
-                                        }
+                                        onPress={() => {
+                                            if (selectMode && onScheduleSelected) {
+                                                // Chế độ đổi lịch: callback về AppointmentDetailScreen
+                                                onScheduleSelected(s);
+                                                navigation.goBack();
+                                            } else {
+                                                // Chế độ đặt lịch mới: navigate sang AppointmentBooking
+                                                navigation.navigate('AppointmentBooking', { schedule: s });
+                                            }
+                                        }}
                                     >
-                                        Đặt lịch này
+                                        {selectMode ? 'Chọn lịch này' : 'Đặt lịch này'}
                                     </Button>
 
                                 </View>
@@ -405,4 +387,4 @@ const AppointmentCreateScreen = ({ navigation }) => {
     );
 };
 
-export default AppointmentCreateScreen;
+export default ScheduleScreen;

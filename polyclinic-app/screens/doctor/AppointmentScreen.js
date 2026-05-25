@@ -12,6 +12,7 @@ import {
     ActivityIndicator,
     RefreshControl,
     TouchableOpacity,
+    Alert,
 } from 'react-native';
 
 import {
@@ -44,6 +45,9 @@ const AppointmentScreen = ({ navigation }) => {
 
     const [activeFilter, setActiveFilter] =
         useState('confirmed');
+
+    // Track which appointment ids are loading no-show
+    const [noShowLoadingIds, setNoShowLoadingIds] = useState([]);
 
     const loadAppointments = async () => {
 
@@ -96,14 +100,14 @@ const AppointmentScreen = ({ navigation }) => {
 
     const filteredData = appointments.filter(a => {
         if (a.status !== activeFilter) return false;
-        
+
         // Tab "confirmed" chỉ hiện ngày >= hôm nay
         if (activeFilter === 'confirmed') {
             const workDate = new Date(a.work_date);
             workDate.setHours(0, 0, 0, 0);
             return workDate >= today;
         }
-        
+
         return true;
     });
 
@@ -123,84 +127,179 @@ const AppointmentScreen = ({ navigation }) => {
         pending: 'Chờ xác nhận',
     }[status] || 'Chờ xác nhận');
 
-    const renderItem = ({ item }) => (
+    // ─────────────────────────────────────────
+    // MARK NO SHOW
+    // ─────────────────────────────────────────
+    const markNoShow = (appointmentId) => {
 
-        <TouchableOpacity
-            activeOpacity={0.85}
-            onPress={() =>
-                navigation.navigate(
-                    'AppointmentDetail',
-                    {
-                        appointment: item,
-                    }
-                )
-            }
-        >
+        Alert.alert(
+            'Xác nhận vắng mặt',
+            'Bạn có chắc bệnh nhân này vắng mặt không?',
+            [
+                {
+                    text: 'Huỷ',
+                    style: 'cancel',
+                },
+                {
+                    text: 'Xác nhận',
+                    style: 'destructive',
+                    onPress: async () => {
 
-            <View style={styles.card}>
+                        try {
 
-                {/* HEADER */}
-                <View style={styles.headerRow}>
+                            setNoShowLoadingIds(prev => [
+                                ...prev,
+                                appointmentId,
+                            ]);
 
-                    <View style={styles.avatar}>
-                        <Text style={styles.avatarText}>
+                            const api = await authApis();
+
+                            await api.patch(
+                                endpoints['no-show-appointment'](
+                                    appointmentId
+                                )
+                            );
+
+                            // Cập nhật local state thay vì reload toàn bộ
+                            setAppointments(prev =>
+                                prev.map(a =>
+                                    a.id === appointmentId
+                                        ? { ...a, status: 'no_show' }
+                                        : a
+                                )
+                            );
+
+                        } catch (err) {
+
+                            console.log(
+                                err.response?.data || err
+                            );
+
+                            Alert.alert(
+                                'Lỗi',
+                                'Không thể đánh dấu vắng mặt'
+                            );
+
+                        } finally {
+
+                            setNoShowLoadingIds(prev =>
+                                prev.filter(id => id !== appointmentId)
+                            );
+                        }
+                    },
+                },
+            ]
+        );
+    };
+
+    const renderItem = ({ item }) => {
+
+        const isNoShowLoading = noShowLoadingIds.includes(item.id);
+
+        return (
+            <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={() =>
+                    navigation.navigate(
+                        'AppointmentDetail',
+                        {
+                            appointment: item,
+                        }
+                    )
+                }
+            >
+
+                <View style={styles.card}>
+
+                    {/* HEADER */}
+                    <View style={styles.headerRow}>
+
+                        <View style={styles.avatar}>
+                            <Text style={styles.avatarText}>
+                                {
+                                    (item.patient_name || 'U')[0]
+                                        .toUpperCase()
+                                }
+                            </Text>
+                        </View>
+
+                        <View style={{ flex: 1 }}>
+
+                            <Text style={styles.name}>
+                                {item.patient_name || 'Unknown Patient'}
+                            </Text>
+
+                            <Text style={styles.specialty}>
+                                {item.specialty_name}
+                            </Text>
+
+                        </View>
+
+                        <View
+                            style={[
+                                styles.badge,
+                                getStatusStyle(item.status),
+                            ]}
+                        >
+                            <Text style={styles.badgeText}>
+                                {getStatusLabel(item.status)}
+                            </Text>
+                        </View>
+
+                    </View>
+
+                    {/* BODY */}
+                    <View style={styles.infoBox}>
+
+                        <Text style={styles.infoText}>
+                            📅 {item.work_date}
+                        </Text>
+
+                        <Text style={styles.infoText}>
+                            🕒 {item.appointment_time}
+                        </Text>
+
+                        <Text style={styles.type}>
                             {
-                                (item.patient_name || 'U')[0]
-                                    .toUpperCase()
+                                item.type === 'online'
+                                    ? '💻 Khám online'
+                                    : '🏥 Khám tại phòng khám'
                             }
                         </Text>
-                    </View>
-
-                    <View style={{ flex: 1 }}>
-
-                        <Text style={styles.name}>
-                            {item.patient_name || 'Unknown Patient'}
-                        </Text>
-
-                        <Text style={styles.specialty}>
-                            {item.specialty_name}
-                        </Text>
 
                     </View>
 
-                    <View
-                        style={[
-                            styles.badge,
-                            getStatusStyle(item.status),
-                        ]}
-                    >
-                        <Text style={styles.badgeText}>
-                            {getStatusLabel(item.status)}
-                        </Text>
-                    </View>
+                    {/* NO SHOW BUTTON — chỉ hiện khi confirmed */}
+                    {item.status === 'confirmed' && (
+                        <TouchableOpacity
+                            style={[
+                                styles.noShowBtn,
+                                isNoShowLoading && styles.noShowBtnDisabled,
+                            ]}
+                            onPress={(e) => {
+                                e.stopPropagation?.();
+                                if (!isNoShowLoading) {
+                                    markNoShow(item.id);
+                                }
+                            }}
+                            activeOpacity={0.7}
+                        >
+                            {isNoShowLoading
+                                ? <ActivityIndicator size="small" color="#EF4444" />
+                                : (
+                                    <Text style={styles.noShowBtnText}>
+                                        👤 Đánh dấu vắng mặt
+                                    </Text>
+                                )
+                            }
+                        </TouchableOpacity>
+                    )}
 
                 </View>
 
-                {/* BODY */}
-                <View style={styles.infoBox}>
-
-                    <Text style={styles.infoText}>
-                        📅 {item.work_date}
-                    </Text>
-
-                    <Text style={styles.infoText}>
-                        🕒 {item.appointment_time}
-                    </Text>
-
-                    <Text style={styles.type}>
-                        {
-                            item.type === 'online'
-                                ? '💻 Khám online'
-                                : '🏥 Khám tại phòng khám'
-                        }
-                    </Text>
-
-                </View>
-
-            </View>
-
-        </TouchableOpacity>
-    );
+            </TouchableOpacity>
+        );
+    };
 
     if (loading) {
 
@@ -414,6 +513,29 @@ const styles = StyleSheet.create({
         marginTop: 4,
         color: '#2F6FED',
         fontWeight: '600',
+    },
+
+    // NO SHOW BUTTON
+    noShowBtn: {
+        marginTop: 12,
+        borderWidth: 1.5,
+        borderColor: '#EF4444',
+        borderRadius: 10,
+        paddingVertical: 8,
+        alignItems: 'center',
+        backgroundColor: '#FFF5F5',
+        minHeight: 36,
+        justifyContent: 'center',
+    },
+
+    noShowBtnDisabled: {
+        opacity: 0.6,
+    },
+
+    noShowBtnText: {
+        color: '#EF4444',
+        fontWeight: '700',
+        fontSize: 13,
     },
 
     // EMPTY

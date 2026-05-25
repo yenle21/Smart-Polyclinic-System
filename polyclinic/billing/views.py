@@ -29,6 +29,7 @@ class InvoiceViewSet(viewsets.ModelViewSet):
     PUT  /invoices/{id}/
     POST /invoices/{id}/pay/
     GET  /invoices/vnpay-return/
+    POST /invoices/vnpay-ipn/
     GET  /invoices/momo-return/
     POST /invoices/momo-ipn/
     """
@@ -203,7 +204,7 @@ class InvoiceViewSet(viewsets.ModelViewSet):
         )
 
     # =========================
-    # VNPAY RETURN
+    # VNPAY RETURN (redirect về app)
     # =========================
     @action(detail=False, methods=['get'], url_path='vnpay-return')
     def vnpay_return(self, request):
@@ -276,6 +277,85 @@ class InvoiceViewSet(viewsets.ModelViewSet):
             )
 
     # =========================
+    # VNPAY IPN (server-to-server)
+    # =========================
+    @action(
+        detail=False,
+        methods=['get', 'post'],
+        url_path='vnpay-ipn',
+        permission_classes=[]   # VNPAY gọi không có token
+    )
+    def vnpay_ipn(self, request):
+
+        # VNPAY có thể gọi GET hoặc POST tùy cấu hình
+        if request.method == 'POST':
+            raw_qs = urllib.parse.urlencode(request.data)
+        else:
+            raw_qs = request.META.get('QUERY_STRING', '')
+
+        params = {}
+        for part in raw_qs.split('&'):
+            if '=' in part:
+                k, v = part.split('=', 1)
+                params[k] = v
+
+        vnp_secure_hash = params.pop('vnp_SecureHash', None)
+        params.pop('vnp_SecureHashType', None)
+
+        # Verify chữ ký
+        sorted_data = dict(sorted(params.items()))
+        hash_data = "&".join([f"{k}={v}" for k, v in sorted_data.items()])
+
+        secure_hash = hmac.new(
+            settings.VNPAY_HASH_SECRET.encode('utf-8'),
+            hash_data.encode('utf-8'),
+            hashlib.sha512
+        ).hexdigest()
+
+        if secure_hash != vnp_secure_hash:
+            # VNPAY yêu cầu trả đúng format này
+            return Response({'RspCode': '97', 'Message': 'Invalid signature'})
+
+        order_id       = urllib.parse.unquote_plus(params.get('vnp_TxnRef', ''))
+        response_code  = urllib.parse.unquote_plus(params.get('vnp_ResponseCode', ''))
+        transaction_no = urllib.parse.unquote_plus(params.get('vnp_TransactionNo', ''))
+        vnp_amount     = urllib.parse.unquote_plus(params.get('vnp_Amount', '0'))
+
+        try:
+            tracking = PaymentTracking.objects.get(order_id=order_id)
+            invoice  = tracking.invoice
+
+            # Kiểm tra số tiền khớp không (VNPAY gửi x100)
+            expected_amount = int(float(invoice.total_amount) * 100)
+            if int(vnp_amount) != expected_amount:
+                return Response({'RspCode': '04', 'Message': 'Invalid amount'})
+
+            # Đã xử lý trước đó rồi
+            if invoice.status == 'paid':
+                return Response({'RspCode': '02', 'Message': 'Order already confirmed'})
+
+            if response_code == '00':
+                with transaction.atomic():
+                    tracking.status         = 'success'
+                    tracking.transaction_no = transaction_no
+                    tracking.save()
+
+                    invoice.status         = 'paid'
+                    invoice.payment_method = 'vnpay'
+                    invoice.paid_at        = timezone.now()
+                    invoice.save()
+            else:
+                tracking.status         = 'failed'
+                tracking.transaction_no = transaction_no
+                tracking.save()
+
+            # Luôn trả 00 để VNPAY biết đã nhận IPN
+            return Response({'RspCode': '00', 'Message': 'Confirm Success'})
+
+        except PaymentTracking.DoesNotExist:
+            return Response({'RspCode': '01', 'Message': 'Order not found'})
+
+    # =========================
     # MOMO RETURN (redirect)
     # =========================
     @action(detail=False, methods=['get'], url_path='momo-return')
@@ -331,7 +411,7 @@ class InvoiceViewSet(viewsets.ModelViewSet):
         return self._process_momo_result(order_id, result_code, transaction_id)
 
     # =========================
-    # XỬ LÝ KẾT QUẢ CHUNG
+    # XỬ LÝ KẾT QUẢ CHUNG MOMO
     # =========================
     def _process_momo_result(self, order_id, result_code, transaction_id):
 

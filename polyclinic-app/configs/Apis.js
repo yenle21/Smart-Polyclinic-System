@@ -2,7 +2,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
-const BASE_URL = 'http://10.17.64.133:8000';
+const BASE_URL = 'http://192.168.1.135:8000';
 
 
 
@@ -10,7 +10,7 @@ const BASE_URL = 'http://10.17.64.133:8000';
 export const endpoints = {
     // Auth
     'login':        '/o/token/',
-    'register':     '/users/register/',
+    'register':     '/users/',
     'current-user': '/users/current-user/',
     'create-doctor':  '/users/create-doctor/',
     'create-staff':   '/users/create-staff/',
@@ -40,6 +40,8 @@ export const endpoints = {
     'complete-appointment': (id) => `/appointments/${id}/complete/`,
     'appointment-detail':   (id) => `/appointments/${id}/`,
     'appointment-cancel':   (id) => `/appointments/${id}/cancel/`,
+    'appointment-change-schedule': (id) => `/appointments/${id}/change-schedule/`,
+    'no-show-appointment': (id) => `/appointments/${id}/no-show/`,
     //patients
     'patient-profile':   '/patients/profile/',
     //dashboard
