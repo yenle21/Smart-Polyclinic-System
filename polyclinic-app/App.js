@@ -2,21 +2,35 @@ import React, { useReducer, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { PaperProvider } from 'react-native-paper';
 import { theme } from './components/shared/theme';
+import * as Linking from 'expo-linking';
 
 import MyUserReducer from './reducers/MyUserReducer';
 import { MyUserContext } from './configs/Contexts';
 
-import AuthNavigator      from './navigators/AuthNavigator';
-import PatientNavigator   from './navigators/PatientNavigator';
-import DoctorNavigator    from './navigators/DoctorNavigator';
-import PharmacyNavigator    from './navigators/PharmacyNavigator';
-import StaffNavigator from './navigators/StaffNavigator';
-
-import AdminNavigator     from './navigators/AdminNavigator';
+import AuthNavigator     from './navigators/AuthNavigator';
+import PatientNavigator  from './navigators/PatientNavigator';
+import DoctorNavigator   from './navigators/DoctorNavigator';
+import PharmacyNavigator from './navigators/PharmacyNavigator';
+import StaffNavigator    from './navigators/StaffNavigator';
+import AdminNavigator    from './navigators/AdminNavigator';
 
 import { db } from './configs/firebase';
 import { ref, set } from 'firebase/database';
 
+// Config deep link — prefix khớp với scheme trong app.json
+const linking = {
+    prefixes: [
+        Linking.createURL('/'),   // expo go: exp://...
+        'polyclinic://',          // production build
+    ],
+    config: {
+        screens: {
+            // Màn hình nhận kết quả thanh toán
+            // Bạn cần thêm route "PaymentResult" vào PatientNavigator
+            PaymentResult: 'payment/result',
+        },
+    },
+};
 
 export default function App() {
     const [user, dispatch] = useReducer(MyUserReducer, null);
@@ -30,18 +44,15 @@ export default function App() {
     }, []);
 
     const getNavigator = () => {
-        
-        
         if (!user) return <AuthNavigator />;
 
-        const role       = user.role;
-        const department = user.staff_profile?.department;
+        const role = user.role;
 
-        if (role === 'patient') return <PatientNavigator />;
-        if (role === 'doctor')  return <DoctorNavigator />;
-        if (role === 'admin')   return <AdminNavigator />;
-        if (role === 'pharmacy')   return <PharmacyNavigator/>;
-        if (role === 'staff')   return <StaffNavigator />;
+        if (role === 'patient')  return <PatientNavigator />;
+        if (role === 'doctor')   return <DoctorNavigator />;
+        if (role === 'admin')    return <AdminNavigator />;
+        if (role === 'pharmacy') return <PharmacyNavigator />;
+        if (role === 'staff')    return <StaffNavigator />;
 
         return <AuthNavigator />;
     };
@@ -49,7 +60,7 @@ export default function App() {
     return (
         <MyUserContext.Provider value={[user, dispatch]}>
             <PaperProvider theme={theme}>
-                <NavigationContainer>
+                <NavigationContainer linking={linking}>
                     {getNavigator()}
                 </NavigationContainer>
             </PaperProvider>

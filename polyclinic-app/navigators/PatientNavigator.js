@@ -24,24 +24,25 @@ import IncomingCallScreen         from '../screens/patient/IncomingCallScreen';
 import VideoCallScreen            from '../screens/shared/VideoCallScreen';
 import ChatListScreen             from '../screens/shared/ChatListScreen';
 import ChatScreen                 from '../screens/shared/ChatScreen';
+import PaymentResultScreen        from '../screens/patient/PaymentResultScreen';
 
 const Tab   = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
 const AppointmentStack = () => (
     <Stack.Navigator>
-        <Stack.Screen name="ScheduleScreen" component={ScheduleScreen} options={{ title: 'Đặt lịch khám' }} />
+        <Stack.Screen name="ScheduleScreen"    component={ScheduleScreen}           options={{ title: 'Đặt lịch khám' }} />
         <Stack.Screen name="AppointmentBooking" component={AppointmentBookingScreen} options={{ title: 'Đặt lịch khám', headerBackTitle: 'Quay lại' }} />
     </Stack.Navigator>
 );
 
 const ProfileStack = () => (
     <Stack.Navigator>
-        <Stack.Screen name="ProfileScreen"       component={ProfileScreen}             options={{ title: 'Cá nhân' }} />
-        <Stack.Screen name="PersonalProfile"     component={PersonalProfileScreen}     options={{ title: 'Hồ sơ cá nhân', headerBackTitle: 'Quay lại' }} />
-        <Stack.Screen name="MyAppointments"      component={MyAppointmentsScreen}      options={{ title: 'Lịch hẹn của tôi', headerBackTitle: 'Quay lại' }} />
-        <Stack.Screen name="AppointmentDetail"   component={AppointmentDetailScreen}   options={{ title: 'Chi tiết lịch hẹn', headerBackTitle: 'Quay lại' }} />
-        <Stack.Screen name="MedicalHistory"      component={MedicalHistoryScreen}      options={{ title: 'Lịch sử khám bệnh', headerBackTitle: 'Quay lại' }} />
+        <Stack.Screen name="ProfileScreen"        component={ProfileScreen}             options={{ title: 'Cá nhân' }} />
+        <Stack.Screen name="PersonalProfile"      component={PersonalProfileScreen}     options={{ title: 'Hồ sơ cá nhân', headerBackTitle: 'Quay lại' }} />
+        <Stack.Screen name="MyAppointments"       component={MyAppointmentsScreen}      options={{ title: 'Lịch hẹn của tôi', headerBackTitle: 'Quay lại' }} />
+        <Stack.Screen name="AppointmentDetail"    component={AppointmentDetailScreen}   options={{ title: 'Chi tiết lịch hẹn', headerBackTitle: 'Quay lại' }} />
+        <Stack.Screen name="MedicalHistory"       component={MedicalHistoryScreen}      options={{ title: 'Lịch sử khám bệnh', headerBackTitle: 'Quay lại' }} />
         <Stack.Screen name="MedicalHistoryDetail" component={MedicalHistoryDetailScreen} options={{ title: 'Chi tiết bệnh án', headerBackTitle: 'Quay lại' }} />
         <Stack.Screen name="ScheduleScreen"       component={ScheduleScreen}            options={{ title: 'Chọn lịch mới', headerBackTitle: 'Quay lại' }} />
     </Stack.Navigator>
@@ -56,12 +57,11 @@ function ChatStack() {
     );
 }
 
-// Tách TabNavigator ra để dùng useNavigation hook hợp lệ
 const TabNavigator = () => {
     const [user]          = useContext(MyUserContext);
     const [unreadCount, setUnreadCount] = useState(0);
-    const navigation      = useNavigation(); // ✅ hợp lệ vì nằm trong Stack.Navigator
-    const handledCallsRef = useRef(new Set()); // tránh navigate nhiều lần
+    const navigation      = useNavigation();
+    const handledCallsRef = useRef(new Set());
 
     const fetchUnread = async () => {
         try {
@@ -80,22 +80,16 @@ const TabNavigator = () => {
         return () => clearInterval(interval);
     }, []);
 
-    // Lắng nghe Firebase — dùng navigation hook trực tiếp
     useEffect(() => {
         if (!user?.id) return;
-        console.log('=== LISTENER STARTED, user.id:', user.id);
 
         const callsRef = ref(db, 'calls');
-
         const handler = onValue(callsRef, (snapshot) => {
-            console.log('=== FIREBASE DATA:', JSON.stringify(snapshot.val()));
             if (!snapshot.exists()) return;
 
             snapshot.forEach((child) => {
                 const callId = child.key;
                 const call   = child.val();
-
-                console.log('=== receiverId:', call.receiverId, '| user.id:', user.id, '| match:', String(call.receiverId) === String(user.id));
 
                 if (
                     call.status === 'calling' &&
@@ -103,8 +97,6 @@ const TabNavigator = () => {
                     !handledCallsRef.current.has(`${callId}_${call.attempt}`)
                 ) {
                     handledCallsRef.current.add(`${callId}_${call.attempt}`);
-                    console.log('=== NAVIGATING TO IncomingCall');
-
                     navigation.navigate('IncomingCall', {
                         callId,
                         doctorName: call.doctorName || 'Bác sĩ',
@@ -148,8 +140,8 @@ const TabNavigator = () => {
                 },
             })}
         >
-            <Tab.Screen name="Appointments"  component={AppointmentStack}   options={{ tabBarLabel: 'Lịch hẹn' }} />
-            <Tab.Screen name="Invoices"      component={InvoiceScreen}      options={{ tabBarLabel: 'Hóa đơn', headerShown: true, title: 'Hóa đơn' }} />
+            <Tab.Screen name="Appointments"  component={AppointmentStack} options={{ tabBarLabel: 'Lịch hẹn' }} />
+            <Tab.Screen name="Invoices"      component={InvoiceScreen}    options={{ tabBarLabel: 'Hóa đơn', headerShown: true, title: 'Hóa đơn' }} />
             <Tab.Screen
                 name="ChatTab"
                 component={ChatStack}
@@ -158,16 +150,15 @@ const TabNavigator = () => {
                     tabBarIcon: ({ color }) => <MaterialCommunityIcons name="chat" size={24} color={color} />,
                 }}
             />
-            <Tab.Screen name="Notifications" component={NotificationScreen}  options={{ tabBarLabel: 'Thông báo', headerShown: true, title: 'Thông báo', listeners: { tabPress: () => setUnreadCount(0) } }} />
-            <Tab.Screen name="ProfileTab"    component={ProfileStack}       options={{ tabBarLabel: 'Cá nhân' }} />
+            <Tab.Screen name="Notifications" component={NotificationScreen} options={{ tabBarLabel: 'Thông báo', headerShown: true, title: 'Thông báo', listeners: { tabPress: () => setUnreadCount(0) } }} />
+            <Tab.Screen name="ProfileTab"    component={ProfileStack}      options={{ tabBarLabel: 'Cá nhân' }} />
         </Tab.Navigator>
     );
 };
 
-// ✅ PatientNavigator — Stack bao ngoài để IncomingCall có thể navigate được
 const PatientNavigator = () => (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="MainTabs" component={TabNavigator} />
+        <Stack.Screen name="MainTabs"    component={TabNavigator} />
         <Stack.Screen
             name="IncomingCall"
             component={IncomingCallScreen}
@@ -177,6 +168,12 @@ const PatientNavigator = () => (
             name="VideoCall"
             component={VideoCallScreen}
             options={{ headerShown: false, gestureEnabled: false }}
+        />
+        {/* Màn hình nhận kết quả thanh toán VNPAY/MoMo qua deep link */}
+        <Stack.Screen
+            name="PaymentResult"
+            component={PaymentResultScreen}
+            options={{ headerShown: true, title: 'Kết quả thanh toán' }}
         />
     </Stack.Navigator>
 );
