@@ -1,30 +1,25 @@
+from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import render
 from rest_framework import viewsets, generics, parsers, permissions, status
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
+from .permissions import IsAdminRole, IsOwnerOrAdmin
 from .models import User, Doctor, Patient, Specialty
-from .serializers import UserSerializer, DoctorSerializer, PatientSerializer, RegisterSerializer, \
-    PatientProfileSerializer, PatientUpdateSerializer, CreateDoctorSerializer, CreateStaffSerializer, SpecialtySerializer
+from .serializers import UserSerializer, DoctorSerializer, PatientProfileSerializer, PatientUpdateSerializer, CreateDoctorSerializer, CreateStaffSerializer, SpecialtySerializer
 
 
-class UserViewSet(viewsets.ViewSet, generics.ListAPIView):
+class UserViewSet(viewsets.ViewSet, generics.ListAPIView,generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    parser_classes = [parsers.MultiPartParser, parsers.FormParser]
-    # đăng kí tài khoản
-    @action(methods=['post'], url_path='register', detail=False,
-            permission_classes=[permissions.AllowAny])
-    def register(self, request):
-        s = RegisterSerializer(data=request.data)
-        s.is_valid(raise_exception=True)
-        s.save()
-        return Response(s.data, status=status.HTTP_201_CREATED)
-    # xem và cập nhật thông tin of user đang đăng nhập
+
+    def get_permissions(self):
+        if self.action in ['create']:
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
+     # xem và cập nhật thông tin of user đang đăng nhập
     @action(methods=['get', 'patch'], url_path='current-user', detail=False,
-            permission_classes=[permissions.IsAuthenticated])
+            permission_classes=[IsOwnerOrAdmin])
     def current_user(self, request):
         u = request.user
         if request.method == 'PATCH':
@@ -34,7 +29,7 @@ class UserViewSet(viewsets.ViewSet, generics.ListAPIView):
         return Response(UserSerializer(u).data, status=status.HTTP_200_OK)
 
     @action(methods=['post'], url_path='create-doctor', detail=False,
-            permission_classes=[permissions.IsAuthenticated])
+            permission_classes=[IsAdminRole])
     def create_doctor(self, request):
         s = CreateDoctorSerializer(data=request.data)
         s.is_valid(raise_exception=True)
@@ -42,7 +37,7 @@ class UserViewSet(viewsets.ViewSet, generics.ListAPIView):
         return Response({'message': 'Tạo tài khoản bác sĩ thành công!'}, status=status.HTTP_201_CREATED)
 
     @action(methods=['post'], url_path='create-staff', detail=False,
-            permission_classes=[permissions.IsAuthenticated])
+            permission_classes=[IsAdminRole])
     def create_staff(self, request):
         s = CreateStaffSerializer(data=request.data)
         s.is_valid(raise_exception=True)
@@ -68,9 +63,8 @@ class PatientViewSet(viewsets.ViewSet, generics.ListAPIView):
     def profile(self, request):
         try:
             patient = request.user.patient_profile
-        except Exception:
+        except ObjectDoesNotExist:
             if request.method == 'PATCH':
-                # ✅ Chưa có thì tạo mới
                 patient = Patient.objects.create(user=request.user)
             else:
                 return Response(

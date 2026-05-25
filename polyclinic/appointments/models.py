@@ -59,7 +59,6 @@ class Appointment(BaseModel):
 
 
 class Notification(BaseModel):
-    """Thông báo nhắc lịch hẹn gửi cho bệnh nhân"""
     TYPE_CHOICES = [
         ('reminder', 'Nhắc lịch hẹn'),
         ('confirmed', 'Lịch hẹn được xác nhận'),
@@ -84,8 +83,6 @@ class Notification(BaseModel):
 
     def __str__(self):
         return f"[{self.type}] {self.title} → {self.user}"
-
-# Thêm vào appointments/models.py
 
 class MedicalRecord(BaseModel): #Hồ sơ bệnh án, tạo sau khi khám xong
     appointment  = models.OneToOneField(Appointment, on_delete=models.CASCADE, related_name='medical_record')

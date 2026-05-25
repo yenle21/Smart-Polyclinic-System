@@ -15,24 +15,14 @@ class Invoice(BaseModel):
         ('vnpay',    'VNPay'),
     ]
 
-    patient          = models.ForeignKey(Patient, on_delete=models.CASCADE,
-                                         related_name='invoices')
-    appointment      = models.OneToOneField('appointments.Appointment',
-                                            on_delete=models.CASCADE,
-                                            related_name='invoice')
-    consultation_fee = models.DecimalField(max_digits=10, decimal_places=2,
-                                           default=0)
-    medicine_fee     = models.DecimalField(max_digits=10, decimal_places=2,
-                                           default=0)
-    service_fee      = models.DecimalField(max_digits=10, decimal_places=2,
-                                           default=0)
-    total_amount     = models.DecimalField(max_digits=10, decimal_places=2,
-                                           default=0)
-    status           = models.CharField(max_length=20, choices=STATUS_CHOICES,
-                                        default='unpaid')
-    payment_method   = models.CharField(max_length=20,
-                                        choices=PAYMENT_METHOD_CHOICES,
-                                        null=True, blank=True)
+    patient          = models.ForeignKey(Patient, on_delete=models.CASCADE,related_name='invoices')
+    appointment      = models.OneToOneField('appointments.Appointment',on_delete=models.CASCADE,related_name='invoice')
+    consultation_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    medicine_fee     = models.DecimalField(max_digits=10, decimal_places=2,default=0)
+    service_fee      = models.DecimalField(max_digits=10, decimal_places=2,default=0)
+    total_amount     = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    status           = models.CharField(max_length=20, choices=STATUS_CHOICES,default='unpaid')
+    payment_method   = models.CharField(max_length=20,choices=PAYMENT_METHOD_CHOICES,null=True, blank=True)
     paid_at          = models.DateTimeField(null=True, blank=True)
     notes            = models.TextField(null=True, blank=True)
 
@@ -51,27 +41,21 @@ class Invoice(BaseModel):
 
     def __str__(self):
         return f"Hóa đơn #{self.id} — {self.patient} — {self.total_amount}đ"
-
+# Chi tiết từng dịch vụ trong hóa đơn
 class InvoiceItem(BaseModel):
-    """Chi tiết từng dịch vụ trong hóa đơn"""
-    invoice     = models.ForeignKey(Invoice, on_delete=models.CASCADE,
-                                    related_name='items')
     description = models.CharField(max_length=200, verbose_name='Mô tả dịch vụ')
     quantity    = models.PositiveIntegerField(default=1)
-    unit_price  = models.DecimalField(max_digits=10, decimal_places=2,
-                                      verbose_name='Đơn giá')
-    total_price = models.DecimalField(max_digits=10, decimal_places=2,
-                                      verbose_name='Thành tiền')
-
+    unit_price  = models.DecimalField(max_digits=10, decimal_places=2,verbose_name='Đơn giá')
+    total_price = models.DecimalField(max_digits=10, decimal_places=2,verbose_name='Thành tiền')
+    invoice     = models.ForeignKey(Invoice, on_delete=models.CASCADE,related_name='items')
     def save(self, *args, **kwargs):
         self.total_price = self.quantity * self.unit_price
         super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.description} x{self.quantity} = {self.total_price}đ"
-
-class PaymentTracking(BaseModel):  # Phải chính xác là PaymentTracking
-    """Theo dõi chi tiết các giao dịch xử lý qua cổng MoMo / VNPAY"""
+# Theo dõi chi tiết các giao dịch xử lý qua cổng MoMo / VNPAY
+class PaymentTracking(BaseModel):
     GATEWAY_CHOICES = [
         ('momo',  'Ví điện tử MoMo'),
         ('vnpay', 'Cổng thanh toán VNPAY'),
@@ -82,8 +66,7 @@ class PaymentTracking(BaseModel):  # Phải chính xác là PaymentTracking
         ('failed',  'Thất bại'),
     ]
 
-    invoice        = models.ForeignKey(Invoice, on_delete=models.CASCADE,
-                                       related_name='payment_trackings')
+    invoice        = models.ForeignKey(Invoice, on_delete=models.CASCADE,related_name='payment_trackings')
     gateway        = models.CharField(max_length=10, choices=GATEWAY_CHOICES)
     order_id       = models.CharField(max_length=100, unique=True, verbose_name="Mã đơn hàng hệ thống")
     transaction_no = models.CharField(max_length=100, null=True, blank=True, verbose_name="Mã giao dịch đối tác")

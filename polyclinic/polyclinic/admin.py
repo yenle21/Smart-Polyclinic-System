@@ -20,6 +20,8 @@ from dashboard.admin import ReportModelAdmin
 from appointments.admin import ScheduleAdmin, AppointmentAdmin, NotificationAdmin, MedicalRecordAdmin, TestResultAdmin
 from accounts.admin import DoctorAdmin,PatientAdmin,CustomUserAdmin
 
+from accounts.admin import SpecialtyAdmin
+from accounts.models import Specialty
 
 
 class PolyclinicAdminSite(admin.AdminSite):
@@ -86,25 +88,26 @@ class PolyclinicAdminSite(admin.AdminSite):
 
 admin_site = PolyclinicAdminSite(name='polyclinic_admin')
 
-# Pharmacy — app của bạn
+# Pharmacy
 admin_site.register(Category,         CategoryModelAdmin)
 admin_site.register(Medicine,         MedicineModelAdmin)
 admin_site.register(Inventory,        InventoryModelAdmin)
 admin_site.register(StockTransaction, StockTransactionModelAdmin)
 admin_site.register(Prescription,     PrescriptionModelAdmin)
 
-# Billing — app của bạn
+# Billing
 admin_site.register(Invoice, InvoiceModelAdmin)
 
-# Dashboard/Reports — app của bạn
+# Dashboard/Reports
 admin_site.register(Report, ReportModelAdmin)
-
-admin_site.register(Schedule,      ScheduleAdmin)
-admin_site.register(Appointment,   AppointmentAdmin)
-admin_site.register(Notification,  NotificationAdmin)
-admin_site.register(MedicalRecord, MedicalRecordAdmin)
-admin_site.register(TestResult,    TestResultAdmin)
-
+# Appointment
+admin_site.register(Schedule,ScheduleAdmin)
+admin_site.register(Appointment,AppointmentAdmin)
+admin_site.register(Notification,NotificationAdmin)
+admin_site.register(MedicalRecord,MedicalRecordAdmin)
+admin_site.register(TestResult,TestResultAdmin)
+# Accounts
 admin_site.register(Doctor, DoctorAdmin)
 admin_site.register(Patient, PatientAdmin)
 admin_site.register(User, CustomUserAdmin)
+admin_site.register(Specialty, SpecialtyAdmin)

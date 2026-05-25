@@ -31,7 +31,7 @@ import loginstyles from "../../styles/loginstyles";
 const ROLES = [
     { key: 'doctor',  label: '🩺 Bác sĩ' },
     { key: 'staff',   label: '💊 Nhân viên y tế' },
-    { key: 'pharmacy',   label: '💊 Dược sĩ' },
+    { key: 'pharmacy',label: '💊 Dược sĩ' },
     { key: 'admin',   label: '🛡️ Admin' },
     { key: 'patient', label: '🧑‍⚕️ Bệnh nhân' },
 ];
@@ -107,14 +107,9 @@ const Login = () => {
             const params = new URLSearchParams();
 
             params.append( 'username',user.username );
-
             params.append( 'password',user.password );
-
-
             params.append( 'client_id','Qo0xwsPc00Wama0YySwi81z1jfnjPbUxi6xYc5H1' );
-
             params.append( 'client_secret','SIN6g29BplhvAY0IfUin8OVGnOzAuvbfy9WXbO8FWIitHgzlRYYDYtixGFOQXbpil0DwAOhx5PdVfGjbOOlZaZo2GzVW6WzqsR4kXa927OTC3qxqUtmFRjqauSvebbfS');
-
             params.append('grant_type','password' );
 
             const res = await Apis.post(endpoints['login'],

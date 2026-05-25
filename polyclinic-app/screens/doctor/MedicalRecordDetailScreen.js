@@ -385,14 +385,6 @@ const MedicalRecordDetailScreen = ({ route, navigation }) => {
                         Xem đơn thuốc
                     </Button>
 
-                    <Button
-                        mode="text"
-                        icon="arrow-left"
-                        style={styles.backButton}
-                        onPress={() => navigation.goBack()}
-                    >
-                        Trở về
-                    </Button>
 
                 </Card.Content>
 

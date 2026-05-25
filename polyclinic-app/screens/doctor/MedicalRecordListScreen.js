@@ -1,83 +1,40 @@
-import React, {
-    useEffect,
-    useState,
-} from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import { ActivityIndicator } from 'react-native-paper';
+import { useFocusEffect } from '@react-navigation/native';
+import { authApis, endpoints } from '../../configs/Apis';
 
-import {
-    View,
-    Text,
-    FlatList,
-    TouchableOpacity,
-    StyleSheet,
-} from 'react-native';
+const MedicalRecordListScreen = ({ navigation }) => {
 
-import {
-    ActivityIndicator,
-} from 'react-native-paper';
+    const [records, setRecords] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-import {
-    authApis,
-    endpoints,
-} from '../../configs/Apis';
-
-const MedicalRecordListScreen = ({
-    navigation,
-}) => {
-
-    const [records, setRecords] =
-        useState([]);
-
-    const [loading, setLoading] =
-        useState(true);
-
-    // =========================
-    // LOAD RECORDS
-    // =========================
-    useEffect(() => {
-
-        const loadRecords = async () => {
-
-            try {
-
-                const api =
-                    await authApis();
-
-                const res =
-                    await api.get(
-                        endpoints['medical-records']
-                    );
-
-                const data =
-                    Array.isArray(res.data)
-                        ? res.data
-                        : res.data.results || [];
-
-                setRecords(data);
-
-            } catch (err) {
-
-                console.log(
-                    err.response?.data || err
-                );
-
-            } finally {
-
-                setLoading(false);
-            }
-        };
-
-        loadRecords();
-
+    const loadRecords = useCallback(async () => {
+        try {
+            setLoading(true);
+            const api = await authApis();
+            const res = await api.get(endpoints['medical-records']);
+            const data = Array.isArray(res.data)
+                ? res.data
+                : res.data.results || [];
+            setRecords(data);
+        } catch (err) {
+            console.log(err.response?.data || err);
+        } finally {
+            setLoading(false);
+        }
     }, []);
 
-    // =========================
-    // FORMAT DATE
-    // =========================
+    // Reload mỗi khi màn hình được focus
+    useFocusEffect(
+        useCallback(() => {
+            loadRecords();
+        }, [loadRecords])
+    );
+
     const formatDate = (dateString) => {
-
-        const d = new Date(dateString);
-
-        return d.toLocaleDateString('vi-VN', {
+        if (!dateString) return 'Không rõ';
+        return new Date(dateString).toLocaleDateString('vi-VN', {
             year: 'numeric',
             month: '2-digit',
             day: '2-digit',
@@ -92,7 +49,6 @@ const MedicalRecordListScreen = ({
         <TouchableOpacity
             activeOpacity={0.85}
             onPress={() =>
-                // ✅ FIX: truyền cả object record thay vì chỉ recordId
                 navigation.navigate(
                     'MedicalRecordDetailTab',
                     {
@@ -153,9 +109,7 @@ const MedicalRecordListScreen = ({
 
                     <Text style={styles.date}>
                         📅 {
-                            formatDate(
-                                item.created_date
-                            )
+                            formatDate(item.work_date)
                         }
                     </Text>
 

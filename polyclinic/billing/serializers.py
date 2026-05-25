@@ -17,9 +17,11 @@ class InvoiceSerializer(serializers.ModelSerializer):
     doctor_name = serializers.SerializerMethodField()
 
     # Tên chuyên khoa
-    specialty_name  = serializers.CharField(
-        source='appointment.schedule.doctor.specialty.name', read_only=True
-    )
+    specialty_name = serializers.SerializerMethodField()
+
+    def get_specialty_name(self, obj):
+        specialty = obj.appointment.schedule.doctor.specialties.first()
+        return specialty.name if specialty else ''
     # Tên trạng thái
     status_display  = serializers.CharField(source='get_status_display', read_only=True)
     # Tên phương thức thanh toán

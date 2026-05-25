@@ -4,68 +4,73 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0bb9ad0e-cead-42a9-9746-f263c45c6822" name="Changes" comment="">
+    <list default="true" id="86b701a0-4574-42c5-8146-eb7120ead1cc" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/polyclinic/accounts/permissions.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/Smart-Polyclinic-System.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/Smart-Polyclinic-System.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/polyclinic-app/configs/Apis.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/configs/Apis.js" afterDir="false" />
-<<<<<<< Updated upstream
       <change beforePath="$PROJECT_DIR$/polyclinic-app/navigators/PatientNavigator.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/navigators/PatientNavigator.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic-app/screens/doctor/AppointmentScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/screens/doctor/AppointmentScreen.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic-app/screens/doctor/MedicalRecordDetailScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/screens/doctor/MedicalRecordDetailScreen.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic-app/screens/doctor/MedicalRecordListScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/screens/doctor/MedicalRecordListScreen.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic-app/screens/patient/AppointmentBookingScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/screens/patient/AppointmentBookingScreen.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic-app/screens/patient/AppointmentDetailScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/screens/patient/AppointmentDetailScreen.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic-app/screens/patient/SchedulesScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/screens/patient/SchedulesScreen.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/polyclinic-app/screens/shared/LoginScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/screens/shared/LoginScreen.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic-app/screens/shared/RegisterScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/screens/shared/RegisterScreen.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic/accounts/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/accounts/admin.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic/accounts/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/accounts/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic/accounts/serializers.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/accounts/serializers.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic/accounts/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/accounts/views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic/appointments/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/appointments/models.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/polyclinic/appointments/serializers.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/appointments/serializers.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/polyclinic/appointments/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/appointments/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic/polyclinic/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/polyclinic/settings.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/requirements.txt" afterDir="false" />
-=======
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/navigators/AdminNavigator.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/navigators/AdminNavigator.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/navigators/StaffNavigator.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/navigators/StaffNavigator.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/screens/admin/AccountManagementScreen.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/screens/admin/DashboardScreen.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/screens/admin/ProfileScreen.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/screens/admin/ServiceManagementScreen.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/screens/admin/SpecialtyManagementScreen.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/screens/staff/InvoiceDetailScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/screens/staff/InvoiceDetailScreen.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/screens/staff/InvoiceListScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/screens/staff/InvoiceListScreen.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/screens/staff/MedicineDetailScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/screens/staff/MedicineDetailScreen.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/screens/staff/MedicineListScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/screens/staff/MedicineListScreen.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic-app/screens/staff/StockTransactionScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic-app/screens/staff/StockTransactionScreen.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic/billing/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/billing/models.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/polyclinic/billing/serializers.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/billing/serializers.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic/billing/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/billing/utils.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/polyclinic/billing/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/billing/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic/dashboard/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/dashboard/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic/pharmacy/serializers.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/pharmacy/serializers.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic/pharmacy/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/pharmacy/urls.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/polyclinic/pharmacy/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/pharmacy/views.py" afterDir="false" />
->>>>>>> Stashed changes
+      <change beforePath="$PROJECT_DIR$/polyclinic/pharmacy/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/pharmacy/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic/polyclinic/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/polyclinic/admin.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic/polyclinic/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/polyclinic/settings.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic/polyclinic/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/polyclinic/urls.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polyclinic/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/polyclinic/requirements.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory">{
-  &quot;lastFilter&quot;: {
-    &quot;state&quot;: &quot;OPEN&quot;,
-    &quot;assignee&quot;: &quot;yenle21&quot;
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "yenle21"
   }
-}</component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/yenle21/Smart-Polyclinic-System.git&quot;,
-    &quot;accountId&quot;: &quot;62973d97-84cd-4dd4-a3e6-c3db14868980&quot;
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/yenle21/Smart-Polyclinic-System.git",
+    "accountId": "62973d97-84cd-4dd4-a3e6-c3db14868980"
   }
-}</component>
-  <component name="ProjectColorInfo">{
-  &quot;associatedIndex&quot;: 2
-}</component>
-  <component name="ProjectId" id="3DqYC3fOzNkpdGiT6zlfLy1dN2D" />
+}]]></component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 2
+}]]></component>
+  <component name="ProjectId" id="3ECPpuLfXrNWSpKy0ohBX85XU2v" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-<<<<<<< Updated upstream
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "ModuleVcsDetector.initialDetectionPerformed": "true",
@@ -74,18 +79,8 @@
     "RunOnceActivity.git.unshallow": "true",
     "git-widget-placeholder": "Yenle",
     "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
-=======
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;NguyenQNhu&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
->>>>>>> Stashed changes
   }
-}</component>
+}]]></component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -95,11 +90,11 @@
   </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="0bb9ad0e-cead-42a9-9746-f263c45c6822" name="Changes" comment="" />
-      <created>1779010935974</created>
+      <changelist id="86b701a0-4574-42c5-8146-eb7120ead1cc" name="Changes" comment="" />
+      <created>1779679764380</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1779010935974</updated>
+      <updated>1779679764380</updated>
     </task>
     <servers />
   </component>
@@ -107,8 +102,8 @@
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/polyclinic/appointments/views.py</url>
-          <option name="timeStamp" value="2" />
+          <url>file://$PROJECT_DIR$/polyclinic/polyclinic/admin.py</url>
+          <option name="timeStamp" value="4" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
