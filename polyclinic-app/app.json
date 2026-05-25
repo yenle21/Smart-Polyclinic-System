@@ -2,6 +2,7 @@
   "expo": {
     "name": "polyclinic-app",
     "slug": "polyclinic-app",
+    "scheme": "polyclinic",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
