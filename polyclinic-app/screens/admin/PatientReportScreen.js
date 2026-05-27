@@ -29,6 +29,8 @@ export default function PatientReportScreen() {
         try {
             const api = await authApis();
             const res = await api.get(endpoints['patients-report']);
+
+
             setData(res.data);
         } catch (err) {
             console.error('PatientReport:', err.response?.data || err.message);
@@ -103,7 +105,7 @@ export default function PatientReportScreen() {
                         ? <Text style={styles.empty}>Không có dữ liệu</Text>
                         : (data.by_specialty || []).map((s, i) => (
                             <BarRow key={i}
-                                    label={s.schedule__doctor__specialty__name || 'Khác'}
+                                    label={s.schedule__doctor__specialties__name || 'Khác'}
                                     value={s.count}
                                     max={maxSpecialty}
                                     color={COLORS_LIST[i % COLORS_LIST.length]} />

@@ -197,7 +197,7 @@ class DashboardViewSet(viewsets.ViewSet):
         # Theo chuyên khoa
         by_specialty = list(
             Appointment.objects.filter(status='completed')
-            .values('schedule__doctor__specialty__name')
+            .values('schedule__doctor__specialties__name')
             .annotate(count=Count('id'))
             .order_by('-count')[:10]
         )

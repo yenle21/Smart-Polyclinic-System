@@ -2,7 +2,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
-const BASE_URL = 'http://192.168.1.135:8000';
+const BASE_URL = 'http://192.168.1.229:8000';
 
 
 
@@ -14,6 +14,7 @@ export const endpoints = {
     'current-user': '/users/current-user/',
     'create-doctor':  '/users/create-doctor/',
     'create-staff':   '/users/create-staff/',
+    'create-pharmacy': '/users/create-pharmacy/',
     'specialties':    '/specialties/',
 
     // Pharmacy
@@ -83,5 +84,13 @@ export const authApis = async () => {
     });
 };
 
+export const uploadApis = async () => {
+    const token = await AsyncStorage.getItem('access_token');
+    return axios.create({
+        baseURL: BASE_URL,
+        timeout: 30000, 
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+};
 
 export default Apis;
