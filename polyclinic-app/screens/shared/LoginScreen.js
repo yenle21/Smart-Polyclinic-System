@@ -27,7 +27,6 @@ import { MyUserContext } from "../../configs/Contexts";
 
 import loginstyles from "../../styles/loginstyles";
 
-//chọn role để đăng nhập 
 const ROLES = [
     { key: 'doctor',  label: '🩺 Bác sĩ' },
     { key: 'staff',   label: '💊 Nhân viên y tế' },
