@@ -73,7 +73,7 @@ const Register = () => {
             if (avatar) {
                 const filename = avatar.uri.split('/').pop();
                 const ext = filename.split('.').pop();
-                form.append('avatar', {
+                form.append('avatar_upload', {
                     uri: avatar.uri,
                     name: filename,
                     type: `image/${ext === 'png' ? 'png' : 'jpeg'}`,
@@ -81,6 +81,7 @@ const Register = () => {
             }
             const res = await Apis.post(endpoints['register'], form, {
                 headers: { 'Content-Type': 'multipart/form-data' },
+                timeout: 90000,
             });
             if (res.status === 200 || res.status === 201) {
                 Alert.alert("Thành công", "Đăng ký thành công", [

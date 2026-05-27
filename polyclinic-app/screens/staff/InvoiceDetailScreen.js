@@ -62,7 +62,6 @@ export default function InvoiceDetailScreen({ route, navigation }) {
                     <Divider style={styles.divider} />
                     <Text variant="titleMedium" style={styles.subtitle}>Chi tiết dịch vụ</Text>
 
-                    {/* Phí khám */}
                     {invoice.consultation_fee > 0 && (
                         <View style={styles.itemRow}>
                             <Text style={styles.itemName}>🩺 Phí khám</Text>
@@ -70,7 +69,7 @@ export default function InvoiceDetailScreen({ route, navigation }) {
                         </View>
                     )}
 
-                    {/* Phí thuốc */}
+                 
                     {invoice.medicine_fee > 0 && (
                         <View style={styles.itemRow}>
                             <Text style={styles.itemName}>💊 Phí thuốc</Text>
@@ -78,7 +77,7 @@ export default function InvoiceDetailScreen({ route, navigation }) {
                         </View>
                     )}
 
-                    {/* Phí dịch vụ/xét nghiệm */}
+                   
                     {invoice.service_fee > 0 && (
                         <View style={styles.itemRow}>
                             <Text style={styles.itemName}>🔬 Phí dịch vụ</Text>
@@ -86,7 +85,7 @@ export default function InvoiceDetailScreen({ route, navigation }) {
                         </View>
                     )}
 
-                    {/* InvoiceItems nếu có */}
+                   
                     {invoice.items?.map((item, i) => (
                         <View key={i} style={styles.itemRow}>
                             <Text style={styles.itemName}>{item.description}</Text>

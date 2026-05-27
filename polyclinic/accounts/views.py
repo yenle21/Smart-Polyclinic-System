@@ -2,11 +2,13 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import render
 from rest_framework import viewsets, generics, parsers, permissions, status
 from rest_framework.decorators import action
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .permissions import IsAdminRole, IsOwnerOrAdmin
 from .models import User, Doctor, Patient, Specialty
-from .serializers import UserSerializer, DoctorSerializer, PatientProfileSerializer, PatientUpdateSerializer, CreateDoctorSerializer, CreateStaffSerializer, SpecialtySerializer
+from .serializers import UserSerializer, DoctorSerializer, PatientProfileSerializer, PatientUpdateSerializer, \
+    CreateDoctorSerializer, CreateStaffSerializer, SpecialtySerializer, CreatePharmacySerializer
 
 
 class UserViewSet(viewsets.ViewSet, generics.ListAPIView,generics.CreateAPIView):
@@ -29,7 +31,7 @@ class UserViewSet(viewsets.ViewSet, generics.ListAPIView,generics.CreateAPIView)
         return Response(UserSerializer(u).data, status=status.HTTP_200_OK)
 
     @action(methods=['post'], url_path='create-doctor', detail=False,
-            permission_classes=[IsAdminRole])
+            permission_classes=[IsAdminRole], parser_classes=[MultiPartParser, FormParser])
     def create_doctor(self, request):
         s = CreateDoctorSerializer(data=request.data)
         s.is_valid(raise_exception=True)
@@ -37,12 +39,20 @@ class UserViewSet(viewsets.ViewSet, generics.ListAPIView,generics.CreateAPIView)
         return Response({'message': 'Tạo tài khoản bác sĩ thành công!'}, status=status.HTTP_201_CREATED)
 
     @action(methods=['post'], url_path='create-staff', detail=False,
-            permission_classes=[IsAdminRole])
+            permission_classes=[IsAdminRole], parser_classes=[MultiPartParser, FormParser])
     def create_staff(self, request):
         s = CreateStaffSerializer(data=request.data)
         s.is_valid(raise_exception=True)
         s.save()
         return Response({'message': 'Tạo tài khoản nhân viên thành công!'}, status=status.HTTP_201_CREATED)
+
+    @action(methods=['post'], url_path='create-pharmacy', detail=False,
+            permission_classes=[IsAdminRole], parser_classes=[MultiPartParser, FormParser])
+    def create_pharmacy(self, request):
+        s = CreatePharmacySerializer(data=request.data)
+        s.is_valid(raise_exception=True)
+        s.save()
+        return Response({'message': 'Tạo tài khoản dược sĩ thành công!'}, status=status.HTTP_201_CREATED)
 
 class SpecialtyViewSet(viewsets.ViewSet, generics.ListAPIView):
     queryset         = Specialty.objects.filter(active=True)

@@ -107,8 +107,8 @@ const Login = () => {
 
             params.append( 'username',user.username );
             params.append( 'password',user.password );
-            params.append( 'client_id','Qo0xwsPc00Wama0YySwi81z1jfnjPbUxi6xYc5H1' );
-            params.append( 'client_secret','SIN6g29BplhvAY0IfUin8OVGnOzAuvbfy9WXbO8FWIitHgzlRYYDYtixGFOQXbpil0DwAOhx5PdVfGjbOOlZaZo2GzVW6WzqsR4kXa927OTC3qxqUtmFRjqauSvebbfS');
+            params.append( 'client_id','n7aGTsfMDLTLWp32Hm9YU6OQGbSDnmHaY77CoWhL' );
+            params.append( 'client_secret','bK8au064hR1Mlj77UWiFJNTkBUgmL9PzGv7kWWdi9NFI31RRSF1hA7B3o8Cstu5bIpMO44dfrx5iG7p13PJWNttp81xEltStjRe5y6XtKpH30AqlXxb6cPnllFYkVpmX');
             params.append('grant_type','password' );
 
             const res = await Apis.post(endpoints['login'],

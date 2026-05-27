@@ -17,16 +17,16 @@ export default function AppointmentListScreen({ navigation }) {
     const [appointments, setAppointments] = useState([]);
     const [refreshing,   setRefreshing]   = useState(false);
     const [search,       setSearch]       = useState('');
-    const [status,       setStatus]       = useState('pending'); // mặc định chờ duyệt
+    const [status,       setStatus]       = useState('pending'); 
 
     const fetchAppointments = useCallback(async () => {
         try {
             const api    = await authApis();
             const params = { q: search };
-            if (status) params.status = status;  // backend cần hỗ trợ param này
+            if (status) params.status = status;  
             const res = await api.get('/appointments/', { params });
             
-            // Nếu backend chưa filter, filter ở frontend tạm thời
+            
             const data = res.data.results || res.data;
             const filtered = status ? data.filter(a => a.status === status) : data;
             setAppointments(filtered);
@@ -79,7 +79,7 @@ export default function AppointmentListScreen({ navigation }) {
 
     return (
         <View style={styles.container}>
-            {/* Tìm kiếm */}
+       
             <Searchbar
                 placeholder="Tìm bệnh nhân..."
                 value={search}
@@ -88,7 +88,7 @@ export default function AppointmentListScreen({ navigation }) {
                 style={styles.searchbar}
             />
 
-            {/* Bộ lọc trạng thái */}
+            
             <ScrollView horizontal showsHorizontalScrollIndicator={false}
                         style={styles.filterRow} contentContainerStyle={styles.filterContent}>
                 {STATUS_OPTIONS.map((opt) => (
@@ -110,7 +110,7 @@ export default function AppointmentListScreen({ navigation }) {
                 ))}
             </ScrollView>
 
-            {/* Danh sách */}
+        
             <FlatList
                 data={appointments}
                 keyExtractor={(item) => item.id.toString()}
