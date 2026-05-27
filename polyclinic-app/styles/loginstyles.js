@@ -118,6 +118,33 @@ const loginstyles = StyleSheet.create({
         color: '#1565C0',
         fontWeight: '700',
     },
+    dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 16,
+},
+    dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 16,
+},
+dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#e0e0e0',
+},
+dividerText: {
+    marginHorizontal: 12,
+    color: '#9e9e9e',
+    fontSize: 13,
+},
+googleBtn: {
+    marginBottom: 12,
+    borderColor: '#DB4437',
+},
+googleBtnLabel: {
+    color: '#DB4437',
+},
 });
 
 export default loginstyles;

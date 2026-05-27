@@ -2,9 +2,8 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
+
 const BASE_URL = 'http://192.168.1.229:8000';
-
-
 
 
 export const endpoints = {
@@ -16,6 +15,7 @@ export const endpoints = {
     'create-staff':   '/users/create-staff/',
     'create-pharmacy': '/users/create-pharmacy/',
     'specialties':    '/specialties/',
+    'google-login': '/auth/google/',
 
     // Pharmacy
     'categories':   '/categories/',

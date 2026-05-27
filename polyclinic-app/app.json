@@ -1,6 +1,7 @@
 {
   "expo": {
     "name": "polyclinic-app",
+    "owner": "yenle21",
     "slug": "polyclinic-app",
     "scheme": "polyclinic",
     "version": "1.0.0",
@@ -15,7 +16,16 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.polyclinic.app"
+      "bundleIdentifier": "com.polyclinic.app",
+      "infoPlist": {
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": [
+              "com.googleusercontent.apps.591879549833-bukf3qsarrvphb9nfl8lc3llaq61e4bb"
+            ]
+          }
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -44,8 +54,7 @@
             "deploymentTarget": "15.1"
           }
         }
-      ],
-      "expo-web-browser"
+      ]
     ]
   }
-}
+} 
