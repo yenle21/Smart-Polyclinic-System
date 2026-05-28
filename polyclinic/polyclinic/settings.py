@@ -139,7 +139,11 @@ USE_TZ = True
 # Static files
 STATIC_URL = 'static/'
 import os
-GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
+GOOGLE_CLIENT_ID     = os.environ.get('GOOGLE_CLIENT_ID')
+GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET')
+GOOGLE_REDIRECT_URI  = os.environ.get('VNPAY_RETURN_URL', '').replace(
+    'invoices/vnpay-return/', 'auth/google/callback/'
+)
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 

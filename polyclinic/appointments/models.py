@@ -9,7 +9,6 @@ class Schedule(BaseModel):
     start_time = models.TimeField()
     end_time   = models.TimeField()
     max_slots  = models.PositiveIntegerField(default=10)  # Số bệnh nhân tối đa
-    # một bác sĩ có nhiều lịch làm việc
     doctor     = models.ForeignKey(Doctor, on_delete=models.CASCADE, related_name='schedules')
 
     class Meta:
@@ -86,10 +85,10 @@ class Notification(BaseModel):
 
 class MedicalRecord(BaseModel): #Hồ sơ bệnh án, tạo sau khi khám xong
     appointment  = models.OneToOneField(Appointment, on_delete=models.CASCADE, related_name='medical_record')
-    diagnosis    = models.TextField()                        # Chẩn đoán
-    treatment    = models.TextField(null=True, blank=True)  # Hướng điều trị
-    notes        = models.TextField(null=True, blank=True)  # Ghi chú thêm của bác sĩ
-    follow_up    = models.DateField(null=True, blank=True)  # Ngày tái khám (nếu có)
+    diagnosis    = models.TextField()
+    treatment    = models.TextField(null=True, blank=True)
+    notes        = models.TextField(null=True, blank=True)
+    follow_up    = models.DateField(null=True, blank=True)
     symptoms = models.TextField(blank=True, null=True)
     blood_pressure = models.CharField(max_length=20, blank=True, null=True)
     temperature = models.CharField(max_length=10, blank=True, null=True)
@@ -111,9 +110,9 @@ class TestResult(BaseModel):
     ]
 
     type           = models.CharField(max_length=20, choices=TYPE_CHOICES, default='other')
-    name           = models.CharField(max_length=200)        # Tên xét nghiệm cụ thể
-    result         = models.TextField(null=True, blank=True) # Mô tả kết quả dạng text
-    file           = CloudinaryField(null=True, blank=True)  # File PDF/ảnh kết quả
+    name           = models.CharField(max_length=200)
+    result         = models.TextField(null=True, blank=True)
+    file           = CloudinaryField(null=True, blank=True)
     tested_at      = models.DateTimeField(null=True, blank=True)
     medical_record = models.ForeignKey(MedicalRecord, on_delete=models.CASCADE, related_name='test_results')
 

@@ -8,7 +8,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -24,7 +24,9 @@
               "com.googleusercontent.apps.591879549833-bukf3qsarrvphb9nfl8lc3llaq61e4bb"
             ]
           }
-        ]
+          
+        ],
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -38,23 +40,19 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "extra": {
-      "eas": {
-        "projectId": "8c4a5704-a8b0-4b68-bdfd-98b1e6c79d99"
-      }
-    },
     "plugins": [
       [
-        "expo-build-properties",
+        "@react-native-google-signin/google-signin",
         {
-          "android": {
-            "minSdkVersion": 24
-          },
-          "ios": {
-            "deploymentTarget": "15.1"
-          }
+          "iosUrlScheme": "com.googleusercontent.apps.591879549833-bukf3qsarrvphb9nfl8lc3llaq61e4bb"
         }
-      ]
-    ]
+      ],
+      "expo-web-browser"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "191e890d-cc96-4a5d-9475-4001c51c5d69"
+      }
+    }
   }
-} 
+}

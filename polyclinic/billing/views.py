@@ -49,9 +49,6 @@ class InvoiceViewSet(viewsets.ModelViewSet):
         'items'
     ).order_by('-created_date')
 
-    # =========================
-    # SERIALIZER
-    # =========================
     def get_serializer_class(self):
         if self.action == 'create':
             return serializers.InvoiceCreateSerializer
@@ -61,9 +58,6 @@ class InvoiceViewSet(viewsets.ModelViewSet):
             return serializers.InvoiceUpdateSerializer
         return serializers.InvoiceSerializer
 
-    # =========================
-    # QUERYSET
-    # =========================
     def get_queryset(self):
         if getattr(self, 'swagger_fake_view', False):
             return Invoice.objects.none()
@@ -101,10 +95,6 @@ class InvoiceViewSet(viewsets.ModelViewSet):
             query = query.filter(created_date__date__lte=date_to)
 
         return query
-
-    # =========================
-    # PAY INVOICE
-    # =========================
     @action(detail=True, methods=['post'], url_path='pay')
     def pay(self, request, pk=None):
 
@@ -173,9 +163,8 @@ class InvoiceViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    # =========================
-    # VNPAY RETURN
-    # =========================
+
+    #vnp return
     @action(detail=False, methods=['get'], url_path='vnpay-return')
     def vnpay_return(self, request):
 
@@ -228,15 +217,8 @@ class InvoiceViewSet(viewsets.ModelViewSet):
         except PaymentTracking.DoesNotExist:
             return _payment_result_page(False, 'Không tìm thấy thông tin giao dịch.')
 
-    # =========================
-    # VNPAY IPN
-    # =========================
-    @action(
-        detail=False,
-        methods=['get', 'post'],
-        url_path='vnpay-ipn',
-        permission_classes=[]
-    )
+
+    @action(detail=False, methods=['get', 'post'],url_path='vnpay-ipn',permission_classes=[])
     def vnpay_ipn(self, request):
 
         if request.method == 'POST':
@@ -289,9 +271,7 @@ class InvoiceViewSet(viewsets.ModelViewSet):
         except PaymentTracking.DoesNotExist:
             return Response({'RspCode': '01', 'Message': 'Order not found'})
 
-    # =========================
-    # MOMO RETURN
-    # =========================
+
     @action(detail=False, methods=['get'], url_path='momo-return')
     def momo_return(self, request):
 
@@ -327,9 +307,7 @@ class InvoiceViewSet(viewsets.ModelViewSet):
 
         return self._process_momo_result(order_id, result_code, transaction_id, as_html=True)
 
-    # =========================
-    # MOMO IPN
-    # =========================
+
     @action(detail=False, methods=['post'], url_path='momo-ipn')
     def momo_ipn(self, request):
 
@@ -341,9 +319,6 @@ class InvoiceViewSet(viewsets.ModelViewSet):
         # IPN là server-to-server → trả JSON
         return self._process_momo_result(order_id, result_code, transaction_id, as_html=False)
 
-    # =========================
-    # XỬ LÝ KẾT QUẢ CHUNG MOMO
-    # =========================
     def _process_momo_result(self, order_id, result_code, transaction_id, as_html=False):
 
         try:

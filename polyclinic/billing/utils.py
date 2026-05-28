@@ -9,18 +9,12 @@ from datetime import datetime
 from django.conf import settings
 
 
-# ====================================
-# MOMO CONSTANTS (Sandbox)
-# ====================================
+
 MOMO_PARTNER_CODE = "MOMO"
 MOMO_ACCESS_KEY   = "F8BBA842ECF85"
 MOMO_SECRET_KEY   = "K951B6PE1waDMi640xX08PD3vg6EkVlz"
 MOMO_ENDPOINT     = "https://test-payment.momo.vn/v2/gateway/api/create"
 
-
-# ====================================
-# VNPAY
-# ====================================
 def create_vnpay_payment_url(request, invoice_id, total_amount, tracking_order_id):
 
     amount_vnd = int(round(float(total_amount)))
@@ -62,10 +56,6 @@ def create_vnpay_payment_url(request, invoice_id, total_amount, tracking_order_i
 
     return f"{settings.VNPAY_PAYMENT_URL}?{queryString}&vnp_SecureHash={secure_hash}"
 
-
-# ====================================
-# MOMO
-# ====================================
 def create_momo_payment_url(invoice_id, total_amount, tracking_order_id, redirect_url, ipn_url):
 
     order_id     = tracking_order_id
