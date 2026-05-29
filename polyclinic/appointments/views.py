@@ -49,7 +49,6 @@ class ScheduleViewSet(viewsets.ViewSet, generics.ListAPIView):
             doctor = request.user.doctor_profile
         except Exception:
             return Response({'detail': 'User này không phải bác sĩ'}, status=status.HTTP_403_FORBIDDEN)
-
         serializer = ScheduleSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(doctor=doctor) #gắn doctor vào lịch trước khi lưu
@@ -57,7 +56,6 @@ class ScheduleViewSet(viewsets.ViewSet, generics.ListAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     # cập nhật một phần lịch
     def partial_update(self, request, pk=None):
-
         try:
             schedule = Schedule.objects.get(pk=pk, doctor=request.user.doctor_profile)
         except Schedule.DoesNotExist:
@@ -329,13 +327,11 @@ class NotificationViewSet(viewsets.ViewSet, generics.ListAPIView):
         return Response(NotificationSerializer(notification).data)
 
 
-class MedicalRecordViewSet(viewsets.ViewSet, generics.ListCreateAPIView):
+class MedicalRecordViewSet(viewsets.ViewSet, generics.ListAPIView):
     queryset = MedicalRecord.objects.all()
     permission_classes = [permissions.IsAuthenticated]
 
     def get_serializer_class(self):
-        if self.request.method == 'POST':
-            return MedicalRecordCreateSerializer
         return MedicalRecordSerializer
 
     def get_queryset(self):
