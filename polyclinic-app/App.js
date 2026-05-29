@@ -2,11 +2,10 @@ import React, { useReducer, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { PaperProvider } from 'react-native-paper';
 import { theme } from './components/shared/theme';
-import * as Linking from 'expo-linking';
 
 import MyUserReducer from './reducers/MyUserReducer';
 import { MyUserContext } from './configs/Contexts';
-
+import * as WebBrowser from 'expo-web-browser';
 import AuthNavigator     from './navigators/AuthNavigator';
 import PatientNavigator  from './navigators/PatientNavigator';
 import DoctorNavigator   from './navigators/DoctorNavigator';
@@ -17,20 +16,7 @@ import AdminNavigator    from './navigators/AdminNavigator';
 import { db } from './configs/firebase';
 import { ref, set } from 'firebase/database';
 
-// Config deep link — prefix khớp với scheme trong app.json
-const linking = {
-    prefixes: [
-        Linking.createURL('/'),   // expo go: exp://...
-        'polyclinic://',          // production build
-    ],
-    config: {
-        screens: {
-            // Màn hình nhận kết quả thanh toán
-            // Bạn cần thêm route "PaymentResult" vào PatientNavigator
-            PaymentResult: 'payment/result',
-        },
-    },
-};
+
 
 export default function App() {
     const [user, dispatch] = useReducer(MyUserReducer, null);
@@ -60,7 +46,7 @@ export default function App() {
     return (
         <MyUserContext.Provider value={[user, dispatch]}>
             <PaperProvider theme={theme}>
-                <NavigationContainer linking={linking}>
+                <NavigationContainer >
                     {getNavigator()}
                 </NavigationContainer>
             </PaperProvider>

@@ -32,12 +32,12 @@ class ScheduleViewSet(viewsets.ViewSet, generics.ListAPIView):
             except Exception:
                 return query.none()
 
-        # Lọc theo ngày nếu client truyền ?date=yyyy-mm-dd
+        # Lọc theo ngày
         date = self.request.query_params.get('date')
         if date:
             query = query.filter(work_date=date)
 
-        # Lọc theo chuyên khoa nếu client truyền ?specialty=tim
+        # Lọc theo chuyên khoa
         specialty_name = self.request.query_params.get('specialty')
         if specialty_name:
             query = query.filter(doctor__specialties__name__icontains=specialty_name)
@@ -57,7 +57,7 @@ class ScheduleViewSet(viewsets.ViewSet, generics.ListAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     # cập nhật một phần lịch
     def partial_update(self, request, pk=None):
-        # Lấy lịch theo id VÀ phải là của bác sĩ đang đăng nhập → tránh sửa lịch người khác
+
         try:
             schedule = Schedule.objects.get(pk=pk, doctor=request.user.doctor_profile)
         except Schedule.DoesNotExist:
@@ -78,9 +78,6 @@ class ScheduleViewSet(viewsets.ViewSet, generics.ListAPIView):
             return Response({'detail': 'Không tìm thấy lịch'}, status=status.HTTP_404_NOT_FOUND)
         except Exception:
             return Response({'detail': 'User này không phải bác sĩ'}, status=status.HTTP_403_FORBIDDEN)
-
-        # Soft delete: không xóa khỏi DB, chỉ set active=False
-        # → giữ lại lịch sử lịch hẹn của bệnh nhân
         schedule.active = False
         schedule.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -94,39 +91,20 @@ class AppointmentViewSet(viewsets.ViewSet, generics.ListAPIView):
     def get_queryset(self):
 
         user = self.request.user
-        # Bệnh nhân: chỉ thấy lịch hẹn của mình
         if user.role == 'patient':
             return self.queryset.filter(
                 patient=user.patient_profile
             ).select_related('schedule__doctor__user').prefetch_related('schedule__doctor__specialties')
 
-        # Bác sĩ: chỉ thấy lịch hẹn của bệnh nhân đặt với mình
         if user.role == 'doctor':
             return self.queryset.filter(
                 schedule__doctor=user.doctor_profile
             ).select_related('patient__user', 'schedule')
 
-        # Staff hoặc admin: thấy tất cả
         if user.role == 'staff' or user.is_superuser:
             return Appointment.objects.all()
 
         return self.queryset.none()
-
-    # @action(methods=['get'], url_path='specialties', detail=False)
-    # def specialties(self, request):
-    #     specialties = Specialty.objects.filter(active=True)
-    #     return Response(SpecialtySerializer(specialties, many=True).data)
-    #
-    # @action(methods=['get'], url_path='doctors', detail=False)
-    # def doctors(self, request):
-    #     specialty_id = request.query_params.get('specialty_id')
-    #     if not specialty_id:
-    #         return Response({'detail': 'Vui lòng chọn chuyên khoa!'}, status=status.HTTP_400_BAD_REQUEST)
-    #
-    #     doctors = Doctor.objects.filter(
-    #         specialties__id=specialty_id, active=True
-    #     ).select_related('user').prefetch_related('specialties')
-    #     return Response(DoctorSerializer(doctors, many=True).data)
 
     @action(methods=['get'], url_path='schedules', detail=False)
     def schedules(self, request):

@@ -1,11 +1,10 @@
-﻿import React, { useContext, useState, useEffect } from "react";
+﻿import React, { useContext, useState } from "react";
 import {
     View,
     Text,
     ScrollView,
     TouchableOpacity,
 } from "react-native";
-
 import {
     Button,
     HelperText,
@@ -13,25 +12,16 @@ import {
     Menu,
     Divider,
 } from "react-native-paper";
-
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from "@react-navigation/native";
-import * as AuthSession from 'expo-auth-session';
-import * as WebBrowser from 'expo-web-browser';
+import {
+    GoogleSignin,
+    statusCodes,
+} from '@react-native-google-signin/google-signin';
 
 import Apis, { authApis, endpoints } from "../../configs/Apis";
 import { MyUserContext } from "../../configs/Contexts";
 import loginstyles from "../../styles/loginstyles";
-
-WebBrowser.maybeCompleteAuthSession();
-
-// ✅ Dùng iOS Client ID
-const GOOGLE_CLIENT_ID = '591879549833-bukf3qsarrvphb9nfl8lc3llaq61e4bb.apps.googleusercontent.com';
-
-const discovery = {
-    authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
-    tokenEndpoint:         'https://oauth2.googleapis.com/token',
-};
 
 const ROLES = [
     { key: 'doctor',   label: '🩺 Bác sĩ' },
@@ -41,11 +31,18 @@ const ROLES = [
     { key: 'patient',  label: '🧑‍⚕️ Bệnh nhân' },
 ];
 
+// ✅ Web application Client ID từ Google Cloud Console
+GoogleSignin.configure({
+    webClientId: '591879549833-qgo82d8cfdhkkk3au38jn8a0r4g8apfe.apps.googleusercontent.com',
+    offlineAccess: false,
+    scopes: ['email', 'profile'],
+});
+
 const Login = () => {
 
     const userInfo = [
         { field: 'username', title: 'Tên đăng nhập', icon: 'account' },
-        { field: 'password', title: 'Mật khẩu',      icon: 'lock' },
+        { field: 'password', title: 'Mật khẩu',      icon: 'lock'    },
     ];
 
     const [user,          setUser]          = useState({});
@@ -59,81 +56,87 @@ const Login = () => {
     const [, dispatch] = useContext(MyUserContext);
     const nav = useNavigation();
 
-    // ✅ Dùng reversed iOS Client ID làm redirect URI
-    const redirectUri = 'com.googleusercontent.apps.591879549833-bukf3qsarrvphb9nfl8lc3llaq61e4bb:/oauthredirect';
-
-    useEffect(() => {
-        console.log('REDIRECT URI:', redirectUri);
-    }, []);
-
-    // ✅ Dùng ResponseType.Token — lấy access_token trực tiếp, không cần proxy
-    const [request, response, promptAsync] = AuthSession.useAuthRequest(
-        {
-            clientId:     GOOGLE_CLIENT_ID,
-            scopes:       ['openid', 'email', 'profile'],
-            responseType: AuthSession.ResponseType.Token,
-            redirectUri,
-        },
-        discovery
-    );
-
-    // ✅ Lấy access_token trực tiếp từ response
-    useEffect(() => {
-        if (response?.type === 'success') {
-            const { access_token } = response.params;
-            if (access_token) {
-                handleGoogleToken(access_token);
-            } else {
-                setErr('Không nhận được token từ Google.');
-            }
-        } else if (response?.type === 'error') {
-            console.log('GOOGLE RESPONSE ERROR:', response.error);
-            setErr('Đăng nhập Google thất bại. Vui lòng thử lại.');
-        }
-    }, [response]);
-
-    // ========================
-    // GỬI ACCESS TOKEN LÊN BACKEND
-    // ========================
-    const handleGoogleToken = async (accessToken) => {
+    // ================================================================
+    // GOOGLE LOGIN
+    // ✅ Dùng @react-native-google-signin/google-signin
+    // ✅ Trả về OAuth2 token (đáp ứng yêu cầu thầy)
+    // ✅ Tích hợp Gmail theo yêu cầu đề tài
+    // ================================================================
+    const handleGoogleLogin = async () => {
         try {
             setGoogleLoading(true);
             setErr(null);
 
-            // ✅ Gửi access_token lên backend
-            const res = await Apis.post(endpoints['google-login'], {
-                access_token: accessToken,
+            // Kiểm tra Google Play Services
+            await GoogleSignin.hasPlayServices({
+                showPlayServicesUpdateDialog: true,
             });
 
-            const { access } = res.data;
-            await AsyncStorage.setItem('access_token', access);
+            // Mở màn hình chọn tài khoản Google
+            const signInResult = await GoogleSignin.signIn();
 
+            // Lấy idToken
+            const idToken = signInResult?.data?.idToken ?? signInResult?.idToken;
+
+            if (!idToken) {
+                throw new Error('Không lấy được idToken từ Google');
+            }
+
+            console.log('GOOGLE ID TOKEN:', idToken.substring(0, 30) + '...');
+
+            // Gửi id_token lên backend Django
+            const res = await Apis.post(
+                endpoints['google-login'],
+                { id_token: idToken }
+            );
+
+            console.log('BACKEND RESPONSE:', res.data);
+
+            // ✅ Backend trả access_token (OAuth2) — lưu giống login thường
+            const accessToken = res.data.access_token;
+            await AsyncStorage.setItem('access_token', accessToken);
+
+            // Gọi current-user với OAuth2 token
             const api = await authApis();
             const u   = await api.get(endpoints['current-user']);
+
+            console.log('CURRENT USER:', u.data);
 
             dispatch({ type: 'LOGIN', payload: u.data });
 
         } catch (ex) {
-            console.log('GOOGLE LOGIN ERROR:', ex.response?.data || ex);
-            setErr('Đăng nhập Google thất bại. Vui lòng thử lại.');
+            console.log('GOOGLE LOGIN ERROR:', ex?.response?.data || ex);
+
+            if (ex.code === statusCodes.SIGN_IN_CANCELLED) {
+                setErr('Đăng nhập Google bị huỷ.');
+            } else if (ex.code === statusCodes.IN_PROGRESS) {
+                setErr('Đang xử lý đăng nhập, vui lòng chờ...');
+            } else if (ex.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+                setErr('Google Play Services không khả dụng trên thiết bị này.');
+            } else if (ex?.response?.data?.error) {
+                setErr(ex.response.data.error);
+            } else {
+                setErr('Đăng nhập Google thất bại. Vui lòng thử lại.');
+            }
         } finally {
+            try { await GoogleSignin.signOut(); } catch (_) {}
             setGoogleLoading(false);
         }
     };
 
-    // ========================
+    // ================================================================
     // VALIDATE
-    // ========================
+    // ================================================================
     const validate = () => {
         if (!role) {
             setErr('Vui lòng chọn vai trò!');
             return false;
         }
-        if (!user.username) {
+        if (!user.username?.trim()) {
             setErr('Vui lòng nhập tên đăng nhập!');
             return false;
         }
-        if (!user.password) {
+        if (!user.password?.trim()) {
             setErr('Vui lòng nhập mật khẩu!');
             return false;
         }
@@ -141,9 +144,9 @@ const Login = () => {
         return true;
     };
 
-    // ========================
-    // LOGIN THƯỜNG
-    // ========================
+    // ================================================================
+    // LOGIN THƯỜNG (username + password + OAuth2)
+    // ================================================================
     const login = async () => {
         if (!validate()) return;
 
@@ -158,11 +161,11 @@ const Login = () => {
             params.append('client_secret', 'SIN6g29BplhvAY0IfUin8OVGnOzAuvbfy9WXbO8FWIitHgzlRYYDYtixGFOQXbpil0DwAOhx5PdVfGjbOOlZaZo2GzVW6WzqsR4kXa927OTC3qxqUtmFRjqauSvebbfS');
             params.append('grant_type',    'password');
 
-
-            const res = await Apis.post(endpoints['login'], params, {
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-            });
-
+            const res = await Apis.post(
+                endpoints['login'],
+                params,
+                { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+            );
 
             const accessToken = res.data.access_token;
             await AsyncStorage.setItem('access_token', accessToken);
@@ -188,7 +191,9 @@ const Login = () => {
                 } else if (errCode === 'invalid_client') {
                     setErr('Lỗi cấu hình bảo mật hệ thống!');
                 } else {
-                    setErr(`Đăng nhập thất bại: ${ex.response.data.error_description || errCode}`);
+                    setErr(`Đăng nhập thất bại: ${
+                        ex.response.data.error_description || errCode
+                    }`);
                 }
             } else {
                 setErr('Không thể kết nối đến máy chủ!');
@@ -198,6 +203,9 @@ const Login = () => {
         }
     };
 
+    // ================================================================
+    // UI
+    // ================================================================
     return (
         <ScrollView
             contentContainerStyle={loginstyles.container}
@@ -205,11 +213,14 @@ const Login = () => {
         >
             <View style={loginstyles.card}>
 
-                {/* TITLE */}
-                <Text style={loginstyles.cardTitle}>🏥 Smart Polyclinic</Text>
-                <Text style={loginstyles.cardSub}>Chọn vai trò và đăng nhập</Text>
+                <Text style={loginstyles.cardTitle}>
+                    🏥 Smart Polyclinic
+                </Text>
+                <Text style={loginstyles.cardSub}>
+                    Chọn vai trò và đăng nhập
+                </Text>
 
-                {/* ROLE DROPDOWN */}
+                {/* Dropdown chọn vai trò */}
                 <Menu
                     visible={menuVisible}
                     onDismiss={() => setMenu(false)}
@@ -253,7 +264,7 @@ const Login = () => {
                     ))}
                 </Menu>
 
-                {/* INPUTS */}
+                {/* Input username & password */}
                 {userInfo.map(u => (
                     <TextInput
                         key={u.field}
@@ -264,24 +275,28 @@ const Login = () => {
                         placeholder={u.title}
                         secureTextEntry={u.field === 'password' ? !showPassword : false}
                         right={
-                            u.field === 'password' ? (
-                                <TextInput.Icon
-                                    icon={showPassword ? "eye-off" : "eye"}
-                                    onPress={() => setShowPassword(!showPassword)}
-                                />
-                            ) : (
-                                <TextInput.Icon icon={u.icon} />
-                            )
+                            u.field === 'password'
+                                ? (
+                                    <TextInput.Icon
+                                        icon={showPassword ? "eye-off" : "eye"}
+                                        onPress={() => setShowPassword(!showPassword)}
+                                    />
+                                )
+                                : <TextInput.Icon icon={u.icon} />
                         }
                     />
                 ))}
 
-                {/* ERROR */}
-                <HelperText type="error" visible={!!err} style={loginstyles.errorText}>
+                {/* Error */}
+                <HelperText
+                    type="error"
+                    visible={!!err}
+                    style={loginstyles.errorText}
+                >
                     {err}
                 </HelperText>
 
-                {/* LOGIN BUTTON */}
+                {/* Nút đăng nhập thường */}
                 <Button
                     loading={loading}
                     disabled={loading || googleLoading}
@@ -293,31 +308,37 @@ const Login = () => {
                     Đăng nhập
                 </Button>
 
-                {/* DIVIDER */}
+                {/* Divider */}
                 <View style={loginstyles.dividerRow}>
                     <View style={loginstyles.dividerLine} />
                     <Text style={loginstyles.dividerText}>hoặc</Text>
                     <View style={loginstyles.dividerLine} />
                 </View>
 
-                {/* GOOGLE LOGIN BUTTON */}
-                <Button
-                    mode="outlined"
-                    onPress={() => promptAsync()}
-                    disabled={!request || loading || googleLoading}
-                    loading={googleLoading}
-                    icon="google"
-                    style={loginstyles.googleBtn}
-                    labelStyle={loginstyles.googleBtnLabel}
-                >
-                    Đăng nhập với Google
-                </Button>
+                {/* Nút Google — chỉ hiện khi chọn patient hoặc chưa chọn */}
+                {(!role || role.key === 'patient') && (
+                    <Button
+                        mode="outlined"
+                        onPress={handleGoogleLogin}
+                        disabled={loading || googleLoading}
+                        loading={googleLoading}
+                        icon="google"
+                        style={loginstyles.googleBtn}
+                        labelStyle={loginstyles.googleBtnLabel}
+                    >
+                        Đăng nhập với Google
+                    </Button>
+                )}
 
-                {/* REGISTER */}
+                {/* Đăng ký */}
                 <View style={loginstyles.registerRow}>
-                    <Text style={loginstyles.registerText}>Chưa có tài khoản?</Text>
+                    <Text style={loginstyles.registerText}>
+                        Chưa có tài khoản?
+                    </Text>
                     <TouchableOpacity onPress={() => nav.navigate('Register')}>
-                        <Text style={loginstyles.registerLink}>Đăng ký ngay</Text>
+                        <Text style={loginstyles.registerLink}>
+                            Đăng ký ngay
+                        </Text>
                     </TouchableOpacity>
                 </View>
 
