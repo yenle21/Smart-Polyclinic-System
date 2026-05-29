@@ -89,7 +89,7 @@ class AppointmentCancelSerializer(serializers.ModelSerializer):
         if appointment.status not in ['pending', 'confirmed']:
             raise serializers.ValidationError('Không thể huỷ lịch này!')
         appointment.cancel_reason = validated_data.get('cancel_reason', '')
-        appointment.status        = 'cancelled'
+        appointment.status = 'cancelled'
         appointment.save()
         return appointment
 
@@ -102,8 +102,7 @@ class AppointmentApproveSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         if self.instance.status != 'pending':
             raise serializers.ValidationError('Lịch hẹn này đã được xử lý trước đó.')
-
-        new_status    = attrs.get('status')
+        new_status = attrs.get('status')
         cancel_reason = attrs.get('cancel_reason')
         if new_status == 'cancelled' and not cancel_reason:
             raise serializers.ValidationError({'cancel_reason': 'Vui lòng nhập lý do từ chối.'})
@@ -133,8 +132,7 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
     class Meta:
         model  = MedicalRecord
         fields = [
-            'id', 'appointment',
-            'doctor_name', 'patient_name', 'specialty_name', 'work_date',
+            'id', 'appointment', 'doctor_name', 'patient_name', 'specialty_name', 'work_date',
             'diagnosis', 'treatment', 'notes', 'follow_up',
             'symptoms', 'blood_pressure', 'temperature', 'height', 'weight',
             'test_results',
@@ -142,7 +140,6 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
 
     def get_patient_name(self, obj):
         patient = obj.appointment.patient
-        # Thử full_name trước, nếu rỗng thì lấy từ user
         if patient.full_name:
             return patient.full_name
         return patient.user.get_full_name() or patient.user.username

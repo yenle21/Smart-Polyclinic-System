@@ -39,22 +39,18 @@ def _vnpay_build_hash(params: dict, secret_key: str) -> str:
     return hmac.new(byteKey, byteData, hashlib.sha512).hexdigest()
 
 
+class InvoiceViewSet(viewsets.GenericViewSet):
 
+    queryset = Invoice.objects.select_related('patient__user').prefetch_related('items').order_by('-created_date')
 
-class InvoiceViewSet(viewsets.ModelViewSet):
-
-    queryset = Invoice.objects.select_related(
-        'patient__user'
-    ).prefetch_related(
-        'items'
-    ).order_by('-created_date')
+    http_method_names = ['get', 'post', 'patch', 'head', 'options']
 
     def get_serializer_class(self):
         if self.action == 'create':
             return serializers.InvoiceCreateSerializer
         if self.action == 'pay':
             return serializers.InvoicePaySerializer
-        if self.action in ['update', 'partial_update']:
+        if self.action == 'partial_update':
             return serializers.InvoiceUpdateSerializer
         return serializers.InvoiceSerializer
 
@@ -95,9 +91,34 @@ class InvoiceViewSet(viewsets.ModelViewSet):
             query = query.filter(created_date__date__lte=date_to)
 
         return query
+
+
+    def list(self, request):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def create(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def retrieve(self, request, pk=None):
+        invoice = self.get_object()
+        serializer = self.get_serializer(invoice)
+        return Response(serializer.data)
+
+    def partial_update(self, request, pk=None):
+        invoice = self.get_object()
+        serializer = self.get_serializer(invoice, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+
     @action(detail=True, methods=['post'], url_path='pay')
     def pay(self, request, pk=None):
-
         invoice = self.get_object()
 
         if invoice.status == 'paid':
@@ -164,10 +185,8 @@ class InvoiceViewSet(viewsets.ModelViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-    #vnp return
     @action(detail=False, methods=['get'], url_path='vnpay-return')
     def vnpay_return(self, request):
-
         params = request.GET.dict()
         vnp_secure_hash = params.pop('vnp_SecureHash', None)
         params.pop('vnp_SecureHashType', None)
@@ -217,10 +236,8 @@ class InvoiceViewSet(viewsets.ModelViewSet):
         except PaymentTracking.DoesNotExist:
             return _payment_result_page(False, 'Không tìm thấy thông tin giao dịch.')
 
-
-    @action(detail=False, methods=['get', 'post'],url_path='vnpay-ipn',permission_classes=[])
+    @action(detail=False, methods=['get', 'post'], url_path='vnpay-ipn', permission_classes=[])
     def vnpay_ipn(self, request):
-
         if request.method == 'POST':
             params = request.data.dict() if hasattr(request.data, 'dict') else dict(request.data)
         else:
@@ -274,7 +291,6 @@ class InvoiceViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='momo-return')
     def momo_return(self, request):
-
         params         = request.GET.dict()
         order_id       = params.get('orderId', '')
         result_code    = params.get('resultCode', '')
@@ -307,20 +323,16 @@ class InvoiceViewSet(viewsets.ModelViewSet):
 
         return self._process_momo_result(order_id, result_code, transaction_id, as_html=True)
 
-
     @action(detail=False, methods=['post'], url_path='momo-ipn')
     def momo_ipn(self, request):
-
         params         = request.data
         order_id       = params.get('orderId', '')
         result_code    = str(params.get('resultCode', ''))
         transaction_id = str(params.get('transId', ''))
 
-        # IPN là server-to-server → trả JSON
         return self._process_momo_result(order_id, result_code, transaction_id, as_html=False)
 
     def _process_momo_result(self, order_id, result_code, transaction_id, as_html=False):
-
         try:
             tracking = PaymentTracking.objects.get(order_id=order_id)
             invoice  = tracking.invoice
@@ -370,19 +382,19 @@ class InvoiceViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
 
+
 def _payment_result_page(success: bool, message: str, detail: str = '') -> HttpResponse:
-    """Trả về trang HTML thông báo kết quả thanh toán."""
     if success:
-        icon        = '✅'
-        title       = 'Thanh toán thành công'
-        color       = '#22c55e'
-        bg_color    = '#f0fdf4'
+        icon         = '✅'
+        title        = 'Thanh toán thành công'
+        color        = '#22c55e'
+        bg_color     = '#f0fdf4'
         border_color = '#bbf7d0'
     else:
-        icon        = '❌'
-        title       = 'Thanh toán thất bại'
-        color       = '#ef4444'
-        bg_color    = '#fef2f2'
+        icon         = '❌'
+        title        = 'Thanh toán thất bại'
+        color        = '#ef4444'
+        bg_color     = '#fef2f2'
         border_color = '#fecaca'
 
     html = f"""<!DOCTYPE html>
@@ -412,18 +424,8 @@ def _payment_result_page(success: bool, message: str, detail: str = '') -> HttpR
             box-shadow: 0 4px 24px rgba(0,0,0,0.08);
         }}
         .icon {{ font-size: 64px; margin-bottom: 16px; }}
-        h1 {{
-            font-size: 22px;
-            font-weight: 700;
-            color: {color};
-            margin-bottom: 12px;
-        }}
-        .message {{
-            font-size: 15px;
-            color: #555;
-            line-height: 1.6;
-            margin-bottom: 20px;
-        }}
+        h1 {{ font-size: 22px; font-weight: 700; color: {color}; margin-bottom: 12px; }}
+        .message {{ font-size: 15px; color: #555; line-height: 1.6; margin-bottom: 20px; }}
         .detail {{
             background: {bg_color};
             border: 1px solid {border_color};

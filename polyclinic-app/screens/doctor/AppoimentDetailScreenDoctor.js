@@ -28,9 +28,6 @@ import {
 } from '../../configs/Apis';
 
 
-// ─────────────────────────────────────────────────────────────
-// TEST TYPES
-// ─────────────────────────────────────────────────────────────
 const TEST_TYPES = [
     { label: 'Xét nghiệm máu',        value: 'blood',        price: 150000 },
     { label: 'Xét nghiệm nước tiểu',  value: 'urine',        price: 100000 },
@@ -46,9 +43,7 @@ const TEST_TYPES = [
     { label: 'Khác',                  value: 'other',        price: 0 },
 ];
 
-// ─────────────────────────────────────────────────────────────
-// TYPE SELECTOR
-// ─────────────────────────────────────────────────────────────
+
 const TestTypeSelector = ({ value, onSelect }) => {
 
     const [visible, setVisible] = useState(false);
@@ -434,7 +429,7 @@ const AppointmentDetailScreenDoctor = ({
 
                     formData.append(
                         'name',
-                        test.name
+                         test.name
                     );
 
                     formData.append(
