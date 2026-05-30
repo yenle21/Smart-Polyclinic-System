@@ -24,7 +24,6 @@ import IncomingCallScreen         from '../screens/patient/IncomingCallScreen';
 import VideoCallScreen            from '../screens/shared/VideoCallScreen';
 import ChatListScreen             from '../screens/shared/ChatListScreen';
 import ChatScreen                 from '../screens/shared/ChatScreen';
-import PaymentResultScreen        from '../screens/patient/PaymentResultScreen';
 
 const Tab   = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -168,12 +167,6 @@ const PatientNavigator = () => (
             name="VideoCall"
             component={VideoCallScreen}
             options={{ headerShown: false, gestureEnabled: false }}
-        />
-        {/* Màn hình nhận kết quả thanh toán VNPAY/MoMo qua deep link */}
-        <Stack.Screen
-            name="PaymentResult"
-            component={PaymentResultScreen}
-            options={{ headerShown: true, title: 'Kết quả thanh toán' }}
         />
     </Stack.Navigator>
 );

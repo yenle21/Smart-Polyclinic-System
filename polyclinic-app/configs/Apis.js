@@ -1,7 +1,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL = 'http://192.168.1.104:8000';
+const BASE_URL = 'http://192.168.1.253:8000';
 
 export const endpoints = {
     // Auth
@@ -26,8 +26,8 @@ export const endpoints = {
     'invoices':     '/invoices/',
     'invoice-detail': (id) => `/invoices/${id}/`,
     'pay-invoice':  (id) => `/invoices/${id}/pay/`,
-    'vnpay-return':      '/invoices/vnpay-return/',   // thêm
-    'momo-return':       '/invoices/momo-return/',    // thêm
+    'vnpay-return':      '/invoices/vnpay-return/',   
+    'momo-return':       '/invoices/momo-return/',   
     'momo-ipn':          '/invoices/momo-ipn/', 
 
     //Appoinment
