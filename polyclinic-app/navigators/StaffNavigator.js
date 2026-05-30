@@ -11,25 +11,12 @@ import { ref, onValue } from 'firebase/database';
 import { View } from 'react-native';
 import { Badge } from 'react-native-paper';
 
-// Pharmacy
-import CategoryListScreen       from '../screens/pharmacy/CategoryScreen';
-import MedicineListScreen       from '../screens/pharmacy/MedicineListScreen';
-import MedicineDetailScreen     from '../screens/pharmacy/MedicineDetailScreen';
-import MedicineFormScreen     from '../screens/pharmacy/MedicineFormScreen';
-import AlertScreen              from '../screens/pharmacy/AlertScreen';
-import StockTransactionScreen   from '../screens/pharmacy/StockTransactionScreen';
-import StockFormScreen from '../screens/pharmacy/StockFormScreen';
-import PrescriptionScreen       from '../screens/pharmacy/PrescriptionScreen';
-import PrescriptionDetailScreen from '../screens/pharmacy/PrescriptionDetailScreen';
 
-
-// Reception
 import AppointmentListScreen from '../screens/staff/AppointmentListScreen';
 import AppointmentDetailScreen from '../screens/staff/AppointmentDetailScreen';
 import InvoiceDetailScreen   from '../screens/staff/InvoiceDetailScreen';
 import InvoiceListScreen     from '../screens/staff/InvoiceListScreen';
 
-// Shared
 import ProfileScreen from '../screens/shared/ProfileScreen';
 import ChatListScreen from '../screens/shared/ChatListScreen';
 import ChatScreen     from '../screens/shared/ChatScreen';
@@ -88,15 +75,13 @@ export default function StaffNavigator() {
     const [user]        = useContext(MyUserContext);
     const [unreadChat, setUnreadChat] = useState(0);
 
-    // ✅ Lắng nghe tổng unread_staff từ Firebase
     useEffect(() => {
         if (!user?.id) return;
         const chatsRef = ref(db, 'chats');
         const unsub = onValue(chatsRef, (snapshot) => {
             const data = snapshot.val();
             if (!data) { setUnreadChat(0); return; }
-            
-            // Tổng tất cả unread_staff
+          
             const total = Object.values(data)
                 .reduce((sum, chat) => sum + (chat.unread_staff || 0), 0);
             setUnreadChat(total);

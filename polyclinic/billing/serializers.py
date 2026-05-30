@@ -7,30 +7,27 @@ class InvoiceItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = InvoiceItem
         fields = ['id', 'description', 'quantity', 'unit_price', 'total_price']
-        # total_price tự tính trong model.save() nên không cần client gửi lên
         read_only_fields = ['total_price']
 
 
 class InvoiceSerializer(serializers.ModelSerializer):
-    # Thông tin bệnh nhân để hiển thị
     patient_name = serializers.SerializerMethodField()
     doctor_name = serializers.SerializerMethodField()
 
-    # Tên chuyên khoa
     specialty_name = serializers.SerializerMethodField()
 
     def get_specialty_name(self, obj):
         specialty = obj.appointment.schedule.doctor.specialties.first()
         return specialty.name if specialty else ''
-    # Tên trạng thái
+
     status_display  = serializers.CharField(source='get_status_display', read_only=True)
-    # Tên phương thức thanh toán
+
     payment_display = serializers.CharField(
         source='get_payment_method_display', read_only=True
     )
-    # Nhúng chi tiết hóa đơn
+
     items           = InvoiceItemSerializer(many=True, read_only=True)
-    # Tổng tiền tự tính — không cho client tự set
+
     total_amount    = serializers.DecimalField(
         max_digits=10, decimal_places=2, read_only=True
     )
@@ -65,7 +62,7 @@ class InvoiceSerializer(serializers.ModelSerializer):
 
 
 class InvoiceCreateSerializer(serializers.ModelSerializer):
-    """Dùng khi tạo hóa đơn mới sau khi khám xong"""
+
     items = InvoiceItemSerializer(many=True, required=False)
 
     class Meta:
@@ -78,7 +75,7 @@ class InvoiceCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         items_data = validated_data.pop('items', [])
-        # model.save() tự tính total_amount
+
         invoice = Invoice.objects.create(**validated_data)
         for item_data in items_data:
             InvoiceItem.objects.create(invoice=invoice, **item_data)
@@ -86,10 +83,7 @@ class InvoiceCreateSerializer(serializers.ModelSerializer):
 
 
 class InvoicePaySerializer(serializers.ModelSerializer):
-    """
-    Chỉ dùng khi bệnh nhân thanh toán — chỉ cần gửi payment_method
-    Không cho thay đổi số tiền hay thông tin khác
-    """
+
     payment_method = serializers.ChoiceField(
         choices=Invoice.PAYMENT_METHOD_CHOICES,
         default='cash'
@@ -99,7 +93,7 @@ class InvoicePaySerializer(serializers.ModelSerializer):
         fields = ['payment_method']
 
     def update(self, instance, validated_data):
-        # Chỉ cho thanh toán khi đang ở trạng thái unpaid
+
         if instance.status != 'unpaid':
             raise serializers.ValidationError('Hóa đơn này đã được xử lý rồi.')
 

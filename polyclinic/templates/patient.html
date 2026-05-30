@@ -1,0 +1,71 @@
+
+{% extends 'admin/base_site.html' %}
+{% block content %}
+<div class="dashboard-tabs">
+    <a href="?tab=patient" class="{% if current_tab == 'patient' %}active{% endif %}">Bệnh nhân</a>
+    <a href="?tab=service" class="{% if current_tab == 'service' %}active{% endif %}">Dịch vụ</a>
+    <a href="?tab=disease" class="{% if current_tab == 'disease' %}active{% endif %}">Bệnh lý</a>
+    <a href="?tab=revenue" class="{% if current_tab == 'revenue' %}active{% endif %}">Doanh thu</a>
+</div>
+<h1>Báo cáo bệnh nhân</h1>
+<p>Tổng số bệnh nhân: <strong>{{ total_patients }}</strong></p>
+
+<div style="display:flex; gap:32px; flex-wrap:wrap; margin-top:24px">
+
+  <div style="flex:1; min-width:280px">
+    <h2>Theo giới tính</h2>
+    <canvas id="genderChart"></canvas>
+  </div>
+
+  <div style="flex:1; min-width:280px">
+    <h2>Theo độ tuổi</h2>
+    <canvas id="ageChart"></canvas>
+  </div>
+
+  
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const genderLabels   = {{ gender_labels|safe }};
+const genderData     = {{ gender_data|safe }};
+const ageLabels      = {{ age_labels|safe }};
+const ageData        = {{ age_data|safe }};
+const specLabels     = {{ specialty_labels|safe }};
+const specData       = {{ specialty_data|safe }};
+
+window.onload = function () {
+  new Chart(document.getElementById('genderChart'), {
+    type: 'pie',
+    data: {
+      labels: genderLabels,
+      datasets: [{ data: genderData, backgroundColor: ['#4e9af1', '#f06292'] }]
+    }
+  });
+
+  new Chart(document.getElementById('ageChart'), {
+    type: 'bar',
+    data: {
+      labels: ageLabels,
+      datasets: [{ label: 'Số bệnh nhân', data: ageData,
+        backgroundColor: '#66bb6a' }]
+    },
+    options: { scales: { y: { beginAtZero: true } } }
+  });
+
+  new Chart(document.getElementById('specialtyChart'), {
+    type: 'bar',
+    data: {
+      labels: specLabels,
+      datasets: [{ label: 'Số bệnh nhân', data: specData,
+        backgroundColor: '#ab47bc' }]
+    },
+    options: {
+      indexAxis: 'y',
+      scales: { x: { beginAtZero: true } }
+    }
+  });
+};
+</script>
+{% endblock %}

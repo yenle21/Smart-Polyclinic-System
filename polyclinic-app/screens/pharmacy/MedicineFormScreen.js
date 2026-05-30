@@ -16,7 +16,7 @@ const UNIT_CHOICES = [
 ];
 
 export default function MedicineFormScreen({ navigation, route }) {
-    const medicine = route?.params?.medicine; // null = thêm mới, object = sửa
+    const medicine = route?.params?.medicine; 
 
     const [categories, setCategories] = useState([]);
     const [loading,    setLoading]    = useState(false);
@@ -60,7 +60,7 @@ export default function MedicineFormScreen({ navigation, route }) {
             const api = await authApis();
 
             if (medicine) {
-                // ── SỬA THUỐC ──
+                
                 await api.put(endpoints['medicine-detail'](medicine.id), {
                     name:        form.name,
                     ingredient:  form.ingredient,
@@ -74,15 +74,13 @@ export default function MedicineFormScreen({ navigation, route }) {
                 return;
             }
 
-            // ── THÊM THUỐC MỚI ──
-
-            // Bước 1: Tạo thuốc
+            
             const res = await api.post(endpoints['medicines'], {
                 name:        form.name,
                 ingredient:  form.ingredient,
-                category:    Number(form.category),   // ép kiểu number
+                category:    Number(form.category),   
                 unit:        form.unit,
-                price:       parseFloat(form.price),  // ép kiểu number
+                price:       parseFloat(form.price),  
                 description: form.description,
             });
           
@@ -94,18 +92,18 @@ export default function MedicineFormScreen({ navigation, route }) {
                 return;
             }
 
-            // Bước 2: Tạo inventory
+            
             await api.post(endpoints['inventory'], {
-                medicine:     medicineId,  // ✅ dùng medicineId thay vì newMedicine.id
+                medicine:     medicineId, 
                 quantity:     0,
                 min_quantity: parseInt(form.min_quantity) || 10,
                 expiry_date:  form.expiry_date || '2027-12-31',
             });
 
-            // Bước 3: Nhập kho
+          
             if (form.quantity && parseInt(form.quantity) > 0) {
                 await api.post(endpoints['stock-transactions'], {
-                    medicine:         medicineId,  // ✅ dùng medicineId
+                    medicine:         medicineId,  
                     transaction_type: 'import',
                     quantity:         parseInt(form.quantity),
                     note:             'Nhập kho ban đầu',

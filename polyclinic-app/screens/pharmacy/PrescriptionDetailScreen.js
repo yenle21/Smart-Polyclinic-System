@@ -12,7 +12,7 @@ const formatDate = (dateStr) =>
     new Date(dateStr).toLocaleDateString('vi-VN');
 
 export default function PrescriptionDetailScreen({ route, navigation }) {
-    const { id } = route.params;  // ← đổi prescription thành id
+    const { id } = route.params;  
     const [prescription, setPrescription] = useState(null);
     const [loading, setLoading] = useState(false);
 

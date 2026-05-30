@@ -1,0 +1,87 @@
+
+{% extends 'admin/base_site.html' %}
+{% block content %}
+<div class="dashboard-tabs">
+    <a href="?tab=patient" class="{% if current_tab == 'patient' %}active{% endif %}">Bệnh nhân</a>
+    <a href="?tab=service" class="{% if current_tab == 'service' %}active{% endif %}">Dịch vụ</a>
+    <a href="?tab=disease" class="{% if current_tab == 'disease' %}active{% endif %}">Bệnh lý</a>
+    <a href="?tab=revenue" class="{% if current_tab == 'revenue' %}active{% endif %}">Doanh thu</a>
+</div>
+<h1>Báo cáo tình hình bệnh phổ biến — {{ current_year }}</h1>
+<p>Tổng hồ sơ bệnh án: <strong>{{ total_records }}</strong></p>
+
+<div style="display:flex; gap:32px; flex-wrap:wrap; margin-top:24px">
+
+  <div style="flex:2; min-width:400px">
+    <h2>Số ca bệnh theo tháng ({{ current_year }})</h2>
+    <canvas id="monthlyChart"></canvas>
+  </div>
+
+  <div style="flex:1; min-width:300px">
+    <h2>Chẩn đoán phổ biến nhất</h2>
+    <table style="width:100%; border-collapse:collapse">
+      <thead>
+        <tr style="background:#e0e0e0">
+          <th style="padding:8px; border:1px solid #ccc; text-align:left">Chẩn đoán</th>
+          <th style="padding:8px; border:1px solid #ccc; text-align:right">Số ca</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in diagnoses %}
+        <tr>
+          <td style="padding:8px; border:1px solid #ccc">{{ d.diagnosis }}</td>
+          <td style="padding:8px; border:1px solid #ccc; text-align:right">{{ d.count }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<div style="margin-top:40px; max-width:500px">
+  <h2>Triệu chứng phổ biến</h2>
+  <canvas id="symptomChart"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const monthlyLabels = {{ monthly_labels|safe }};
+const monthlyData   = {{ monthly_data|safe }};
+const symptoms      = {{ symptoms|safe }};
+
+window.onload = function () {
+  new Chart(document.getElementById('monthlyChart'), {
+    type: 'line',
+    data: {
+      labels: monthlyLabels,
+      datasets: [{
+        label: 'Số ca bệnh',
+        data: monthlyData,
+        borderColor: '#ef5350',
+        backgroundColor: 'rgba(239,83,80,0.1)',
+        fill: true,
+        tension: 0.3
+      }]
+    },
+    options: { scales: { y: { beginAtZero: true } } }
+  });
+
+  new Chart(document.getElementById('symptomChart'), {
+    type: 'bar',
+    data: {
+      labels: symptoms.map(s => s.symptoms.substring(0, 40)),
+      datasets: [{
+        label: 'Số lần gặp',
+        data: symptoms.map(s => s.count),
+        backgroundColor: '#ff7043'
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      scales: { x: { beginAtZero: true } }
+    }
+  });
+};
+</script>
+{% endblock %}

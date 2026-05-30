@@ -40,15 +40,15 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
-      [
-        "@react-native-google-signin/google-signin",
-        {
-          "iosUrlScheme": "com.googleusercontent.apps.591879549833-bukf3qsarrvphb9nfl8lc3llaq61e4bb"
-        }
-      ],
-      "expo-web-browser"
-    ],
+    // "plugins": [
+    //   [
+    //     "@react-native-google-signin/google-signin",
+    //     {
+    //       "iosUrlScheme": "com.googleusercontent.apps.591879549833-bukf3qsarrvphb9nfl8lc3llaq61e4bb"
+    //     }
+    //   ],
+    //   "expo-web-browser"
+    // ],
     "extra": {
       "eas": {
         "projectId": "191e890d-cc96-4a5d-9475-4001c51c5d69"

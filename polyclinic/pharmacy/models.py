@@ -77,7 +77,7 @@ class StockTransaction(BaseModel):
         return f"{self.get_transaction_type_display()} — {self.medicine.name} x{self.quantity}"
 
 class Prescription(BaseModel):
-    """Đơn thuốc — liên kết với MedicalRecord bên appointments"""
+
     instructions   = models.TextField(null=True, blank=True)
     is_dispensed   = models.BooleanField(default=False)
     medical_record = models.OneToOneField('appointments.MedicalRecord',on_delete=models.CASCADE,related_name='prescription')
@@ -90,7 +90,7 @@ class Prescription(BaseModel):
             return f"Đơn thuốc #{self.id}"
 
 class PrescriptionItem(BaseModel):
-    """Chi tiết từng thuốc trong đơn"""
+
     quantity      = models.PositiveIntegerField()
     dosage        = models.CharField(max_length=200)
     duration_days = models.PositiveIntegerField(default=1)
@@ -102,7 +102,7 @@ class PrescriptionItem(BaseModel):
     def save(self, *args, **kwargs):
             is_new = self._state.adding
             super().save(*args, **kwargs)
-            # Tự động trừ kho khi tạo mới
+
             if is_new:
                 inv = self.medicine.inventory
                 inv.quantity -= self.quantity

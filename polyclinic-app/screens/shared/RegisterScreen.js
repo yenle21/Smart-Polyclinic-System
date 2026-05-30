@@ -103,7 +103,7 @@ const Register = () => {
     };
 
     return (
-        // ✅ Bọc ngoài cùng bằng KeyboardAvoidingView
+       
         <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={{ flex: 1 }}
