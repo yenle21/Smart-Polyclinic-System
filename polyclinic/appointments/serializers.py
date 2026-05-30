@@ -7,6 +7,12 @@ class ScheduleSerializer(serializers.ModelSerializer):
     doctor_name     = serializers.CharField(source='doctor.user.get_full_name', read_only=True)
     specialty_name  = serializers.SerializerMethodField()
 
+    def get_available_slots(self, obj):
+        return obj.available_slots()
+
+    def get_specialty_name(self, obj):
+        return ", ".join([s.name for s in obj.doctor.specialties.all()])
+
     class Meta:
         model  = Schedule
         fields = [
@@ -15,19 +21,21 @@ class ScheduleSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['doctor', 'available_slots', 'doctor_name', 'specialty_name']
 
-    def get_available_slots(self, obj):
-        return obj.available_slots()
-
-    def get_specialty_name(self, obj):
-        return ", ".join([s.name for s in obj.doctor.specialties.all()])
-
-
 class AppointmentSerializer(serializers.ModelSerializer):
     doctor_name    = serializers.CharField(source='schedule.doctor.user.get_full_name', read_only=True)
     specialty_name = serializers.SerializerMethodField()
     work_date      = serializers.DateField(source='schedule.work_date', read_only=True)
     patient_name   = serializers.SerializerMethodField()
     patient_id     = serializers.IntegerField(source='patient.user.id', read_only=True)
+
+    def get_specialty_name(self, obj):
+        return ", ".join([s.name for s in obj.schedule.doctor.specialties.all()])
+
+    def get_patient_name(self, obj):
+        patient = obj.patient
+        if patient.full_name:
+            return patient.full_name
+        return patient.user.get_full_name() or patient.user.username
 
     class Meta:
         model  = Appointment
@@ -39,14 +47,6 @@ class AppointmentSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['status', 'cancel_reason', 'created_date', 'updated_date']
 
-    def get_specialty_name(self, obj):
-        return ", ".join([s.name for s in obj.schedule.doctor.specialties.all()])
-
-    def get_patient_name(self, obj):
-        patient = obj.patient
-        if patient.full_name:
-            return patient.full_name
-        return patient.user.get_full_name() or patient.user.username
 
 
 class AppointmentCreateSerializer(serializers.ModelSerializer):
