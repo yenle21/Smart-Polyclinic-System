@@ -11,6 +11,9 @@ class IsOwnerOrAdmin(BasePermission):
             return True
         return obj == request.user or getattr(obj, 'user', None) == request.user
 
+class IsStaffOrAdminRole(BasePermission):
+    def has_permission(self, request, view):
+        return (request.user.is_authenticated and (request.user.role == 'staff' or request.user.is_superuser))
 class IsStaffRole(BasePermission):
     def has_permission(self, request, view):
         return bool(request.user and request.user.is_authenticated and request.user.role == 'staff')

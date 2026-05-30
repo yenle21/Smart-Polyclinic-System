@@ -105,10 +105,6 @@ const ScheduleScreen = ({ navigation, route }) => {
                 ? res.data
                 : (res.data.results ?? []);
 
-            // ✅ FIX: So sánh string YYYY-MM-DD trực tiếp, tránh lỗi UTC+7
-            // new Date("2025-05-30") parse theo UTC → thành 29/05 giờ Việt Nam
-            // => lịch hôm nay bị lọc mất. Dùng toISOString().slice(0,10) để lấy
-            // ngày local rồi so sánh string an toàn.
             const todayStr = new Date(
                 new Date().getTime() - new Date().getTimezoneOffset() * 60000
             ).toISOString().slice(0, 10); // "2025-05-30" theo giờ địa phương

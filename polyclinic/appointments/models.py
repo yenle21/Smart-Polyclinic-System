@@ -19,9 +19,7 @@ class Schedule(BaseModel):
         return f"{self.doctor} | {self.work_date} | {self.start_time}–{self.end_time}"
 
     def available_slots(self):
-        booked = self.appointments.filter(
-            status__in=['pending', 'confirmed']
-        ).count()
+        booked = self.appointments.filter(status__in=['pending', 'confirmed']).count()
         return self.max_slots - booked
 
 
@@ -39,12 +37,12 @@ class Appointment(BaseModel):
         ('online',  'Khám trực tuyến'),
     ]
 
-    appointment_time = models.TimeField()                           # Giờ khám cụ thể trong khung lịch
+    appointment_time = models.TimeField()
     type             = models.CharField(max_length=10, choices=TYPE_CHOICES, default='offline')
     status           = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
-    reason           = models.TextField(null=True, blank=True)     # Lý do khám
-    notes            = models.TextField(null=True, blank=True)     # Ghi chú thêm của bệnh nhân
-    cancel_reason    = models.TextField(null=True, blank=True)     # Lý do huỷ (nếu có)
+    reason           = models.TextField(null=True, blank=True)
+    notes            = models.TextField(null=True, blank=True)
+    cancel_reason    = models.TextField(null=True, blank=True)
     patient          = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='appointments')
     schedule         = models.ForeignKey(Schedule, on_delete=models.CASCADE, related_name='appointments')
 
@@ -68,10 +66,8 @@ class Notification(BaseModel):
         ('invoice', 'Hóa đơn mới'),
         ('general', 'Chung'),
     ]
-
     user        = models.ForeignKey('accounts.User', on_delete=models.CASCADE, related_name='notifications')
-    appointment = models.ForeignKey(Appointment, on_delete=models.SET_NULL,
-                                    null=True, blank=True, related_name='notifications')
+    appointment = models.ForeignKey(Appointment, on_delete=models.SET_NULL,null=True, blank=True, related_name='notifications')
     type        = models.CharField(max_length=20, choices=TYPE_CHOICES, default='general')
     title       = models.CharField(max_length=200)
     message     = models.TextField()
@@ -84,11 +80,11 @@ class Notification(BaseModel):
         return f"[{self.type}] {self.title} → {self.user}"
 
 class MedicalRecord(BaseModel): #Hồ sơ bệnh án, tạo sau khi khám xong
-    appointment  = models.OneToOneField(Appointment, on_delete=models.CASCADE, related_name='medical_record')
-    diagnosis    = models.TextField()
-    treatment    = models.TextField(null=True, blank=True)
-    notes        = models.TextField(null=True, blank=True)
-    follow_up    = models.DateField(null=True, blank=True)
+    appointment = models.OneToOneField(Appointment, on_delete=models.CASCADE, related_name='medical_record')
+    diagnosis = models.TextField()
+    treatment = models.TextField(null=True, blank=True)
+    notes = models.TextField(null=True, blank=True)
+    follow_up = models.DateField(null=True, blank=True)
     symptoms = models.TextField(blank=True, null=True)
     blood_pressure = models.CharField(max_length=20, blank=True, null=True)
     temperature = models.CharField(max_length=10, blank=True, null=True)
@@ -109,11 +105,11 @@ class TestResult(BaseModel):
         ('other',   'Khác'),
     ]
 
-    type           = models.CharField(max_length=20, choices=TYPE_CHOICES, default='other')
-    name           = models.CharField(max_length=200)
-    result         = models.TextField(null=True, blank=True)
-    file           = CloudinaryField(null=True, blank=True)
-    tested_at      = models.DateTimeField(null=True, blank=True)
+    type = models.CharField(max_length=20, choices=TYPE_CHOICES, default='other')
+    name = models.CharField(max_length=200)
+    result = models.TextField(null=True, blank=True)
+    file = CloudinaryField(null=True, blank=True)
+    tested_at = models.DateTimeField(null=True, blank=True)
     medical_record = models.ForeignKey(MedicalRecord, on_delete=models.CASCADE, related_name='test_results')
 
     def __str__(self):

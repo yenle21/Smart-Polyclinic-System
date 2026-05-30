@@ -38,7 +38,6 @@ export const endpoints = {
     'appointments':'/appointments/',
     'appointment-book': '/appointments/book/',
     'complete-appointment': (id) => `/appointments/${id}/complete/`,
-    'appointment-detail':   (id) => `/appointments/${id}/`,
     'appointment-cancel':   (id) => `/appointments/${id}/cancel/`,
     'appointment-change-schedule': (id) => `/appointments/${id}/change-schedule/`,
     'no-show-appointment': (id) => `/appointments/${id}/no-show/`,
