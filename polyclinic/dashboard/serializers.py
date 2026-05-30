@@ -22,10 +22,6 @@ class ReportSerializer(serializers.ModelSerializer):
 
 
 class DashboardSerializer(serializers.Serializer):
-    """
-    Không có model — chỉ để định dạng data trả về cho dashboard
-    Dùng Serializer thường (không phải ModelSerializer)
-    """
     # Thống kê tổng quan
     total_patients     = serializers.IntegerField()
     total_doctors      = serializers.IntegerField()

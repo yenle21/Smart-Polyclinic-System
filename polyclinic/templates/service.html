@@ -1,0 +1,91 @@
+{% extends 'admin/base_site.html' %}
+{% block content %}
+<div class="dashboard-tabs">
+    <a href="?tab=patient" class="{% if current_tab == 'patient' %}active{% endif %}">Bệnh nhân</a>
+    <a href="?tab=service" class="{% if current_tab == 'service' %}active{% endif %}">Dịch vụ</a>
+    <a href="?tab=disease" class="{% if current_tab == 'disease' %}active{% endif %}">Bệnh lý</a>
+    <a href="?tab=revenue" class="{% if current_tab == 'revenue' %}active{% endif %}">Doanh thu</a>
+</div>
+<h1>Báo cáo dịch vụ y tế</h1>
+
+<p>Tổng lượt khám: <strong>{{ total_appointments }}</strong> &nbsp;|&nbsp;
+   Đã khám xong: <strong>{{ total_completed }}</strong></p>
+
+<div style="display:flex; gap:32px; flex-wrap:wrap; margin-top:24px">
+
+  <div style="flex:1; min-width:260px">
+    <h2>Loại khám</h2>
+    <canvas id="typeChart"></canvas>
+  </div>
+
+  <div style="flex:1; min-width:260px">
+    <h2>Xét nghiệm theo loại</h2>
+    <canvas id="testChart"></canvas>
+  </div>
+
+
+
+</div>
+
+<h2 style="margin-top:40px">Top 10 thuốc được kê nhiều nhất</h2>
+<table style="width:50%; border-collapse:collapse">
+  <thead>
+    <tr style="background:#e0e0e0">
+      <th style="padding:8px; text-align:left; border:1px solid #ccc">Thuốc</th>
+      <th style="padding:8px; text-align:right; border:1px solid #ccc">Số lượng kê</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for m in top_medicines %}
+    <tr>
+      <td style="padding:8px; border:1px solid #ccc">{{ m.medicine_name }}</td>
+      <td style="padding:8px; text-align:right; border:1px solid #ccc">{{ m.total_qty }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const typeLabels    = {{ type_labels|safe }};
+const typeData      = {{ type_data|safe }};
+const testLabels    = {{ test_labels|safe }};
+const testData      = {{ test_data|safe }};
+const specApptData  = {{ specialty_appt|safe }};
+
+window.onload = function () {
+  new Chart(document.getElementById('typeChart'), {
+    type: 'doughnut',
+    data: {
+      labels: typeLabels,
+      datasets: [{ data: typeData, backgroundColor: ['#42a5f5', '#ef5350'] }]
+    }
+  });
+
+  new Chart(document.getElementById('testChart'), {
+    type: 'bar',
+    data: {
+      labels: testLabels,
+      datasets: [{ label: 'Số lượt', data: testData, backgroundColor: '#ffa726' }]
+    },
+    options: { scales: { y: { beginAtZero: true } } }
+  });
+
+  new Chart(document.getElementById('specApptChart'), {
+    type: 'bar',
+    data: {
+      labels: specApptData.map(s => s.name),
+      datasets: [{
+        label: 'Lượt khám',
+        data:  specApptData.map(s => s.count),
+        backgroundColor: '#26c6da'
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      scales: { x: { beginAtZero: true } }
+    }
+  });
+};
+</script>
+{% endblock %}

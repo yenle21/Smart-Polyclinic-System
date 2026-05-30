@@ -26,11 +26,8 @@ class CategoryViewSet(viewsets.ViewSet, generics.ListCreateAPIView):
 
 class MedicineViewSet(viewsets.ViewSet,
                       generics.ListCreateAPIView,
-                      generics.RetrieveUpdateDestroyAPIView):
+                      generics.RetrieveAPIView):
 
-    # ✅ FIX: dùng prefetch_related thay vì select_related cho inventory
-    # select_related dùng INNER JOIN → mất thuốc không có inventory
-    # prefetch_related dùng query riêng → giữ đủ tất cả thuốc
     queryset = Medicine.objects.filter(
         is_active=True
     ).select_related('category').prefetch_related('inventory')
@@ -53,15 +50,6 @@ class MedicineViewSet(viewsets.ViewSet,
         if category_id:
             query = query.filter(category_id=category_id)
         return query
-
-    def destroy(self, request, *args, **kwargs):
-        medicine           = self.get_object()
-        medicine.is_active = False
-        medicine.save()
-        return Response(
-            {'message': f'Đã ngừng kinh doanh thuốc {medicine.name}'},
-            status=status.HTTP_200_OK
-        )
 
     @action(detail=False, methods=['get'], url_path='alerts')
     def alerts(self, request):
@@ -197,7 +185,7 @@ class PrescriptionViewSet(viewsets.ViewSet, generics.ListCreateAPIView,  generic
 
         appointment = prescription.medical_record.appointment
 
-        # Tính tiền thuốc
+
         medicine_fee = prescription.items.aggregate(
             total=db_models.Sum(
                 db_models.F('quantity') * db_models.F('medicine__price'),
@@ -205,7 +193,7 @@ class PrescriptionViewSet(viewsets.ViewSet, generics.ListCreateAPIView,  generic
             )
         )['total'] or 0
 
-        # Lấy phí khám từ schedule của bác sĩ
+
         consultation_fee = 0
         try:
             consultation_fee = appointment.schedule.doctor.consultation_fee or 0
@@ -216,14 +204,14 @@ class PrescriptionViewSet(viewsets.ViewSet, generics.ListCreateAPIView,  generic
             appointment=appointment,
             defaults={
                 'patient': appointment.patient,
-                'consultation_fee': consultation_fee,  # ← thêm
+                'consultation_fee': consultation_fee,
                 'medicine_fee': medicine_fee,
             }
         )
 
         if not created:
             invoice.medicine_fee = medicine_fee
-            invoice.consultation_fee = consultation_fee  # ← thêm
+            invoice.consultation_fee = consultation_fee
             invoice.save()
 
         return Response({'invoice_id': invoice.id}, status=status.HTTP_200_OK)

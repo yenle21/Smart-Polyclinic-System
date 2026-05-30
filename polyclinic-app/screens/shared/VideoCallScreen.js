@@ -9,14 +9,14 @@ import { authApis } from '../../configs/Apis';
 const VideoCallScreen = ({ route, navigation }) => {
     const { callId } = route.params;
 
-    // Dùng 8x8.vc — Jitsi server không cần moderator, hoàn toàn miễn phí
+    
     const roomUrl = `https://meet.ffmuc.net/polyclinic-${callId}`;
 
     console.log('=== ROOM URL:', roomUrl);
     console.log('=== CALL ID:', callId);
 
     useEffect(() => {
-        // Tự động mở trình duyệt
+       
         Linking.openURL(roomUrl).catch(() => {
             Alert.alert('Lỗi', 'Không thể mở trình duyệt!');
         });
@@ -39,17 +39,7 @@ const VideoCallScreen = ({ route, navigation }) => {
         }
     };
 
-    // const endCall = async () => {
-    //     try {
-    //         await update(ref(db, `calls/${callId}`), { status: 'ended' });
-    //     } catch (e) {
-    //         console.error('endCall error:', e);
-    //     }
-
-    //     // Luôn chuyển sang kê đơn sau khi kết thúc call
-    //     navigation.replace('PrescriptionForm', { appointmentId: callId });
-    // };
-
+    
     return (
         <View style={styles.container}>
             <Text style={styles.icon}>📞</Text>

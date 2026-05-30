@@ -1,7 +1,9 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL = 'http://192.168.1.253:8000';
+
+const BASE_URL = 'http://192.168.1.223:8000';
+
 
 export const endpoints = {
     // Auth

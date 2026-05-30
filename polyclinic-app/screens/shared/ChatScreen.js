@@ -48,7 +48,7 @@ export default function ChatScreen({ route }) {
 
         await push(ref(db, `chats/${chatId}/messages`), msg);
 
-        // ✅ Lấy unread hiện tại rồi +1
+        
         const unreadKey = user?.role === 'patient' ? 'unread_staff' : 'unread_patient';
         const snapshot  = await get(ref(db, `chats/${chatId}`));
         const current   = snapshot.val()?.[unreadKey] || 0;
@@ -67,7 +67,7 @@ export default function ChatScreen({ route }) {
         const isMe = item.sender_id === user?.id;
         return (
             <View style={[styles.msgWrap, isMe ? styles.myWrap : styles.theirWrap]}>
-                {/* ✅ Hiển thị tên người gửi */}
+                
                 {!isMe && (
                     <Text style={styles.senderName}>
                         {item.sender_name || item.sender || 'Unknown'}

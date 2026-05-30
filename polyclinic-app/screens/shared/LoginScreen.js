@@ -31,7 +31,7 @@ const ROLES = [
     { key: 'patient',  label: '🧑‍⚕️ Bệnh nhân' },
 ];
 
-// ✅ Web application Client ID từ Google Cloud Console
+
 GoogleSignin.configure({
     webClientId: '591879549833-qgo82d8cfdhkkk3au38jn8a0r4g8apfe.apps.googleusercontent.com',
     offlineAccess: false,
@@ -56,26 +56,17 @@ const Login = () => {
     const [, dispatch] = useContext(MyUserContext);
     const nav = useNavigation();
 
-    // ================================================================
-    // GOOGLE LOGIN
-    // ✅ Dùng @react-native-google-signin/google-signin
-    // ✅ Trả về OAuth2 token (đáp ứng yêu cầu thầy)
-    // ✅ Tích hợp Gmail theo yêu cầu đề tài
-    // ================================================================
     const handleGoogleLogin = async () => {
         try {
             setGoogleLoading(true);
             setErr(null);
 
-            // Kiểm tra Google Play Services
             await GoogleSignin.hasPlayServices({
                 showPlayServicesUpdateDialog: true,
             });
 
-            // Mở màn hình chọn tài khoản Google
             const signInResult = await GoogleSignin.signIn();
 
-            // Lấy idToken
             const idToken = signInResult?.data?.idToken ?? signInResult?.idToken;
 
             if (!idToken) {
@@ -84,7 +75,7 @@ const Login = () => {
 
             console.log('GOOGLE ID TOKEN:', idToken.substring(0, 30) + '...');
 
-            // Gửi id_token lên backend Django
+            
             const res = await Apis.post(
                 endpoints['google-login'],
                 { id_token: idToken }
@@ -92,11 +83,10 @@ const Login = () => {
 
             console.log('BACKEND RESPONSE:', res.data);
 
-            // ✅ Backend trả access_token (OAuth2) — lưu giống login thường
-            const accessToken = res.data.access_token;
+            
             await AsyncStorage.setItem('access_token', accessToken);
 
-            // Gọi current-user với OAuth2 token
+           
             const api = await authApis();
             const u   = await api.get(endpoints['current-user']);
 
@@ -124,9 +114,6 @@ const Login = () => {
         }
     };
 
-    // ================================================================
-    // VALIDATE
-    // ================================================================
     const validate = () => {
         if (!role) {
             setErr('Vui lòng chọn vai trò!');
@@ -144,9 +131,6 @@ const Login = () => {
         return true;
     };
 
-    // ================================================================
-    // LOGIN THƯỜNG (username + password + OAuth2)
-    // ================================================================
     const login = async () => {
         if (!validate()) return;
 
@@ -157,8 +141,8 @@ const Login = () => {
             const params = new URLSearchParams();
             params.append('username',      user.username);
             params.append('password',      user.password);
-            params.append('client_id',     'Qo0xwsPc00Wama0YySwi81z1jfnjPbUxi6xYc5H1');
-            params.append('client_secret', 'SIN6g29BplhvAY0IfUin8OVGnOzAuvbfy9WXbO8FWIitHgzlRYYDYtixGFOQXbpil0DwAOhx5PdVfGjbOOlZaZo2GzVW6WzqsR4kXa927OTC3qxqUtmFRjqauSvebbfS');
+            params.append('client_id',     'n7aGTsfMDLTLWp32Hm9YU6OQGbSDnmHaY77CoWhL');
+            params.append('client_secret', 'bK8au064hR1Mlj77UWiFJNTkBUgmL9PzGv7kWWdi9NFI31RRSF1hA7B3o8Cstu5bIpMO44dfrx5iG7p13PJWNttp81xEltStjRe5y6XtKpH30AqlXxb6cPnllFYkVpmX');
             params.append('grant_type',    'password');
 
             const res = await Apis.post(
@@ -203,9 +187,6 @@ const Login = () => {
         }
     };
 
-    // ================================================================
-    // UI
-    // ================================================================
     return (
         <ScrollView
             contentContainerStyle={loginstyles.container}

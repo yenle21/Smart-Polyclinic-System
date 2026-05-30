@@ -30,7 +30,7 @@ class DashboardViewSet(viewsets.ViewSet):
         last_7    = today - timedelta(days=7)
         threshold = today + timedelta(days=30)
 
-        # Doanh thu 7 ngày gần nhất — mỗi ngày 1 dòng
+
         revenue_7days = list(
             Invoice.objects.filter(
                 status='paid', paid_at__date__gte=last_7
@@ -39,7 +39,7 @@ class DashboardViewSet(viewsets.ViewSet):
             .order_by('paid_at__date')
         )
 
-        # Top 5 thuốc tồn kho thấp
+
         low_stock = list(
             Inventory.objects.filter(
                 quantity__lte=F('min_quantity')
@@ -48,7 +48,7 @@ class DashboardViewSet(viewsets.ViewSet):
             .order_by('quantity')[:5]
         )
 
-        # Top 5 thuốc sắp hết hạn
+
         expiring = list(
             Inventory.objects.filter(
                 expiry_date__lte=threshold
@@ -58,7 +58,7 @@ class DashboardViewSet(viewsets.ViewSet):
         )
 
         return Response({
-            # Tổng quan billing
+
             'total_revenue':   Invoice.objects.filter(
                                    status='paid'
                                ).aggregate(t=Sum('total_amount'))['t'] or 0,
@@ -67,13 +67,13 @@ class DashboardViewSet(viewsets.ViewSet):
                                ).aggregate(t=Sum('total_amount'))['t'] or 0,
             'unpaid_invoices': Invoice.objects.filter(status='unpaid').count(),
 
-            # Tổng quan pharmacy
+
             'total_medicines':    Medicine.objects.filter(is_active=True).count(),
             'low_stock_count':    Inventory.objects.filter(quantity__lte=F('min_quantity')).count(),
             'expiring_count':     Inventory.objects.filter(expiry_date__lte=threshold).count(),
             'expired_count':      Inventory.objects.filter(expiry_date__lt=today).count(),
 
-            # Chi tiết cảnh báo
+
             'revenue_7days':         revenue_7days,
             'low_stock_medicines':   low_stock,
             'expiring_medicines':    expiring,
@@ -81,12 +81,7 @@ class DashboardViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'], url_path='revenue')
     def revenue(self, request):
-        """
-        Báo cáo doanh thu chi tiết
-        GET /api/dashboard/revenue/
-        ?period=day|month|year
-        ?date_from=2024-01-01&date_to=2024-12-31
-        """
+
         period    = request.query_params.get('period', 'month')
         date_from = request.query_params.get('date_from')
         date_to   = request.query_params.get('date_to')
@@ -97,7 +92,7 @@ class DashboardViewSet(viewsets.ViewSet):
         if date_to:
             qs = qs.filter(paid_at__date__lte=date_to)
 
-        # Group theo ngày/tháng/năm
+
         if period == 'day':
             group_field = 'paid_at__date'
         elif period == 'year':
@@ -114,7 +109,7 @@ class DashboardViewSet(viewsets.ViewSet):
             ).order_by(group_field)
         )
 
-        # Doanh thu theo phương thức thanh toán
+
         by_method = list(
             qs.values('payment_method')
             .annotate(total=Sum('total_amount'), count=Count('id'))
@@ -133,14 +128,11 @@ class DashboardViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'], url_path='medicines-report')
     def medicines(self, request):
-        """
-        Báo cáo dược phẩm và kho thuốc
-        GET /api/dashboard/medicines/
-        """
+
         today     = timezone.now().date()
         threshold = today + timedelta(days=30)
 
-        # Thống kê theo danh mục
+
         by_category = list(
             Medicine.objects.filter(is_active=True)
             .values('category__name')
@@ -148,7 +140,7 @@ class DashboardViewSet(viewsets.ViewSet):
             .order_by('-count')
         )
 
-        # Thuốc được kê nhiều nhất
+
         top_prescribed = list(
             Prescription.objects.values('items__medicine__name')
             .annotate(count=Count('id'))
@@ -170,14 +162,14 @@ class DashboardViewSet(viewsets.ViewSet):
         today = date.today()
         patients = Patient.objects.select_related('user')
 
-        # Theo giới tính — lấy từ Patient.gender
+
         by_gender = list(
             patients.values('gender')
             .annotate(count=Count('id'))
             .order_by('-count')
         )
 
-        # Theo độ tuổi — lấy từ Patient.dob
+
         age_groups = {'0-18': 0, '19-35': 0, '36-50': 0, '51-65': 0, '65+': 0}
         for p in patients:
             dob = p.dob
@@ -194,7 +186,7 @@ class DashboardViewSet(viewsets.ViewSet):
                 else:
                     age_groups['65+'] += 1
 
-        # Theo chuyên khoa
+
         by_specialty = list(
             Appointment.objects.filter(status='completed')
             .values('schedule__doctor__specialties__name')
@@ -213,7 +205,7 @@ class DashboardViewSet(viewsets.ViewSet):
     def disease_report(self, request):
         from appointments.models import MedicalRecord
 
-        # Bệnh phổ biến từ diagnosis
+
         by_diagnosis = list(
             MedicalRecord.objects.exclude(diagnosis='')
             .exclude(diagnosis__isnull=True)
@@ -222,7 +214,7 @@ class DashboardViewSet(viewsets.ViewSet):
             .order_by('-count')[:15]
         )
 
-        # Thuốc được kê nhiều nhất
+
         top_medicines = list(
             PrescriptionItem.objects.values('medicine__name')
             .annotate(total=Sum('quantity'))
@@ -237,19 +229,14 @@ class DashboardViewSet(viewsets.ViewSet):
 class ReportViewSet(viewsets.ViewSet,
                     generics.ListCreateAPIView,
                     generics.RetrieveAPIView):
-    """
-    Lưu và xem lại các báo cáo đã tạo
-    GET  /api/dashboard/reports/      → danh sách báo cáo
-    POST /api/dashboard/reports/      → tạo báo cáo mới
-    GET  /api/dashboard/reports/{id}/ → xem chi tiết báo cáo
-    """
+
     queryset         = Report.objects.select_related('created_by').order_by('-created_date')
     serializer_class = serializers.ReportSerializer
 
     def get_queryset(self):
         query = self.queryset
 
-        # Lọc theo loại: ?type=revenue
+
         report_type = self.request.query_params.get('type')
         if report_type:
             query = query.filter(report_type=report_type)
@@ -257,7 +244,6 @@ class ReportViewSet(viewsets.ViewSet,
         return query
 
     def perform_create(self, serializer):
-        # Tự động gán người tạo
         serializer.save(created_by=self.request.user)
 
 class DoctorDashboardView(APIView):
@@ -266,9 +252,6 @@ class DoctorDashboardView(APIView):
 
     def get(self, request):
 
-        # =========================
-        # CHECK DOCTOR
-        # =========================
         try:
             doctor = Doctor.objects.get(user=request.user)
 
@@ -281,9 +264,6 @@ class DoctorDashboardView(APIView):
                 status=403
             )
 
-        # =========================
-        # TODAY APPOINTMENTS
-        # =========================
         appointments = Appointment.objects.filter(
             schedule__doctor=doctor,
             schedule__work_date=date.today()
@@ -292,9 +272,6 @@ class DoctorDashboardView(APIView):
             'schedule'
         )
 
-        # =========================
-        # STATISTICS
-        # =========================
         total = appointments.count()
 
         pending = appointments.filter(
@@ -313,9 +290,6 @@ class DoctorDashboardView(APIView):
             status='cancelled'
         ).count()
 
-        # =========================
-        # APPOINTMENT LIST
-        # =========================
         appointment_data = []
 
         for ap in appointments:
@@ -340,9 +314,7 @@ class DoctorDashboardView(APIView):
                     ap.reason,
             })
 
-        # =========================
-        # RESPONSE
-        # =========================
+
         data = {
 
             "doctor": {

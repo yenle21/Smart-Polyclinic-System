@@ -140,8 +140,7 @@ class PrescriptionCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model  = Prescription
         fields = ['medical_record', 'instructions', 'items']
-        # Bỏ UniqueValidator mà DRF tự inject từ OneToOneField
-        # để create() có thể tự xử lý update_or_create
+
         extra_kwargs = {
             'medical_record': {'validators': []}
         }
@@ -155,7 +154,7 @@ class PrescriptionCreateSerializer(serializers.ModelSerializer):
             defaults={'instructions': validated_data.get('instructions', '')}
         )
 
-        # Nếu đã có đơn cũ → xóa items cũ trước khi tạo lại
+
         if not created:
             prescription.items.all().delete()
 
