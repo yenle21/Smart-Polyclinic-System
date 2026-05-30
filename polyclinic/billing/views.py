@@ -41,7 +41,7 @@ def _vnpay_build_hash(params: dict, secret_key: str) -> str:
 
 class InvoiceViewSet(viewsets.GenericViewSet):
 
-    queryset = Invoice.objects.select_related('patient__user').prefetch_related('items').order_by('-created_date')
+    queryset = Invoice.objects.select_related('patient__user','appointment__schedule__doctor__user').prefetch_related('items').order_by('-created_date')
 
     http_method_names = ['get', 'post', 'patch', 'head', 'options']
 

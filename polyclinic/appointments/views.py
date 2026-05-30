@@ -36,6 +36,9 @@ class ScheduleViewSet(viewsets.ViewSet, generics.ListAPIView):
         date = self.request.query_params.get('date')
         if date:
             query = query.filter(work_date=date)
+        else:
+            from django.utils import timezone
+            query = query.filter(work_date__gte=timezone.localdate())
 
         # Lọc theo chuyên khoa
         specialty_name = self.request.query_params.get('specialty')

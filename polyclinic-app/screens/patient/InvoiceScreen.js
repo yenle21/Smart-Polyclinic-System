@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
     View,
     Text,
@@ -6,6 +6,7 @@ import {
     ActivityIndicator,
     TouchableOpacity,
     Alert,
+    RefreshControl,   // ✅ thêm pull-to-refresh
 } from 'react-native';
 import { Card, Chip, Divider, Button, RadioButton } from 'react-native-paper';
 import * as WebBrowser from 'expo-web-browser';
@@ -32,6 +33,7 @@ const REDIRECT_METHODS = ['momo', 'vnpay'];
 const InvoiceScreen = () => {
     const [invoices, setInvoices]     = useState([]);
     const [loading, setLoading]       = useState(false);
+    const [refreshing, setRefreshing] = useState(false);  // ✅ thêm
     const [expanded, setExpanded]     = useState(null);
     const [payingId, setPayingId]     = useState(null);
     const [payMethod, setPayMethod]   = useState('cash');
@@ -54,6 +56,22 @@ const InvoiceScreen = () => {
             setLoading(false);
         }
     };
+
+    // ✅ Pull-to-refresh: dùng refreshing state riêng để hiện spinner vòng tròn
+    // thay vì ActivityIndicator toàn màn hình
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        try {
+            const api = await authApis();
+            const res = await api.get(endpoints['invoices']);
+            const data = Array.isArray(res.data)
+                ? res.data
+                : (res.data.results ?? []);
+            setInvoices(data);
+        } finally {
+            setRefreshing(false);
+        }
+    }, []);
 
     const formatDate = (dateStr) => {
         if (!dateStr) return '---';
@@ -111,13 +129,15 @@ const InvoiceScreen = () => {
                 // Mở trang thanh toán
                 await WebBrowser.openBrowserAsync(paymentUrl);
 
-                // Sau khi user đóng browser → kiểm tra kết quả
+                // ✅ Sau khi user đóng browser → kiểm tra và hiện thông báo đúng
                 await checkPaymentResult(id);
+
             } else {
                 // Tiền mặt / chuyển khoản → xong luôn
-                Alert.alert('Thành công', 'Thanh toán hóa đơn thành công!');
                 setPayingId(null);
-                loadInvoices();
+                await loadInvoices();
+                // ✅ Hiện thông báo SAU KHI reload xong
+                Alert.alert('Thành công 🎉', 'Thanh toán hóa đơn thành công!');
             }
 
         } catch (ex) {
@@ -140,9 +160,9 @@ const InvoiceScreen = () => {
             const invoice = res.data;
 
             if (invoice.status === 'paid') {
-                Alert.alert('Thành công 🎉', 'Thanh toán thành công!');
                 setPayingId(null);
-                loadInvoices();
+                await loadInvoices(); // ✅ reload trước
+                Alert.alert('Thành công 🎉', 'Thanh toán thành công!'); // ✅ rồi mới alert
             } else {
                 Alert.alert(
                     'Chưa hoàn tất',
@@ -159,7 +179,18 @@ const InvoiceScreen = () => {
     };
 
     return (
-        <ScrollView style={{ flex: 1, backgroundColor: '#F5F7FA', padding: 16 }}>
+        <ScrollView
+            style={{ flex: 1, backgroundColor: '#F5F7FA', padding: 16 }}
+            // ✅ Vuốt xuống để refresh
+            refreshControl={
+                <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={onRefresh}
+                    colors={['#1565C0']}   // Android
+                    tintColor="#1565C0"    // iOS
+                />
+            }
+        >
 
             <Text style={{
                 fontSize: 20, fontWeight: '700',

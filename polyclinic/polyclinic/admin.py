@@ -97,9 +97,6 @@ admin_site.register(Prescription,     PrescriptionModelAdmin)
 
 # Billing
 admin_site.register(Invoice, InvoiceModelAdmin)
-
-# Dashboard/Reports
-admin_site.register(Report, ReportModelAdmin)
 # Appointment
 admin_site.register(Schedule,ScheduleAdmin)
 admin_site.register(Appointment,AppointmentAdmin)

@@ -14,7 +14,7 @@ import {
     Chip,
     Card,
 } from 'react-native-paper';
-import { useFocusEffect } from '@react-navigation/native';   // ← thêm
+import { useFocusEffect } from '@react-navigation/native';
 import { authApis, endpoints } from '../../configs/Apis';
 import styles from '../../styles/patientstyles';
 
@@ -105,15 +105,21 @@ const ScheduleScreen = ({ navigation, route }) => {
                 ? res.data
                 : (res.data.results ?? []);
 
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
+            // ✅ FIX: So sánh string YYYY-MM-DD trực tiếp, tránh lỗi UTC+7
+            // new Date("2025-05-30") parse theo UTC → thành 29/05 giờ Việt Nam
+            // => lịch hôm nay bị lọc mất. Dùng toISOString().slice(0,10) để lấy
+            // ngày local rồi so sánh string an toàn.
+            const todayStr = new Date(
+                new Date().getTime() - new Date().getTimezoneOffset() * 60000
+            ).toISOString().slice(0, 10); // "2025-05-30" theo giờ địa phương
 
-            const filtered = data.filter(s => {
-                const workDate = new Date(s.work_date);
-                return workDate >= today;
+            const filtered = data.filter(s => s.work_date >= todayStr);
+
+            filtered.sort((a, b) => {
+                if (a.work_date !== b.work_date)
+                    return a.work_date.localeCompare(b.work_date);
+                return a.start_time.localeCompare(b.start_time);
             });
-
-            filtered.sort((a, b) => new Date(a.work_date) - new Date(b.work_date));
 
             setSchedules(filtered);
 
@@ -126,25 +132,17 @@ const ScheduleScreen = ({ navigation, route }) => {
         }
     };
 
-    // =========================
-    // TỰ ĐỘNG RELOAD KHI QUAY LẠI MÀN HÌNH NÀY
-    // =========================
+
     useFocusEffect(
         useCallback(() => {
             loadSchedules();
-        }, [])   // [] = chỉ phụ thuộc vào focus, không re-run khi specialty/date thay đổi
+        }, [])
     );
 
-    // =========================
-    // FILTER CLIENT-SIDE
-    // =========================
     const displayedSchedules = hideFullSlots
         ? schedules.filter(s => s.available_slots > 0)
         : schedules;
 
-    // =========================
-    // RENDER
-    // =========================
     return (
         <ScrollView
             style={styles.container}
@@ -355,7 +353,7 @@ const ScheduleScreen = ({ navigation, route }) => {
 
                                     <Button
                                         mode="contained"
-                                        icon={selectMode ? "calendar-check" : "calendar-check"}
+                                        icon="calendar-check"
                                         style={[styles.bookBtn, { marginTop: 12 }]}
                                         labelStyle={styles.bookBtnText}
                                         disabled={s.available_slots === 0}
