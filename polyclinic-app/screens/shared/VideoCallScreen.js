@@ -12,9 +12,6 @@ const VideoCallScreen = ({ route, navigation }) => {
     
     const roomUrl = `https://meet.ffmuc.net/polyclinic-${callId}`;
 
-    console.log('=== ROOM URL:', roomUrl);
-    console.log('=== CALL ID:', callId);
-
     useEffect(() => {
        
         Linking.openURL(roomUrl).catch(() => {

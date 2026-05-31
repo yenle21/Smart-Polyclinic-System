@@ -1,20 +1,18 @@
 from datetime import date
 from django.contrib import admin
 from django.db import models as db_models
-from django.db.models import Count, Sum, F
-from django.db.models.functions import TruncMonth, Coalesce
+from django.db.models import Count, Sum, F, Q, ExpressionWrapper, IntegerField
+from django.db.models.functions import TruncMonth, Coalesce, ExtractYear
 from django.template.response import TemplateResponse
 from django.urls import path
 from django.utils import timezone
 
-# ── 1. IMPORT MODELS ─────────────────────────────────────────────────────────
 from accounts.models import User, Doctor, Patient, Specialty
 from appointments.models import Schedule, Appointment, Notification, MedicalRecord, TestResult
 from pharmacy.models import Category, Medicine, Inventory, StockTransaction, Prescription, PrescriptionItem
 from billing.models import Invoice
 from dashboard.models import Report
 
-# ── 2. IMPORT MODELADMINS ─────────────────────────────────────────────────────
 from accounts.admin import CustomUserAdmin, DoctorAdmin, PatientAdmin, SpecialtyAdmin
 from appointments.admin import ScheduleAdmin, AppointmentAdmin, NotificationAdmin, MedicalRecordAdmin, TestResultAdmin
 from pharmacy.admin import (
@@ -24,22 +22,17 @@ from pharmacy.admin import (
 from billing.admin import InvoiceModelAdmin
 from dashboard.admin import ReportModelAdmin
 
-
-# ── 3. CUSTOM ADMIN SITE ──────────────────────────────────────────────────────
 class PolyclinicAdminSite(admin.AdminSite):
     site_header = '🏥 Smart Polyclinic Admin'
     site_title = 'Polyclinic Admin'
     index_title = 'Bảng điều khiển'
 
     def get_urls(self):
-        # Đã đồng bộ tên hàm xử lý thống nhất là dashboard_stats_view
         return [
             path('stats/', self.admin_view(self.dashboard_stats_view), name='stats'),
         ] + super().get_urls()
 
-    # ────────────────────────────────────────────────────────────────────────
-    # 3.1 Hàm xử lý View chính (Render Template)
-    # ────────────────────────────────────────────────────────────────────────
+
     def dashboard_stats_view(self, request):
         current_tab = request.GET.get('tab', 'patient')
 
@@ -70,29 +63,33 @@ class PolyclinicAdminSite(admin.AdminSite):
         else:
             template_name = "patient.html"
 
+
         return TemplateResponse(request, template_name, context)
 
-    # ────────────────────────────────────────────────────────────────────────
-    # 3.2 Các hàm tính toán số liệu Logic ORM
-    # ────────────────────────────────────────────────────────────────────────
     def get_patient_stats(self):
-        today = date.today()
+        current_year = timezone.now().year
+
         gender_stats = Patient.objects.values('gender').annotate(count=Count('id')).order_by('gender')
         GENDER_MAP = {'male': 'Nam', 'female': 'Nữ', None: 'Chưa rõ'}
 
-        age_groups = {'0-17': 0, '18-30': 0, '31-45': 0, '46-60': 0, '60+': 0}
-        for p in Patient.objects.exclude(dob=None):
-            age = (today - p.dob).days // 365
-            if age < 18:
-                age_groups['0-17'] += 1
-            elif age <= 30:
-                age_groups['18-30'] += 1
-            elif age <= 45:
-                age_groups['31-45'] += 1
-            elif age <= 60:
-                age_groups['46-60'] += 1
-            else:
-                age_groups['60+'] += 1
+        age_groups_query = Patient.objects.exclude(dob=None).annotate(
+            age=ExpressionWrapper(current_year - ExtractYear('dob'), output_field=IntegerField())
+        ).aggregate(
+            group_0_17=Count('id', filter=Q(age__lt=18)),
+            group_18_30=Count('id', filter=Q(age__gte=18, age__lte=30)),
+            group_31_45=Count('id', filter=Q(age__gte=31, age__lte=45)),
+            group_46_60=Count('id', filter=Q(age__gte=46, age__lte=60)),
+            group_60_plus=Count('id', filter=Q(age__gt=60))
+        )
+
+        age_labels = ['0-17', '18-30', '31-45', '46-60', '60+']
+        age_data = [
+            age_groups_query['group_0_17'],
+            age_groups_query['group_18_30'],
+            age_groups_query['group_31_45'],
+            age_groups_query['group_46_60'],
+            age_groups_query['group_60_plus']
+        ]
 
         specialty_stats = Specialty.objects.annotate(
             count=Count('doctors__schedules__appointments__patient', distinct=True)
@@ -101,8 +98,8 @@ class PolyclinicAdminSite(admin.AdminSite):
         return {
             'gender_labels': [GENDER_MAP.get(g['gender'], 'Chưa rõ') for g in gender_stats],
             'gender_data': [g['count'] for g in gender_stats],
-            'age_labels': list(age_groups.keys()),
-            'age_data': list(age_groups.values()),
+            'age_labels': age_labels,
+            'age_data': age_data,
             'specialty_labels': [s['name'] for s in specialty_stats],
             'specialty_data': [s['count'] for s in specialty_stats],
             'total_patients': Patient.objects.count(),
@@ -122,7 +119,8 @@ class PolyclinicAdminSite(admin.AdminSite):
             'mri': 'MRI', 'ct': 'CT Scan', 'ultrasound': 'Siêu âm', 'other': 'Khác',
         }
 
-        top_medicines = PrescriptionItem.objects.values(
+
+        top_medicines = PrescriptionItem.objects.select_related('medicine').values(
             medicine_name=F('medicine__name')
         ).annotate(total_qty=Sum('quantity')).order_by('-total_qty')[:10]
 
@@ -138,9 +136,11 @@ class PolyclinicAdminSite(admin.AdminSite):
         }
 
     def get_disease_stats(self):
-        diagnoses = MedicalRecord.objects.exclude(diagnosis='').exclude(diagnosis__isnull=True).values(
+
+        diagnoses = MedicalRecord.objects.exclude(Q(diagnosis='') | Q(diagnosis__isnull=True)).values(
             'diagnosis').annotate(count=Count('id')).order_by('-count')[:15]
-        symptoms = MedicalRecord.objects.exclude(symptoms='').exclude(symptoms__isnull=True).values(
+
+        symptoms = MedicalRecord.objects.exclude(Q(symptoms='') | Q(symptoms__isnull=True)).values(
             'symptoms').annotate(count=Count('id')).order_by('-count')[:10]
 
         current_year = timezone.now().year
@@ -170,6 +170,7 @@ class PolyclinicAdminSite(admin.AdminSite):
 
         monthly = paid_invoices.filter(paid_at__year=current_year).annotate(month=TruncMonth('paid_at')).values(
             'month').annotate(revenue=Sum('total_amount')).order_by('month')
+
         by_method = paid_invoices.values('payment_method').annotate(total=Sum('total_amount'),
                                                                     count=Count('id')).order_by('-total')
         METHOD_MAP = {'cash': 'Tiền mặt', 'transfer': 'Chuyển khoản', 'momo': 'MoMo', 'vnpay': 'VNPay'}
@@ -178,6 +179,12 @@ class PolyclinicAdminSite(admin.AdminSite):
             name=F('appointment__schedule__doctor__specialties__name')
         ).annotate(revenue=Sum('total_amount')).exclude(name__isnull=True).order_by('-revenue')[:8]
 
+
+        top_invoices = paid_invoices.select_related(
+            'patient',
+            'appointment__schedule__doctor'
+        ).order_by('-total_amount')[:10]
+
         return {
             'summary': summary,
             'monthly_labels': [m['month'].strftime('%m/%Y') for m in monthly if m['month']],
@@ -185,12 +192,11 @@ class PolyclinicAdminSite(admin.AdminSite):
             'method_labels': [METHOD_MAP.get(m['payment_method'], m['payment_method']) for m in by_method],
             'method_revenue': [float(m['total']) for m in by_method],
             'by_specialty': list(by_specialty),
-            'top_invoices': paid_invoices.select_related('patient', 'appointment').order_by('-total_amount')[:10],
+            'top_invoices': top_invoices,
             'current_year': current_year,
         }
 
 
-# ── 4. KHỞI TẠO VÀ ĐĂNG KÝ MODELADMIN ─────────────────────────────────────────
 admin_site = PolyclinicAdminSite(name='polyclinic_admin')
 
 # Pharmacy
